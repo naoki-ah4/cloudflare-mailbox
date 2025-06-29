@@ -82,7 +82,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   }
 }
 
-export default function Messages() {
+const Messages = () => {
   const { 
     messages, 
     managedEmails, 
@@ -383,4 +383,6 @@ export default function Messages() {
       </div>
     </div>
   );
-}
+};
+
+export default Messages;

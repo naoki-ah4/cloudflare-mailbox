@@ -89,21 +89,21 @@ export async function action({ request, context }: ActionFunctionArgs) {
   }
 }
 
-export default function Login() {
+const Login = () => {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div style={{ maxWidth: "400px", margin: "0 auto", padding: "2rem" }}>
-      <h1>ログイン</h1>
-      <p style={{ color: "#666", marginBottom: "2rem" }}>
+    <div className="max-w-md mx-auto p-8">
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">ログイン</h1>
+      <p className="text-gray-600 mb-8">
         メールボックス管理システムにログインしてください。
       </p>
       
       <Form method="post">
         
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="username" style={{ display: "block", marginBottom: "0.5rem" }}>
+        <div className="mb-4">
+          <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-700">
             ユーザー名:
           </label>
           <input
@@ -111,19 +111,13 @@ export default function Login() {
             id="username"
             name="username"
             required
-            style={{ 
-              width: "100%", 
-              padding: "0.75rem", 
-              borderRadius: "4px", 
-              border: "1px solid #ccc",
-              fontSize: "1rem"
-            }}
+            className="w-full px-3 py-3 rounded border border-gray-300 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
             disabled={isSubmitting}
           />
         </div>
         
-        <div style={{ marginBottom: "2rem" }}>
-          <label htmlFor="password" style={{ display: "block", marginBottom: "0.5rem" }}>
+        <div className="mb-8">
+          <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-700">
             パスワード:
           </label>
           <input
@@ -131,13 +125,7 @@ export default function Login() {
             id="password"
             name="password"
             required
-            style={{ 
-              width: "100%", 
-              padding: "0.75rem", 
-              borderRadius: "4px", 
-              border: "1px solid #ccc",
-              fontSize: "1rem"
-            }}
+            className="w-full px-3 py-3 rounded border border-gray-300 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
             disabled={isSubmitting}
           />
         </div>
@@ -145,33 +133,21 @@ export default function Login() {
         <button
           type="submit"
           disabled={isSubmitting}
-          style={{
-            width: "100%",
-            padding: "0.75rem",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "1rem",
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-            opacity: isSubmitting ? 0.6 : 1,
-            marginBottom: "1rem"
-          }}
+          className={`w-full py-3 bg-blue-600 text-white border-0 rounded text-base font-medium mb-4 transition-all ${
+            isSubmitting 
+              ? "cursor-not-allowed opacity-60" 
+              : "cursor-pointer hover:bg-blue-700"
+          }`}
         >
           {isSubmitting ? "ログイン中..." : "ログイン"}
         </button>
       </Form>
       
-      <div style={{ 
-        textAlign: "center", 
-        padding: "1rem", 
-        backgroundColor: "#f8f9fa",
-        borderRadius: "4px",
-        fontSize: "0.875rem",
-        color: "#666"
-      }}>
+      <div className="text-center p-4 bg-gray-50 rounded text-sm text-gray-600">
         アカウントをお持ちでない場合は、管理者から招待URLを受け取ってください。
       </div>
     </div>
   );
-}
+};
+
+export default Login;

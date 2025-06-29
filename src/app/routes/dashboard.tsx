@@ -61,116 +61,65 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   }
 }
 
-export default function Dashboard() {
+const Dashboard = () => {
   const { user, stats, mailboxStats } = useLoaderData<typeof loader>();
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "2rem" }}>
-      <header style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        marginBottom: "2rem",
-        borderBottom: "1px solid #eee",
-        paddingBottom: "1rem"
-      }}>
+    <div className="max-w-4xl mx-auto p-8">
+      <header className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
         <div>
-          <h1>メールボックス</h1>
-          <p style={{ margin: "0.5rem 0 0 0", color: "#666" }}>
+          <h1 className="text-2xl font-bold text-gray-900">メールボックス</h1>
+          <p className="mt-2 text-gray-600">
             ようこそ、{user.username}さん
           </p>
         </div>
         <form method="post" action="/api/logout">
           <button
             type="submit"
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor: "#dc3545",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            className="px-4 py-2 bg-red-600 text-white border-0 rounded cursor-pointer hover:bg-red-700 transition-colors"
           >
             ログアウト
           </button>
         </form>
       </header>
       
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "1rem",
-        marginBottom: "2rem"
-      }}>
-        <div style={{ 
-          padding: "1.5rem", 
-          backgroundColor: "#f8f9fa", 
-          borderRadius: "8px",
-          textAlign: "center"
-        }}>
-          <h3 style={{ margin: "0 0 0.5rem 0", color: "#007bff" }}>総メール数</h3>
-          <p style={{ margin: "0", fontSize: "2rem", fontWeight: "bold" }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="p-6 bg-gray-50 rounded-lg text-center">
+          <h3 className="mb-2 text-blue-600 font-semibold">総メール数</h3>
+          <p className="text-3xl font-bold text-gray-900">
             {stats.totalMessages}
           </p>
         </div>
         
-        <div style={{ 
-          padding: "1.5rem", 
-          backgroundColor: "#f8f9fa", 
-          borderRadius: "8px",
-          textAlign: "center"
-        }}>
-          <h3 style={{ margin: "0 0 0.5rem 0", color: "#dc3545" }}>未読メール</h3>
-          <p style={{ margin: "0", fontSize: "2rem", fontWeight: "bold" }}>
+        <div className="p-6 bg-gray-50 rounded-lg text-center">
+          <h3 className="mb-2 text-red-600 font-semibold">未読メール</h3>
+          <p className="text-3xl font-bold text-gray-900">
             {stats.unreadMessages}
           </p>
         </div>
         
-        <div style={{ 
-          padding: "1.5rem", 
-          backgroundColor: "#f8f9fa", 
-          borderRadius: "8px",
-          textAlign: "center"
-        }}>
-          <h3 style={{ margin: "0 0 0.5rem 0", color: "#28a745" }}>管理メールボックス</h3>
-          <p style={{ margin: "0", fontSize: "2rem", fontWeight: "bold" }}>
+        <div className="p-6 bg-gray-50 rounded-lg text-center">
+          <h3 className="mb-2 text-green-600 font-semibold">管理メールボックス</h3>
+          <p className="text-3xl font-bold text-gray-900">
             {user.managedEmails.length}
           </p>
         </div>
       </div>
       
-      <div style={{ 
-        backgroundColor: "white",
-        borderRadius: "8px",
-        border: "1px solid #dee2e6",
-        padding: "1.5rem"
-      }}>
-        <h2 style={{ margin: "0 0 1rem 0" }}>管理中のメールアドレス</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 className="mb-4 text-xl font-semibold text-gray-900">管理中のメールアドレス</h2>
+        <div className="flex flex-col gap-3">
           {mailboxStats.map((stat) => (
             <div 
               key={stat.email} 
-              style={{ 
-                padding: "1rem",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "6px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}
+              className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
             >
               <div>
-                <strong style={{ fontSize: "1rem" }}>{stat.email}</strong>
+                <strong className="text-base text-gray-900">{stat.email}</strong>
               </div>
-              <div style={{ 
-                display: "flex", 
-                gap: "1rem", 
-                fontSize: "0.875rem",
-                color: "#666"
-              }}>
-                <span>総数: <strong>{stat.total}</strong></span>
-                <span>未読: <strong style={{ color: stat.unread > 0 ? "#dc3545" : "#28a745" }}>
+              <div className="flex gap-4 text-sm text-gray-600">
+                <span>総数: <strong className="text-gray-900">{stat.total}</strong></span>
+                <span>未読: <strong className={stat.unread > 0 ? "text-red-600" : "text-green-600"}>
                   {stat.unread}
                 </strong></span>
               </div>
@@ -179,31 +128,18 @@ export default function Dashboard() {
         </div>
       </div>
       
-      <div style={{ 
-        marginTop: "2rem",
-        textAlign: "center",
-        padding: "2rem",
-        backgroundColor: "#007bff",
-        borderRadius: "8px",
-        color: "white"
-      }}>
-        <h3>メール閲覧</h3>
-        <p style={{ margin: "1rem 0" }}>メールの閲覧・管理を行えます。</p>
+      <div className="mt-8 text-center p-8 bg-blue-600 rounded-lg text-white">
+        <h3 className="text-xl font-semibold mb-4">メール閲覧</h3>
+        <p className="mb-6">メールの閲覧・管理を行えます。</p>
         <a 
           href="/messages"
-          style={{
-            display: "inline-block",
-            padding: "0.75rem 1.5rem",
-            backgroundColor: "white",
-            color: "#007bff",
-            textDecoration: "none",
-            borderRadius: "4px",
-            fontWeight: "bold"
-          }}
+          className="inline-block px-6 py-3 bg-white text-blue-600 no-underline rounded font-bold hover:bg-gray-50 transition-colors"
         >
           メール一覧を開く
         </a>
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;
