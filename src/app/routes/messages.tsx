@@ -1,32 +1,23 @@
 import { useLoaderData, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { SessionKV, InboxKV } from "~/utils/kv";
+import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/kv/schema";
-
-/**
- * クッキーから値を取得
- */
-function getCookie(request: Request, name: string): string | null {
-  const cookieHeader = request.headers.get('Cookie');
-  if (!cookieHeader) return null;
-  
-  const cookies = cookieHeader.split(';').map(c => c.trim());
-  const cookie = cookies.find(c => c.startsWith(`${name}=`));
-  return cookie ? cookie.split('=')[1] : null;
-}
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {
     // セッションからユーザー情報を取得
-    const sessionId = getCookie(request, 'user-session');
+    const session = await getUserSession(request.headers.get("Cookie"));
+    const sessionId = session.get("sessionId");
+    
     if (!sessionId) {
       throw new Error("認証が必要です");
     }
     
-    const session = await SessionKV.get(env.USERS_KV, sessionId);
-    if (!session || session.expiresAt < Date.now()) {
+    const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
+    if (!kvSession || kvSession.expiresAt < Date.now()) {
       throw new Error("セッションが無効です");
     }
     
@@ -39,13 +30,13 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     
     if (selectedMailbox) {
       // 特定のメールボックスのみ
-      if (session.managedEmails.includes(selectedMailbox)) {
+      if (kvSession.managedEmails.includes(selectedMailbox)) {
         const messages = await InboxKV.get(env.MAILBOXES_KV, selectedMailbox);
         allMessages = messages.map(msg => ({ ...msg, mailbox: selectedMailbox }));
       }
     } else {
       // 全メールボックス統合
-      for (const email of session.managedEmails) {
+      for (const email of kvSession.managedEmails) {
         const messages = await InboxKV.get(env.MAILBOXES_KV, email);
         // メールボックス情報を追加
         const messagesWithMailbox = messages.map(msg => ({
@@ -74,7 +65,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     
     return {
       messages: allMessages,
-      managedEmails: session.managedEmails,
+      managedEmails: kvSession.managedEmails,
       selectedMailbox,
       searchQuery,
       stats: {
@@ -82,7 +73,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
         unreadMessages,
       },
       user: {
-        email: session.email,
+        email: kvSession.email,
       }
     };
   } catch (error) {
