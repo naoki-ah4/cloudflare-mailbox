@@ -1,17 +1,17 @@
 import type { Route } from "./+types/home";
 
-export function meta({ params }: Route.MetaArgs) {
+export const meta = ({ params }: Route.MetaArgs) => {
   return [
     { title: "Cloudflare Mailbox - セキュアなメール管理システム" },
     { name: "description", content: "Cloudflare Workers上で動作するプライベートメール管理システム" },
   ];
-}
+};
 
-export function loader({ context }: Route.LoaderArgs) {
+export const loader = ({ context }: Route.LoaderArgs) => {
   return {};
-}
+};
 
-export default function Home({ loaderData }: Route.ComponentProps) {
+const Home = ({ loaderData }: Route.ComponentProps) => {
   return (
     <div style={{ 
       minHeight: "100vh",
