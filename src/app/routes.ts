@@ -6,9 +6,11 @@ export default [
   route("/admin/login", "routes/admin/login.tsx"),
   route("/admin", "routes/admin/dashboard.tsx"),
   
-  // 管理者API
+  // 管理者ページ（UI + API統合）
+  route("/admin/users", "routes/admin/users.tsx"),
+  route("/admin/invites", "routes/admin/invites.tsx"),
+  route("/admin/administrators", "routes/admin/administrators.tsx"),
+  
+  // 専用APIエンドポイント（UIなし）
   route("/api/admin/logout", "routes/api/admin/logout.tsx"),
-  route("/api/admin/users", "routes/api/admin/users.tsx"),
-  route("/api/admin/invites", "routes/api/admin/invites.tsx"),
-  route("/api/admin/administrators", "routes/api/admin/administrators.tsx"),
 ] satisfies RouteConfig;
