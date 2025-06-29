@@ -33,7 +33,7 @@ export default function AdminDashboard() {
         paddingBottom: "1rem"
       }}>
         <h1>管理者ダッシュボード</h1>
-        <form method="post" action="/admin/logout">
+        <form method="post" action="/api/admin/logout">
           <button
             type="submit"
             style={{
