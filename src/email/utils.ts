@@ -20,11 +20,11 @@ export function createEmailMessage(
     attachments,
     threadId: generateThreadId(parsedEmail),
     inReplyTo: parsedEmail.headers.find(
-      (header) => header.name.toLowerCase() === 'in-reply-to'
+      (header) => String(header.name).toLowerCase() === 'in-reply-to'
     )?.value,
     references: parseReferences(
       parsedEmail.headers.find(
-        (header) => header.name.toLowerCase() === 'references'
+        (header) => String(header.name).toLowerCase() === 'references'
       )?.value
     ),
   };
@@ -32,10 +32,10 @@ export function createEmailMessage(
 
 export function generateThreadId(parsedEmail: Email): string {
   const inReplyTo = parsedEmail.headers.find(
-    (header) => header.name.toLowerCase() === 'in-reply-to'
+    (header) => String(header.name).toLowerCase() === 'in-reply-to'
   )?.value;
   const references = parsedEmail.headers?.find(
-    (header) => header.name.toLowerCase() === 'references'
+    (header) => String(header.name).toLowerCase() === 'references'
   )?.value;
 
   if (inReplyTo) {
@@ -50,7 +50,7 @@ export function generateThreadId(parsedEmail: Email): string {
   }
 
   const messageId = parsedEmail.headers.find(
-    (header) => header.name.toLowerCase() === 'message-id'
+    (header) => String(header.name).toLowerCase() === 'message-id'
   )?.value;
   return messageId ? messageId.replace(/[<>]/g, '') : crypto.randomUUID();
 }
