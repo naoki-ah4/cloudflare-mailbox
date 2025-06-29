@@ -1,6 +1,6 @@
 import { createRequestHandler } from "react-router";
 import EmailApp from "~/email";
-import { AdminKV, AdminSessionKV } from "~/utils/kv";
+import { AdminKV, AdminSessionKV, SessionKV } from "~/utils/kv";
 import { isIPInCIDRList } from "~/utils/cidr";
 
 declare module "react-router" {
@@ -66,6 +66,31 @@ async function authenticateAdmin(request: Request, env: Env): Promise<{ isAuthen
   return { isAuthenticated: true };
 }
 
+/**
+ * ユーザー認証チェック
+ */
+async function authenticateUser(request: Request, env: Env): Promise<{ isAuthenticated: boolean; redirect?: string }> {
+  const url = new URL(request.url);
+  
+  // ログイン・登録ページは認証不要
+  if (['/login', '/signup'].includes(url.pathname) || url.pathname.startsWith('/signup?')) {
+    return { isAuthenticated: true };
+  }
+  
+  // セッション認証必須
+  const sessionId = getCookie(request, 'user-session');
+  if (!sessionId) {
+    return { isAuthenticated: false, redirect: '/login' };
+  }
+  
+  const session = await SessionKV.get(env.USERS_KV, sessionId);
+  if (!session || session.expiresAt < Date.now()) {
+    return { isAuthenticated: false, redirect: '/login' };
+  }
+  
+  return { isAuthenticated: true };
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -79,6 +104,18 @@ export default {
           return Response.redirect(new URL(authResult.redirect, request.url).toString(), 302);
         }
         return new Response('Forbidden', { status: 403 });
+      }
+    }
+    
+    // ユーザーページの認証チェック
+    if (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/messages')) {
+      const authResult = await authenticateUser(request, env);
+      
+      if (!authResult.isAuthenticated) {
+        if (authResult.redirect) {
+          return Response.redirect(new URL(authResult.redirect, request.url).toString(), 302);
+        }
+        return new Response('Unauthorized', { status: 401 });
       }
     }
     
