@@ -1,17 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { SessionKV, MessageKV } from "~/utils/kv";
-
-/**
- * クッキーから値を取得
- */
-const getCookie = (request: Request, name: string): string | null => {
-  const cookieHeader = request.headers.get('Cookie');
-  if (!cookieHeader) return null;
-  
-  const cookies = cookieHeader.split(';').map(c => c.trim());
-  const cookie = cookies.find(c => c.startsWith(`${name}=`));
-  return cookie ? cookie.split('=')[1] : null;
-}
+import { getUserSession } from "~/utils/session.server";
 
 export const loader = async ({ request, params, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env; ctx: ExecutionContext } }).cloudflare;
@@ -22,14 +11,16 @@ export const loader = async ({ request, params, context }: LoaderFunctionArgs) =
       return new Response("パラメータが不正です", { status: 400 });
     }
     
-    // セッション確認
-    const sessionId = getCookie(request, 'user-session');
+    // React Routerセッション確認
+    const session = await getUserSession(request.headers.get("Cookie"));
+    const sessionId = session.get("sessionId");
+    
     if (!sessionId) {
       return new Response("認証が必要です", { status: 401 });
     }
     
-    const session = await SessionKV.get(env.USERS_KV, sessionId);
-    if (!session || session.expiresAt < Date.now()) {
+    const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
+    if (!kvSession || kvSession.expiresAt < Date.now()) {
       return new Response("セッションが無効です", { status: 401 });
     }
     
@@ -39,7 +30,7 @@ export const loader = async ({ request, params, context }: LoaderFunctionArgs) =
       return new Response("メッセージが見つかりません", { status: 404 });
     }
     
-    const canAccess = message.to.some(email => session.managedEmails.includes(email));
+    const canAccess = message.to.some(email => kvSession.managedEmails.includes(email));
     if (!canAccess) {
       return new Response("このメッセージにアクセスする権限がありません", { status: 403 });
     }
