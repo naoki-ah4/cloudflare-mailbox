@@ -17,13 +17,13 @@ function ipv4ToInt(ip: string): number {
 function isIPv4InCIDR(ip: string, cidr: string): boolean {
   const [network, prefixStr] = cidr.split('/');
   const prefix = parseInt(prefixStr, 10);
-  
+
   if (prefix < 0 || prefix > 32) return false;
-  
+
   const ipInt = ipv4ToInt(ip);
   const networkInt = ipv4ToInt(network);
   const mask = ~((1 << (32 - prefix)) - 1);
-  
+
   return (ipInt & mask) === (networkInt & mask);
 }
 
@@ -38,18 +38,19 @@ function ipv6ToBytes(ip: string): Uint8Array {
     const leftParts = parts[0] ? parts[0].split(':') : [];
     const rightParts = parts[1] ? parts[1].split(':') : [];
     const missingParts = 8 - leftParts.length - rightParts.length;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     normalized = [...leftParts, ...Array(missingParts).fill('0'), ...rightParts].join(':');
   }
-  
+
   const parts = normalized.split(':');
   const bytes = new Uint8Array(16);
-  
+
   for (let i = 0; i < 8; i++) {
     const hex = parseInt(parts[i] || '0', 16);
     bytes[i * 2] = (hex >> 8) & 0xff;
     bytes[i * 2 + 1] = hex & 0xff;
   }
-  
+
   return bytes;
 }
 
@@ -59,20 +60,20 @@ function ipv6ToBytes(ip: string): Uint8Array {
 function isIPv6InCIDR(ip: string, cidr: string): boolean {
   const [network, prefixStr] = cidr.split('/');
   const prefix = parseInt(prefixStr, 10);
-  
+
   if (prefix < 0 || prefix > 128) return false;
-  
+
   const ipBytes = ipv6ToBytes(ip);
   const networkBytes = ipv6ToBytes(network);
-  
+
   const fullBytes = Math.floor(prefix / 8);
   const remainingBits = prefix % 8;
-  
+
   // フルバイトの比較
   for (let i = 0; i < fullBytes; i++) {
     if (ipBytes[i] !== networkBytes[i]) return false;
   }
-  
+
   // 残りビットの比較
   if (remainingBits > 0) {
     const mask = 0xff << (8 - remainingBits);
@@ -80,7 +81,7 @@ function isIPv6InCIDR(ip: string, cidr: string): boolean {
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -96,7 +97,7 @@ function isIPv6(ip: string): boolean {
  */
 export function isIPInCIDR(ip: string, cidr: string): boolean {
   if (!ip || !cidr) return false;
-  
+
   try {
     if (isIPv6(ip) && isIPv6(cidr)) {
       return isIPv6InCIDR(ip, cidr);
@@ -115,7 +116,7 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
  */
 export function isIPInCIDRList(ip: string, cidrList: string): boolean {
   if (!ip || !cidrList) return false;
-  
+
   const cidrs = cidrList.split(',').map(c => c.trim());
   return cidrs.some(cidr => isIPInCIDR(ip, cidr));
 }

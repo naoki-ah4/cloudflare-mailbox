@@ -37,6 +37,26 @@ export const InviteSchema = z.object({
   usedAt: z.number().optional(),
 });
 
+// 管理者関連スキーマ
+export const AdminSchema = z.object({
+  id: z.string().uuid(),
+  username: z
+    .string()
+    .min(3)
+    .max(30)
+    .regex(/^[a-zA-Z0-9_]+$/),
+  passwordHash: z.string(),
+  createdAt: z.number(),
+  lastLogin: z.number().optional(),
+});
+
+export const AdminSessionSchema = z.object({
+  id: z.string().uuid(),
+  adminId: z.string().uuid(),
+  createdAt: z.number(),
+  expiresAt: z.number(),
+});
+
 // メッセージ関連スキーマ
 export const EmailAttachmentSchema = z.object({
   filename: z.string(),
@@ -95,6 +115,8 @@ export const KVSchemas = {
   user: UserSchema,
   session: SessionSchema,
   invite: InviteSchema,
+  admin: AdminSchema,
+  'admin-session': AdminSessionSchema,
 
   // MESSAGES_KV
   msg: EmailMessageSchema,
@@ -110,6 +132,8 @@ export const KVSchemas = {
 export type User = z.infer<typeof UserSchema>;
 export type Session = z.infer<typeof SessionSchema>;
 export type Invite = z.infer<typeof InviteSchema>;
+export type Admin = z.infer<typeof AdminSchema>;
+export type AdminSession = z.infer<typeof AdminSessionSchema>;
 export type EmailMessage = z.infer<typeof EmailMessageSchema>;
 export type EmailMetadata = z.infer<typeof EmailMetadataSchema>;
 export type EmailAttachment = z.infer<typeof EmailAttachmentSchema>;
