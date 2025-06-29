@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { SessionKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/kv/schema";
+import styles from "./messages.module.scss";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -114,74 +115,34 @@ const Messages = () => {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div className={styles.container}>
       {/* サイドバー */}
-      <div style={{ 
-        width: "280px", 
-        backgroundColor: "#f8f9fa", 
-        borderRight: "1px solid #dee2e6",
-        padding: "1rem"
-      }}>
-        <div style={{ marginBottom: "2rem" }}>
-          <h2 style={{ margin: "0 0 0.5rem 0", fontSize: "1.25rem" }}>メールボックス</h2>
-          <p style={{ margin: "0", fontSize: "0.875rem", color: "#666" }}>
-            {user.email}
-          </p>
+      <div className={styles.sidebar}>
+        <div className={styles.sidebarHeader}>
+          <h2>メールボックス</h2>
+          <p>{user.email}</p>
         </div>
         
-        <div style={{ marginBottom: "2rem" }}>
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0.5rem",
-            marginBottom: "1rem"
-          }}>
-            <div style={{ 
-              padding: "0.75rem", 
-              backgroundColor: "white", 
-              borderRadius: "4px",
-              textAlign: "center",
-              border: "1px solid #dee2e6"
-            }}>
-              <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#007bff" }}>
-                {stats.totalMessages}
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#666" }}>総数</div>
-            </div>
-            <div style={{ 
-              padding: "0.75rem", 
-              backgroundColor: "white", 
-              borderRadius: "4px",
-              textAlign: "center",
-              border: "1px solid #dee2e6"
-            }}>
-              <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#dc3545" }}>
-                {stats.unreadMessages}
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#666" }}>未読</div>
-            </div>
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <p style={{ color: "#007bff" }}>{stats.totalMessages}</p>
+            <h3>総数</h3>
+          </div>
+          <div className={styles.statCard}>
+            <p style={{ color: "#dc3545" }}>{stats.unreadMessages}</p>
+            <h3>未読</h3>
           </div>
         </div>
         
-        <div style={{ marginBottom: "2rem" }}>
-          <h3 style={{ margin: "0 0 1rem 0", fontSize: "1rem" }}>フィルタ</h3>
+        <div className={styles.mailboxSection}>
+          <h3>フィルタ</h3>
           
-          <div style={{ marginBottom: "1rem" }}>
+          <div className={styles.mailboxList}>
             <button
               onClick={() => handleMailboxChange("all")}
-              style={{
-                width: "100%",
-                padding: "0.5rem 0.75rem",
-                backgroundColor: !selectedMailbox ? "#007bff" : "white",
-                color: !selectedMailbox ? "white" : "#333",
-                border: "1px solid " + (!selectedMailbox ? "#007bff" : "#dee2e6"),
-                borderRadius: "4px",
-                textAlign: "left",
-                cursor: "pointer",
-                marginBottom: "0.25rem"
-              }}
+              className={`${styles.mailboxItem} ${!selectedMailbox ? styles.active : ''}`}
             >
-              📥 すべて ({stats.totalMessages})
+              <div className={styles.mailboxName}>📥 すべて ({stats.totalMessages})</div>
             </button>
             
             {managedEmails.map((email) => {

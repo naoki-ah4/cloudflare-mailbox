@@ -1,0 +1,200 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
+.backLink {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.875rem;
+  
+  &:hover {
+    color: #0056b3;
+  }
+}
+
+.logoutButton {
+  padding: 0.5rem 1rem;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: #c82333;
+  }
+}
+
+.errorMessage {
+  color: red;
+  background-color: #ffebee;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.successMessage {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.messageCard {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  overflow: hidden;
+}
+
+.messageHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid #f8f9fa;
+  background-color: #f8f9fa;
+  
+  h1 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+  }
+}
+
+.messageMetaGrid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #666;
+  
+  strong {
+    font-weight: bold;
+  }
+}
+
+.markReadButton {
+  padding: 0.5rem 1rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+  
+  &:hover {
+    background-color: #218838;
+  }
+}
+
+.attachmentsSection {
+  padding: 1rem;
+  border-bottom: 1px solid #f8f9fa;
+  background-color: #fafafa;
+  
+  h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+  }
+}
+
+.attachmentsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.attachmentItem {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  
+  .icon {
+    margin-right: 0.5rem;
+  }
+  
+  .link {
+    color: #007bff;
+    text-decoration: none;
+    margin-right: 0.5rem;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  .size {
+    color: #666;
+    font-size: 0.75rem;
+  }
+}
+
+.messageContent {
+  padding: 1.5rem;
+}
+
+.displayModeButtons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.displayModeButton {
+  padding: 0.25rem 0.75rem;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  
+  &.active {
+    background-color: #007bff;
+  }
+  
+  &.inactive {
+    background-color: #6c757d;
+  }
+}
+
+.htmlContent {
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 1rem;
+  background-color: #fafafa;
+  max-height: 400px;
+  overflow: auto;
+}
+
+.textContent {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 0;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  max-height: 400px;
+  overflow: auto;
+}
+
+.noContentMessage {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}

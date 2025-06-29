@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import { useState } from "react";
+import styles from "./messages.$messageId.module.scss";
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -115,12 +116,12 @@ const MessageDetail = () => {
   const [displayMode, setDisplayMode] = useState<'html' | 'text'>('html');
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <header className="flex justify-between items-center mb-4 border-b border-gray-200 pb-4">
+    <div className={styles.container}>
+      <header className={styles.header}>
         <div>
           <a 
             href="/messages"
-            className="text-blue-600 no-underline text-sm hover:text-blue-800"
+            className={styles.backLink}
           >
             ← メール一覧に戻る
           </a>
@@ -129,7 +130,7 @@ const MessageDetail = () => {
         <form method="post" action="/api/logout">
           <button
             type="submit"
-            className="px-4 py-2 bg-red-600 text-white border-0 rounded cursor-pointer hover:bg-red-700"
+            className={styles.logoutButton}
           >
             ログアウト
           </button>
@@ -137,40 +138,23 @@ const MessageDetail = () => {
       </header>
 
       {actionData?.error && (
-        <div className="text-red-600 bg-red-50 p-4 rounded mb-4">
+        <div className={styles.errorMessage}>
           {actionData.error}
         </div>
       )}
 
       {actionData?.success && (
-        <div className="text-green-700 bg-green-50 border border-green-200 p-4 rounded mb-4">
+        <div className={styles.successMessage}>
           {actionData.message}
         </div>
       )}
       
-      <div style={{ 
-        backgroundColor: "white",
-        borderRadius: "8px",
-        border: "1px solid #dee2e6",
-        overflow: "hidden"
-      }}>
+      <div className={styles.messageCard}>
         {/* メッセージヘッダー */}
-        <div style={{ 
-          padding: "1.5rem",
-          borderBottom: "1px solid #f8f9fa",
-          backgroundColor: "#f8f9fa"
-        }}>
-          <h1 style={{ margin: "0 0 1rem 0", fontSize: "1.5rem" }}>
-            {message.subject || "(件名なし)"}
-          </h1>
+        <div className={styles.messageHeader}>
+          <h1>{message.subject || "(件名なし)"}</h1>
           
-          <div style={{ 
-            display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            gap: "0.5rem 1rem",
-            fontSize: "0.875rem",
-            color: "#666"
-          }}>
+          <div className={styles.messageMetaGrid}>
             <strong>送信者:</strong>
             <span>{message.from}</span>
             
@@ -191,20 +175,12 @@ const MessageDetail = () => {
             )}
           </div>
           
-          <div style={{ marginTop: "1rem" }}>
+          <div>
             <Form method="post" style={{ display: "inline" }}>
               <input type="hidden" name="action" value="markRead" />
               <button
                 type="submit"
-                style={{
-                  padding: "0.5rem 1rem",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "0.875rem"
-                }}
+                className={styles.markReadButton}
               >
                 既読にする
               </button>

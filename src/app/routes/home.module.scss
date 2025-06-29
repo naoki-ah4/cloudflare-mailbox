@@ -1,0 +1,120 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.card {
+  max-width: 800px;
+  background-color: white;
+  border-radius: 16px;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  margin-bottom: 2rem;
+  
+  h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 0 0 1rem 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  p {
+    font-size: 1.25rem;
+    color: #666;
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.feature {
+  padding: 1rem;
+  
+  .icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #666;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  display: inline-block;
+  padding: 1rem 2rem;
+  background-color: #667eea;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  }
+}
+
+.secondaryButton {
+  display: inline-block;
+  padding: 1rem 2rem;
+  background-color: transparent;
+  color: #667eea;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border: 2px solid #667eea;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: #667eea;
+    color: white;
+    transform: translateY(-2px);
+  }
+}
+
+.footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+  font-size: 0.875rem;
+  color: #999;
+  
+  p {
+    margin: 0;
+  }
+}
