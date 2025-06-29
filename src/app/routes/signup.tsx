@@ -2,6 +2,7 @@ import { Form, useLoaderData, useActionData, useNavigation } from "react-router"
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { UserKV, InviteKV, SessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
+import { getUserSession, commitUserSession } from "~/utils/session.server";
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -41,6 +42,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export async function action({ request, context }: ActionFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+  const session = await getUserSession(request.headers.get("Cookie"));
   
   try {
     const formData = await request.formData();
@@ -132,9 +134,9 @@ export async function action({ request, context }: ActionFunctionArgs) {
     // 招待トークンを使用済みにマーク
     await InviteKV.markUsed(env.USERS_KV, inviteToken);
     
-    // 自動ログイン - セッション作成
+    // 自動ログイン - セッション作成（KVに保存）
     const sessionId = crypto.randomUUID();
-    const session = {
+    const kvSession = {
       id: sessionId,
       userId,
       email: user.email,
@@ -143,13 +145,16 @@ export async function action({ request, context }: ActionFunctionArgs) {
       expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7日間
     };
     
-    await SessionKV.set(env.USERS_KV, sessionId, session);
+    await SessionKV.set(env.USERS_KV, sessionId, kvSession);
     
-    // クッキー設定
-    const headers = new Headers();
-    headers.set("Set-Cookie", `user-session=${sessionId}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`);
+    // React RouterセッションにsessionIdを保存
+    session.set("sessionId", sessionId);
     
-    return redirect("/dashboard", { headers });
+    return redirect("/dashboard", {
+      headers: {
+        "Set-Cookie": await commitUserSession(session),
+      },
+    });
   } catch (error) {
     console.error("User registration error:", error);
     return { error: "アカウント作成に失敗しました。もう一度お試しください。" };

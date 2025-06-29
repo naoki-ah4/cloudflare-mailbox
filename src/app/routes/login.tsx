@@ -2,9 +2,11 @@ import { Form, useActionData, useNavigation } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { UserKV, SessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
+import { getUserSession, commitUserSession } from "~/utils/session.server";
 
 export async function action({ request, context }: ActionFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+  const session = await getUserSession(request.headers.get("Cookie"));
   
   try {
     const formData = await request.formData();
@@ -12,13 +14,23 @@ export async function action({ request, context }: ActionFunctionArgs) {
     const password = formData.get("password") as string;
     
     if (!username || !password) {
-      return { error: "ユーザー名とパスワードを入力してください" };
+      session.flash("error", "ユーザー名とパスワードを入力してください");
+      return redirect("/login", {
+        headers: {
+          "Set-Cookie": await commitUserSession(session),
+        },
+      });
     }
     
     // ユーザーを取得
     const user = await UserKV.getByUsername(env.USERS_KV, username);
     if (!user) {
-      return { error: "ユーザー名またはパスワードが正しくありません" };
+      session.flash("error", "ユーザー名またはパスワードが正しくありません");
+      return redirect("/login", {
+        headers: {
+          "Set-Cookie": await commitUserSession(session),
+        },
+      });
     }
     
     // パスワード検証
@@ -31,12 +43,17 @@ export async function action({ request, context }: ActionFunctionArgs) {
       .join('');
     
     if (user.passwordHash !== hashHex) {
-      return { error: "ユーザー名またはパスワードが正しくありません" };
+      session.flash("error", "ユーザー名またはパスワードが正しくありません");
+      return redirect("/login", {
+        headers: {
+          "Set-Cookie": await commitUserSession(session),
+        },
+      });
     }
     
-    // セッション作成
+    // セッション作成（KVに保存）
     const sessionId = crypto.randomUUID();
-    const session = {
+    const kvSession = {
       id: sessionId,
       userId: user.id,
       email: user.email,
@@ -45,7 +62,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7日間
     };
     
-    await SessionKV.set(env.USERS_KV, sessionId, session);
+    await SessionKV.set(env.USERS_KV, sessionId, kvSession);
     
     // lastLogin更新
     await UserKV.set(env.USERS_KV, user.id, {
@@ -53,14 +70,22 @@ export async function action({ request, context }: ActionFunctionArgs) {
       lastLogin: Date.now(),
     });
     
-    // クッキー設定
-    const headers = new Headers();
-    headers.set("Set-Cookie", `user-session=${sessionId}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`);
+    // React RouterセッションにsessionIdを保存
+    session.set("sessionId", sessionId);
     
-    return redirect("/dashboard", { headers });
+    return redirect("/dashboard", {
+      headers: {
+        "Set-Cookie": await commitUserSession(session),
+      },
+    });
   } catch (error) {
     console.error("User login error:", error);
-    return { error: "ログインに失敗しました。もう一度お試しください。" };
+    session.flash("error", "ログインに失敗しました。もう一度お試しください。");
+    return redirect("/login", {
+      headers: {
+        "Set-Cookie": await commitUserSession(session),
+      },
+    });
   }
 }
 

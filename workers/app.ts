@@ -2,7 +2,7 @@ import { createRequestHandler } from "react-router";
 import EmailApp from "~/email";
 import { AdminKV, SessionKV } from "~/utils/kv";
 import { isIPInCIDRList } from "~/utils/cidr";
-import { getSession } from "~/utils/session.server";
+import { getAdminSession, getUserSession } from "~/utils/session.server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -18,17 +18,6 @@ const requestHandler = createRequestHandler(
   import.meta.env.MODE
 );
 
-/**
- * クッキーから値を取得
- */
-function getCookie(request: Request, name: string): string | null {
-  const cookieHeader = request.headers.get('Cookie');
-  if (!cookieHeader) return null;
-
-  const cookies = cookieHeader.split(';').map(c => c.trim());
-  const cookie = cookies.find(c => c.startsWith(`${name}=`));
-  return cookie ? cookie.split('=')[1] : null;
-}
 
 /**
  * 管理者認証チェック
@@ -57,7 +46,7 @@ async function authenticateAdmin(request: Request, env: Env): Promise<{ isAuthen
 
   // 4. その他の管理者ページはReact Routerセッション認証必須
   try {
-    const session = await getSession(request.headers.get("Cookie"));
+    const session = await getAdminSession(request.headers.get("Cookie"));
     const adminId = session.get("adminId");
 
     if (!adminId) {
@@ -91,18 +80,26 @@ async function authenticateUser(request: Request, env: Env): Promise<{ isAuthent
     return { isAuthenticated: true };
   }
 
-  // セッション認証必須
-  const sessionId = getCookie(request, 'user-session');
-  if (!sessionId) {
+  // React Routerセッション認証必須
+  try {
+    const session = await getUserSession(request.headers.get("Cookie"));
+    const sessionId = session.get("sessionId");
+    
+    if (!sessionId) {
+      return { isAuthenticated: false, redirect: '/login' };
+    }
+    
+    // KVからセッションデータを取得
+    const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
+    if (!kvSession || kvSession.expiresAt < Date.now()) {
+      return { isAuthenticated: false, redirect: '/login' };
+    }
+    
+    return { isAuthenticated: true };
+  } catch (error) {
+    console.error("User session check error:", error);
     return { isAuthenticated: false, redirect: '/login' };
   }
-
-  const session = await SessionKV.get(env.USERS_KV, sessionId);
-  if (!session || session.expiresAt < Date.now()) {
-    return { isAuthenticated: false, redirect: '/login' };
-  }
-
-  return { isAuthenticated: true };
 }
 
 export default {
