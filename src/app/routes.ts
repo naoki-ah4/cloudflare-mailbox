@@ -22,6 +22,6 @@ export default [
   
   // 専用APIエンドポイント（UIなし）
   route("/api/admin/logout", "routes/api/admin/logout.tsx"),
-  route("/api/user/logout", "routes/api/user/logout.tsx"),
+  route("/api/logout", "routes/api/logout.tsx"),
   route("/api/attachments/:messageId/:filename", "routes/api/attachments.$messageId.$filename.tsx"),
 ] satisfies RouteConfig;

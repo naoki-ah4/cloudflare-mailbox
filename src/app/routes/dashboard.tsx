@@ -34,7 +34,7 @@ export default function Dashboard() {
             ようこそ、{user.username}さん
           </p>
         </div>
-        <form method="post" action="/api/user/logout">
+        <form method="post" action="/api/logout">
           <button
             type="submit"
             style={{

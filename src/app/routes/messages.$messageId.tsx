@@ -137,7 +137,7 @@ export default function MessageDetail() {
           </a>
         </div>
         
-        <form method="post" action="/api/user/logout">
+        <form method="post" action="/api/logout">
           <button
             type="submit"
             style={{
