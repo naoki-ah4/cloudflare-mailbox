@@ -1,5 +1,4 @@
 import { useLoaderData } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
 
 export function loader() {
   // TODO: ユーザー認証ミドルウェア実装後にセッション情報を取得
@@ -115,12 +114,26 @@ export default function Dashboard() {
         marginTop: "2rem",
         textAlign: "center",
         padding: "2rem",
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "#007bff",
         borderRadius: "8px",
-        color: "#666"
+        color: "white"
       }}>
-        <h3>メール閲覧機能は実装中です</h3>
-        <p>Phase 4でメール一覧・詳細表示機能を実装予定です。</p>
+        <h3>メール閲覧</h3>
+        <p style={{ margin: "1rem 0" }}>メールの閲覧・管理を行えます。</p>
+        <a 
+          href="/messages"
+          style={{
+            display: "inline-block",
+            padding: "0.75rem 1.5rem",
+            backgroundColor: "white",
+            color: "#007bff",
+            textDecoration: "none",
+            borderRadius: "4px",
+            fontWeight: "bold"
+          }}
+        >
+          メール一覧を開く
+        </a>
       </div>
     </div>
   );

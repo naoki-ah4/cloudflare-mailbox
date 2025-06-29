@@ -16,7 +16,12 @@ export default [
   route("/login", "routes/login.tsx"),
   route("/dashboard", "routes/dashboard.tsx"),
   
+  // メール閲覧機能
+  route("/messages", "routes/messages.tsx"),
+  route("/messages/:messageId", "routes/messages.$messageId.tsx"),
+  
   // 専用APIエンドポイント（UIなし）
   route("/api/admin/logout", "routes/api/admin/logout.tsx"),
   route("/api/user/logout", "routes/api/user/logout.tsx"),
+  route("/api/attachments/:messageId/:filename", "routes/api/attachments.$messageId.$filename.tsx"),
 ] satisfies RouteConfig;
