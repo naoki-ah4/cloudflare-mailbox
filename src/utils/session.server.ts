@@ -56,12 +56,6 @@ const {
   },
 });
 
-// 管理者セッション（下位互換性）
-export const getSession = getAdminSession;
-export const commitSession = commitAdminSession;
-export const destroySession = destroyAdminSession;
-
-// 明示的なエクスポート
 export {
   getAdminSession,
   commitAdminSession,

@@ -2,11 +2,11 @@ import { Form, useNavigation } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { AdminKV } from "~/utils/kv";
 import { redirect } from "react-router";
-import { getSession, commitSession } from "~/utils/session.server";
+import { getAdminSession, commitAdminSession } from "~/utils/session.server";
 
 export async function action({ request, context }: ActionFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  const session = await getSession(request.headers.get("Cookie"));
+  const session = await getAdminSession(request.headers.get("Cookie"));
 
   const formData = await request.formData();
   const username = formData.get("username") as string;
@@ -16,7 +16,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     session.flash("error", "ユーザー名とパスワードを入力してください");
     return redirect("/admin/login", {
       headers: {
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await commitAdminSession(session),
       },
     });
   }
@@ -28,7 +28,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       session.flash("error", "ユーザー名またはパスワードが正しくありません");
       return redirect("/admin/login", {
         headers: {
-          "Set-Cookie": await commitSession(session),
+          "Set-Cookie": await commitAdminSession(session),
         },
       });
     }
@@ -46,7 +46,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       session.flash("error", "ユーザー名またはパスワードが正しくありません");
       return redirect("/admin/login", {
         headers: {
-          "Set-Cookie": await commitSession(session),
+          "Set-Cookie": await commitAdminSession(session),
         },
       });
     }
@@ -62,7 +62,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
     return redirect("/admin", {
       headers: {
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await commitAdminSession(session),
       },
     });
   } catch (error) {
@@ -70,7 +70,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     session.flash("error", "ログインに失敗しました。もう一度お試しください。");
     return redirect("/admin/login", {
       headers: {
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await commitAdminSession(session),
       },
     });
   }
