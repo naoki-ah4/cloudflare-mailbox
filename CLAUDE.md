@@ -57,7 +57,9 @@ A mailbox management system using Cloudflare Workers and KV. Centrally manages m
 
 - **Username-based authentication**: Login with username instead of email address
 - **Invitation-only**: Registration only through invitation tokens issued by administrators
-- **Session management**: Session management in JWT format
+- **Hybrid session management**: React Router v7 + KV integration approach
+  - Cookie: sessionId only (React Router managed)
+  - KV: Session data persistence (expiration management & force logout support)
 
 #### User Information
 
@@ -107,10 +109,17 @@ User {
 KV structure:
 - user:{userId} → User information
 - username:{username} → userId (index)
-- session:{sessionId} → Session information
+- session:{sessionId} → User session information
+- admin:{adminId} → Admin information
+- admin-username:{username} → adminId (index)
+- admin-session:{sessionId} → Admin session information
 - inbox:{email} → EmailMetadata[]
 - msg:{messageId} → EmailMessage
 - thread:{threadId} → messageId[]
+
+React Router v7 Cookie:
+- __user_session: {sessionId: string}
+- __admin_session: {sessionId: string}
 ```
 
 ### KV Optimization Strategy
@@ -208,4 +217,4 @@ KV structure:
 
 ---
 
-Last updated: June 29, 2025
+Last updated: June 29, 2025 (Session management specification updated)

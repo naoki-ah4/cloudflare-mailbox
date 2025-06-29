@@ -57,7 +57,9 @@ Cloudflare Workers と KV を使用したメールボックス管理システム
 
 - **ユーザー名ベース認証**: メールアドレスではなくユーザー名でログイン
 - **招待制**: 管理者が発行した招待トークンによる登録のみ
-- **セッション管理**: JWT 形式でのセッション管理
+- **ハイブリッドセッション管理**: React Router v7 + KV統合方式
+  - Cookie: sessionIdのみ（React Router管理）
+  - KV: セッションデータ永続化（期限管理・強制ログアウト対応）
 
 #### ユーザー情報
 
@@ -107,10 +109,17 @@ User {
 KV構造:
 - user:{userId} → User情報
 - username:{username} → userId (インデックス)
-- session:{sessionId} → Session情報
+- session:{sessionId} → ユーザーSession情報
+- admin:{adminId} → Admin情報
+- admin-username:{username} → adminId (インデックス)
+- admin-session:{sessionId} → 管理者Session情報
 - inbox:{email} → EmailMetadata[]
 - msg:{messageId} → EmailMessage
 - thread:{threadId} → messageId[]
+
+React Router v7 Cookie:
+- __user_session: {sessionId: string}
+- __admin_session: {sessionId: string}
 ```
 
 ### KV 最適化戦略
@@ -208,4 +217,4 @@ KV構造:
 
 ---
 
-最終更新: 2025 年 6 月 29 日
+最終更新: 2025 年 6 月 29 日（セッション管理仕様更新）
