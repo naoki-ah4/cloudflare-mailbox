@@ -1,7 +1,8 @@
 import { createRequestHandler } from "react-router";
 import EmailApp from "~/email";
-import { AdminKV, AdminSessionKV, SessionKV } from "~/utils/kv";
+import { AdminKV, SessionKV } from "~/utils/kv";
 import { isIPInCIDRList } from "~/utils/cidr";
+import { getSession } from "~/utils/session.server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -23,7 +24,7 @@ const requestHandler = createRequestHandler(
 function getCookie(request: Request, name: string): string | null {
   const cookieHeader = request.headers.get('Cookie');
   if (!cookieHeader) return null;
-  
+
   const cookies = cookieHeader.split(';').map(c => c.trim());
   const cookie = cookies.find(c => c.startsWith(`${name}=`));
   return cookie ? cookie.split('=')[1] : null;
@@ -34,7 +35,7 @@ function getCookie(request: Request, name: string): string | null {
  */
 async function authenticateAdmin(request: Request, env: Env): Promise<{ isAuthenticated: boolean; redirect?: string }> {
   const url = new URL(request.url);
-  
+
   // 1. IP制限チェック（開発環境ではスキップ）
   if (env.NODE_ENV !== 'development') {
     const clientIP = request.headers.get('CF-Connecting-IP');
@@ -42,30 +43,38 @@ async function authenticateAdmin(request: Request, env: Env): Promise<{ isAuthen
       return { isAuthenticated: false };
     }
   }
-  
+
   // 2. セットアップページは管理者0人時のみアクセス可能
   if (url.pathname === '/admin/setup' || url.pathname === '/admin/setup.data') {
     const adminCount = await AdminKV.count(env.USERS_KV);
     return { isAuthenticated: adminCount === 0 };
   }
-  
+
   // 3. ログインページはIP制限のみでアクセス可能
-  if (url.pathname === '/admin/login') {
+  if (url.pathname === '/admin/login' || url.pathname === '/admin/login.data') {
     return { isAuthenticated: true };
   }
-  
-  // 4. その他の管理者ページはセッション認証必須
-  const sessionId = getCookie(request, 'admin-session');
-  if (!sessionId) {
+
+  // 4. その他の管理者ページはReact Routerセッション認証必須
+  try {
+    const session = await getSession(request.headers.get("Cookie"));
+    const adminId = session.get("adminId");
+
+    if (!adminId) {
+      return { isAuthenticated: false, redirect: '/admin/login' };
+    }
+
+    // 管理者存在確認
+    const admin = await AdminKV.get(env.USERS_KV, adminId);
+    if (!admin) {
+      return { isAuthenticated: false, redirect: '/admin/login' };
+    }
+
+    return { isAuthenticated: true };
+  } catch (error) {
+    console.error("Admin session check error:", error);
     return { isAuthenticated: false, redirect: '/admin/login' };
   }
-  
-  const session = await AdminSessionKV.get(env.USERS_KV, sessionId);
-  if (!session || session.expiresAt < Date.now()) {
-    return { isAuthenticated: false, redirect: '/admin/login' };
-  }
-  
-  return { isAuthenticated: true };
 }
 
 /**
@@ -73,34 +82,37 @@ async function authenticateAdmin(request: Request, env: Env): Promise<{ isAuthen
  */
 async function authenticateUser(request: Request, env: Env): Promise<{ isAuthenticated: boolean; redirect?: string }> {
   const url = new URL(request.url);
-  
+
   // ログイン・登録ページは認証不要
-  if (['/login', '/signup'].includes(url.pathname) || url.pathname.startsWith('/signup?')) {
+  if (['/login', '/signup'].includes(url.pathname) ||
+    url.pathname.startsWith('/signup?') ||
+    url.pathname.startsWith('/login.') ||
+    url.pathname.startsWith('/signup.')) {
     return { isAuthenticated: true };
   }
-  
+
   // セッション認証必須
   const sessionId = getCookie(request, 'user-session');
   if (!sessionId) {
     return { isAuthenticated: false, redirect: '/login' };
   }
-  
+
   const session = await SessionKV.get(env.USERS_KV, sessionId);
   if (!session || session.expiresAt < Date.now()) {
     return { isAuthenticated: false, redirect: '/login' };
   }
-  
+
   return { isAuthenticated: true };
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    
+
     // 管理者ページの認証チェック
     if (url.pathname.startsWith('/admin')) {
       const authResult = await authenticateAdmin(request, env);
-      
+
       if (!authResult.isAuthenticated) {
         if (authResult.redirect) {
           return Response.redirect(new URL(authResult.redirect, request.url).toString(), 302);
@@ -108,11 +120,11 @@ export default {
         return new Response('Forbidden', { status: 403 });
       }
     }
-    
+
     // ユーザーページの認証チェック
     if (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/messages')) {
       const authResult = await authenticateUser(request, env);
-      
+
       if (!authResult.isAuthenticated) {
         if (authResult.redirect) {
           return Response.redirect(new URL(authResult.redirect, request.url).toString(), 302);
@@ -120,7 +132,7 @@ export default {
         return new Response('Unauthorized', { status: 401 });
       }
     }
-    
+
     return requestHandler(request, {
       cloudflare: { env, ctx },
     });

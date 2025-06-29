@@ -1,45 +1,17 @@
 import type { ActionFunctionArgs } from "react-router";
-import { AdminSessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
+import { getSession, destroySession } from "~/utils/session.server";
 
-/**
- * クッキーから値を取得
- */
-function getCookie(request: Request, name: string): string | null {
-  const cookieHeader = request.headers.get('Cookie');
-  if (!cookieHeader) return null;
-  
-  const cookies = cookieHeader.split(';').map(c => c.trim());
-  const cookie = cookies.find(c => c.startsWith(`${name}=`));
-  return cookie ? cookie.split('=')[1] : null;
+export async function action({ request }: ActionFunctionArgs) {
+  const session = await getSession(request.headers.get("Cookie"));
+
+  return redirect("/admin/login", {
+    headers: {
+      "Set-Cookie": await destroySession(session),
+    },
+  });
 }
 
-export async function action({ request, context }: ActionFunctionArgs) {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
-  if (request.method !== "POST") {
-    return Response.json({ error: "Method not allowed" }, { status: 405 });
-  }
-  
-  try {
-    // セッションIDを取得して削除
-    const sessionId = getCookie(request, 'admin-session');
-    if (sessionId) {
-      await AdminSessionKV.delete(env.USERS_KV, sessionId);
-    }
-    
-    // クッキーを削除してログインページにリダイレクト
-    const headers = new Headers();
-    headers.set("Set-Cookie", "admin-session=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/");
-    
-    return redirect("/admin/login", { headers });
-  } catch (error) {
-    console.error("Admin logout error:", error);
-    return Response.json({ error: "Logout failed" }, { status: 500 });
-  }
-}
-
-// GETは許可しない
-export function loader() {
-  return Response.json({ error: "Method not allowed" }, { status: 405 });
+export async function loader() {
+  return redirect("/admin/login");
 }

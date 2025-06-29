@@ -5,7 +5,7 @@ import { AdminKV, UserKV } from "~/utils/kv";
 export async function loader({ context }: LoaderFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
-  // 統計情報を取得
+  // 統計情報を取得（認証チェックはworkers/app.tsで実施済み）
   const [adminCount, userCount] = await Promise.all([
     AdminKV.count(env.USERS_KV),
     UserKV.count(env.USERS_KV),
