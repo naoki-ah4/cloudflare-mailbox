@@ -8,6 +8,7 @@
     "workers/**/*",
     "worker-configuration.d.ts",
     "src/utils/**/*.ts",
+    "src/email/**/*.ts",
   ],
   "compilerOptions": {
     "composite": true,
@@ -31,8 +32,8 @@
     ],
     "paths": {
       "~/*": [
-        "./app/*"
-      ]
+        "./src/*"
+      ],
     },
     "esModuleInterop": true,
     "resolveJsonModule": true

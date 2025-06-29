@@ -1,4 +1,5 @@
 import { createRequestHandler } from "react-router";
+import EmailApp from "~/email"
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -20,4 +21,5 @@ export default {
       cloudflare: { env, ctx },
     });
   },
+  email: EmailApp.email,
 } satisfies ExportedHandler<Env>;
