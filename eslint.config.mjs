@@ -18,6 +18,7 @@ export default defineConfig([
     {
         rules: {
             "@typescript-eslint/no-unused-vars": "warn",
+            "@typescript-eslint/require-await": "off",
         }
     }
     ,
