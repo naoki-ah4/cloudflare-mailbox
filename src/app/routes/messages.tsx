@@ -40,7 +40,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     if (selectedMailbox) {
       // 特定のメールボックスのみ
       if (session.managedEmails.includes(selectedMailbox)) {
-        allMessages = await InboxKV.get(env.MAILBOXES_KV, selectedMailbox);
+        const messages = await InboxKV.get(env.MAILBOXES_KV, selectedMailbox);
+        allMessages = messages.map(msg => ({ ...msg, mailbox: selectedMailbox }));
       }
     } else {
       // 全メールボックス統合

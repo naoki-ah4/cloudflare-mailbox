@@ -1,4 +1,4 @@
-import { Form, useActionData, useNavigation } from "react-router";
+import { Form, useNavigation } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { UserKV, SessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
@@ -90,7 +90,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
 }
 
 export default function Login() {
-  const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
@@ -102,17 +101,6 @@ export default function Login() {
       </p>
       
       <Form method="post">
-        {actionData?.error && (
-          <div style={{ 
-            color: "red", 
-            backgroundColor: "#ffebee", 
-            padding: "1rem", 
-            borderRadius: "4px",
-            marginBottom: "1rem"
-          }}>
-            {actionData.error}
-          </div>
-        )}
         
         <div style={{ marginBottom: "1rem" }}>
           <label htmlFor="username" style={{ display: "block", marginBottom: "0.5rem" }}>
