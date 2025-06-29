@@ -3,7 +3,7 @@ import { redirect } from "react-router";
 import { getUserSession, destroyUserSession } from "~/utils/session.server";
 import { SessionKV } from "~/utils/kv";
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {
@@ -26,6 +26,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
   }
 }
 
-export async function loader() {
+export const loader = async () => {
   return redirect("/login");
 }

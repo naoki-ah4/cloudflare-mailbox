@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { UserKV } from "~/utils/kv";
 import { redirect } from "react-router";
 
-export async function loader({ context }: LoaderFunctionArgs) {
+export const loader = async ({ context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {
@@ -30,7 +30,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
   }
 }
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   if (request.method === "DELETE") {
@@ -61,145 +61,112 @@ export async function action({ request, context }: ActionFunctionArgs) {
   return { error: "許可されていないメソッドです" };
 }
 
-export default function AdminUsers() {
+export default () => {
   const { users, total } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isDeleting = navigation.state === "submitting" && navigation.formMethod === "DELETE";
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "2rem" }}>
-      <header style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        marginBottom: "2rem",
-        borderBottom: "1px solid #eee",
-        paddingBottom: "1rem"
-      }}>
+    <div className="max-w-6xl mx-auto p-8">
+      <header className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
         <div>
-          <h1>ユーザー管理</h1>
-          <p style={{ margin: "0.5rem 0 0 0", color: "#666" }}>
+          <h1 className="text-2xl font-bold">ユーザー管理</h1>
+          <p className="text-gray-600 mt-2">
             登録ユーザー数: {total}
           </p>
         </div>
         <a 
           href="/admin"
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#6c757d",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: "4px",
-          }}
+          className="px-4 py-2 bg-gray-500 text-white no-underline rounded-md hover:bg-gray-600 transition-colors"
         >
           ダッシュボードに戻る
         </a>
       </header>
 
       {actionData?.error && (
-        <div style={{ 
-          color: "red", 
-          backgroundColor: "#ffebee", 
-          padding: "1rem", 
-          borderRadius: "4px",
-          marginBottom: "1rem"
-        }}>
+        <div className="text-red-600 bg-red-50 p-4 rounded-md mb-4">
           {actionData.error}
         </div>
       )}
 
       {users.length === 0 ? (
-        <div style={{ 
-          textAlign: "center", 
-          padding: "3rem", 
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-          color: "#666"
-        }}>
+        <div className="text-center py-12 bg-gray-50 rounded-lg text-gray-600">
           登録されているユーザーはありません
         </div>
       ) : (
-        <div style={{ 
-          backgroundColor: "white",
-          borderRadius: "8px",
-          border: "1px solid #dee2e6",
-          overflow: "hidden"
-        }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ backgroundColor: "#f8f9fa" }}>
-              <tr>
-                <th style={{ padding: "1rem", textAlign: "left", borderBottom: "1px solid #dee2e6" }}>
-                  ユーザー名
-                </th>
-                <th style={{ padding: "1rem", textAlign: "left", borderBottom: "1px solid #dee2e6" }}>
-                  連絡先メール
-                </th>
-                <th style={{ padding: "1rem", textAlign: "left", borderBottom: "1px solid #dee2e6" }}>
-                  管理メールアドレス数
-                </th>
-                <th style={{ padding: "1rem", textAlign: "left", borderBottom: "1px solid #dee2e6" }}>
-                  登録日
-                </th>
-                <th style={{ padding: "1rem", textAlign: "left", borderBottom: "1px solid #dee2e6" }}>
-                  最終ログイン
-                </th>
-                <th style={{ padding: "1rem", textAlign: "center", borderBottom: "1px solid #dee2e6" }}>
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} style={{ borderBottom: "1px solid #f8f9fa" }}>
-                  <td style={{ padding: "1rem", fontWeight: "500" }}>
-                    {user.username}
-                  </td>
-                  <td style={{ padding: "1rem" }}>
-                    {user.email}
-                  </td>
-                  <td style={{ padding: "1rem" }}>
-                    {user.managedEmails.length}個
-                  </td>
-                  <td style={{ padding: "1rem", color: "#666" }}>
-                    {new Date(user.createdAt).toLocaleDateString('ja-JP')}
-                  </td>
-                  <td style={{ padding: "1rem", color: "#666" }}>
-                    {user.lastLogin 
-                      ? new Date(user.lastLogin).toLocaleDateString('ja-JP')
-                      : 'なし'
-                    }
-                  </td>
-                  <td style={{ padding: "1rem", textAlign: "center" }}>
-                    <Form method="delete" style={{ display: "inline" }}>
-                      <input type="hidden" name="userId" value={user.id} />
-                      <button
-                        type="submit"
-                        disabled={isDeleting}
-                        onClick={(e) => {
-                          if (!confirm(`ユーザー「${user.username}」を削除しますか？この操作は取り消せません。`)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        style={{
-                          padding: "0.25rem 0.75rem",
-                          backgroundColor: "#dc3545",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "4px",
-                          fontSize: "0.875rem",
-                          cursor: isDeleting ? "not-allowed" : "pointer",
-                          opacity: isDeleting ? 0.6 : 1,
-                        }}
-                      >
-                        {isDeleting ? "削除中..." : "削除"}
-                      </button>
-                    </Form>
-                  </td>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+                    ユーザー名
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+                    連絡先メール
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+                    管理メールアドレス数
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+                    登録日
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+                    最終ログイン
+                  </th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 border-b border-gray-200">
+                    操作
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white">
+                {users.map((user) => (
+                  <tr key={user.id} className="border-b border-gray-100">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {user.username}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {user.email}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {user.managedEmails.length}個
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {new Date(user.createdAt).toLocaleDateString('ja-JP')}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {user.lastLogin 
+                        ? new Date(user.lastLogin).toLocaleDateString('ja-JP')
+                        : 'なし'
+                      }
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Form method="delete" className="inline">
+                        <input type="hidden" name="userId" value={user.id} />
+                        <button
+                          type="submit"
+                          disabled={isDeleting}
+                          onClick={(e) => {
+                            if (!confirm(`ユーザー「${user.username}」を削除しますか？この操作は取り消せません。`)) {
+                              e.preventDefault();
+                            }
+                          }}
+                          className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                            isDeleting 
+                              ? "bg-red-400 text-white cursor-not-allowed opacity-60" 
+                              : "bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+                          }`}
+                        >
+                          {isDeleting ? "削除中..." : "削除"}
+                        </button>
+                      </Form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

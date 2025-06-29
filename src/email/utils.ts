@@ -1,11 +1,11 @@
 import type { Email } from 'postal-mime';
 import type { EmailMessage } from './types';
 
-export function createEmailMessage(
+export const createEmailMessage = (
   parsedEmail: Email,
   messageId: string,
   attachments: EmailMessage['attachments']
-): EmailMessage {
+): EmailMessage => {
   return {
     id: messageId,
     from: parsedEmail.from?.address || '',
@@ -30,7 +30,7 @@ export function createEmailMessage(
   };
 }
 
-export function generateThreadId(parsedEmail: Email): string {
+export const generateThreadId = (parsedEmail: Email): string => {
   const inReplyTo = parsedEmail.headers.find(
     (header) => String(header.name).toLowerCase() === 'in-reply-to'
   )?.value;
@@ -55,7 +55,7 @@ export function generateThreadId(parsedEmail: Email): string {
   return messageId ? messageId.replace(/[<>]/g, '') : crypto.randomUUID();
 }
 
-export function parseReferences(references?: string): string[] | undefined {
+export const parseReferences = (references?: string): string[] | undefined => {
   if (!references) return undefined;
   return references
     .split(/\s+/)

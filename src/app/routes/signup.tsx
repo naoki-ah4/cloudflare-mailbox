@@ -4,7 +4,7 @@ import { UserKV, InviteKV, SessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
+export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   const url = new URL(request.url);
@@ -40,7 +40,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   }
 }
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   const session = await getUserSession(request.headers.get("Cookie"));
   
@@ -161,16 +161,16 @@ export async function action({ request, context }: ActionFunctionArgs) {
   }
 }
 
-export default function Signup() {
+export default () => {
   const { inviteToken } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div style={{ maxWidth: "500px", margin: "0 auto", padding: "2rem" }}>
-      <h1>ユーザー登録</h1>
-      <p style={{ color: "#666", marginBottom: "2rem" }}>
+    <div className="max-w-2xl mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-4">ユーザー登録</h1>
+      <p className="text-gray-600 mb-8 leading-relaxed">
         招待を受けたメールボックス管理システムへようこそ。<br />
         アカウント情報を入力してください。
       </p>
@@ -179,19 +179,13 @@ export default function Signup() {
         <input type="hidden" name="inviteToken" value={inviteToken} />
         
         {actionData?.error && (
-          <div style={{ 
-            color: "red", 
-            backgroundColor: "#ffebee", 
-            padding: "1rem", 
-            borderRadius: "4px",
-            marginBottom: "1rem"
-          }}>
+          <div className="text-red-600 bg-red-50 p-4 rounded-md mb-4">
             {actionData.error}
           </div>
         )}
         
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="username" style={{ display: "block", marginBottom: "0.5rem" }}>
+        <div className="mb-4">
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
             ユーザー名 *
           </label>
           <input
@@ -202,22 +196,16 @@ export default function Signup() {
             minLength={3}
             maxLength={30}
             pattern="[a-zA-Z0-9_]+"
-            style={{ 
-              width: "100%", 
-              padding: "0.75rem", 
-              borderRadius: "4px", 
-              border: "1px solid #ccc",
-              fontSize: "1rem"
-            }}
+            className="w-full px-3 py-3 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <small style={{ color: "#666" }}>
+          <small className="text-gray-500 text-sm">
             3〜30文字、英数字とアンダースコアのみ
           </small>
         </div>
         
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="password" style={{ display: "block", marginBottom: "0.5rem" }}>
+        <div className="mb-4">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
             パスワード *
           </label>
           <input
@@ -226,22 +214,16 @@ export default function Signup() {
             name="password"
             required
             minLength={8}
-            style={{ 
-              width: "100%", 
-              padding: "0.75rem", 
-              borderRadius: "4px", 
-              border: "1px solid #ccc",
-              fontSize: "1rem"
-            }}
+            className="w-full px-3 py-3 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <small style={{ color: "#666" }}>
+          <small className="text-gray-500 text-sm">
             8文字以上
           </small>
         </div>
         
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="email" style={{ display: "block", marginBottom: "0.5rem" }}>
+        <div className="mb-4">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
             連絡先メールアドレス *
           </label>
           <input
@@ -249,22 +231,16 @@ export default function Signup() {
             id="email"
             name="email"
             required
-            style={{ 
-              width: "100%", 
-              padding: "0.75rem", 
-              borderRadius: "4px", 
-              border: "1px solid #ccc",
-              fontSize: "1rem"
-            }}
+            className="w-full px-3 py-3 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <small style={{ color: "#666" }}>
+          <small className="text-gray-500 text-sm">
             システム通知やパスワードリセット用
           </small>
         </div>
         
-        <div style={{ marginBottom: "2rem" }}>
-          <label htmlFor="managedEmails" style={{ display: "block", marginBottom: "0.5rem" }}>
+        <div className="mb-8">
+          <label htmlFor="managedEmails" className="block text-sm font-medium text-gray-700 mb-2">
             管理するメールアドレス *
           </label>
           <textarea
@@ -273,17 +249,10 @@ export default function Signup() {
             required
             rows={4}
             placeholder="example1@domain.com&#10;example2@domain.com&#10;..."
-            style={{ 
-              width: "100%", 
-              padding: "0.75rem", 
-              borderRadius: "4px", 
-              border: "1px solid #ccc",
-              fontSize: "1rem",
-              resize: "vertical"
-            }}
+            className="w-full px-3 py-3 border border-gray-300 rounded-md text-base resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <small style={{ color: "#666" }}>
+          <small className="text-gray-500 text-sm">
             1行に1つずつ入力してください。連絡先メールとは別のアドレスを指定してください。
           </small>
         </div>
@@ -291,17 +260,11 @@ export default function Signup() {
         <button
           type="submit"
           disabled={isSubmitting}
-          style={{
-            width: "100%",
-            padding: "0.75rem",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "1rem",
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-            opacity: isSubmitting ? 0.6 : 1,
-          }}
+          className={`w-full py-3 px-4 text-white font-medium rounded-md text-base transition-all ${
+            isSubmitting 
+              ? "bg-blue-400 cursor-not-allowed opacity-60" 
+              : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+          }`}
         >
           {isSubmitting ? "作成中..." : "アカウント作成"}
         </button>

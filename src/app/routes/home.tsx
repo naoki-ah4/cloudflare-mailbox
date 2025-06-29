@@ -1,18 +1,27 @@
 import type { Route } from "./+types/home";
 import styles from "./home.module.scss";
 
-export const meta = ({ params }: Route.MetaArgs) => {
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params
+}: Route.MetaArgs) => {
   return [
     { title: "Cloudflare Mailbox - セキュアなメール管理システム" },
     { name: "description", content: "Cloudflare Workers上で動作するプライベートメール管理システム" },
   ];
 };
 
-export const loader = ({ context }: Route.LoaderArgs) => {
+export const loader = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  context
+}: Route.LoaderArgs) => {
   return {};
 };
 
-const Home = ({ loaderData }: Route.ComponentProps) => {
+const Home = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  loaderData
+}: Route.ComponentProps) => {
   return (
     <div className={styles.container}>
       <div className={styles.card}>

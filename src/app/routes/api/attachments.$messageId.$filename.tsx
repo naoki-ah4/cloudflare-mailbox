@@ -4,7 +4,7 @@ import { SessionKV, MessageKV } from "~/utils/kv";
 /**
  * クッキーから値を取得
  */
-function getCookie(request: Request, name: string): string | null {
+const getCookie = (request: Request, name: string): string | null => {
   const cookieHeader = request.headers.get('Cookie');
   if (!cookieHeader) return null;
   
@@ -13,7 +13,7 @@ function getCookie(request: Request, name: string): string | null {
   return cookie ? cookie.split('=')[1] : null;
 }
 
-export async function loader({ request, params, context }: LoaderFunctionArgs) {
+export const loader = async ({ request, params, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env; ctx: ExecutionContext } }).cloudflare;
   
   try {

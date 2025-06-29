@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { AdminKV } from "~/utils/kv";
 import { redirect } from "react-router";
 
-export async function loader({ context }: LoaderFunctionArgs) {
+export const loader = async ({ context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {
@@ -28,7 +28,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
   }
 }
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   if (request.method === "POST") {
@@ -121,66 +121,41 @@ export async function action({ request, context }: ActionFunctionArgs) {
   return { error: "許可されていないメソッドです" };
 }
 
-export default function AdminAdministrators() {
+export default () => {
   const { administrators, total } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "2rem" }}>
-      <header style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        marginBottom: "2rem",
-        borderBottom: "1px solid #eee",
-        paddingBottom: "1rem"
-      }}>
+    <div className="max-w-4xl mx-auto p-8">
+      <header className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
         <div>
-          <h1>管理者管理</h1>
-          <p style={{ margin: "0.5rem 0 0 0", color: "#666" }}>
+          <h1 className="text-2xl font-bold">管理者管理</h1>
+          <p className="text-gray-600 mt-2">
             管理者数: {total}
           </p>
         </div>
         <a 
           href="/admin"
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#6c757d",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: "4px",
-          }}
+          className="px-4 py-2 bg-gray-500 text-white no-underline rounded-md hover:bg-gray-600 transition-colors"
         >
           ダッシュボードに戻る
         </a>
       </header>
 
       {actionData?.error && (
-        <div style={{ 
-          color: "red", 
-          backgroundColor: "#ffebee", 
-          padding: "1rem", 
-          borderRadius: "4px",
-          marginBottom: "1rem"
-        }}>
+        <div className="text-red-600 bg-red-50 p-4 rounded-md mb-4">
           {actionData.error}
         </div>
       )}
 
-      <div style={{
-        backgroundColor: "white",
-        borderRadius: "8px",
-        border: "1px solid #dee2e6",
-        padding: "1.5rem",
-        marginBottom: "2rem"
-      }}>
-        <h2 style={{ margin: "0 0 1rem 0" }}>新しい管理者追加</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">新しい管理者追加</h2>
         <Form method="post">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="username" style={{ display: "block", marginBottom: "0.5rem" }}>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                 ユーザー名:
               </label>
               <input
@@ -191,21 +166,16 @@ export default function AdminAdministrators() {
                 minLength={3}
                 maxLength={30}
                 pattern="[a-zA-Z0-9_]+"
-                style={{ 
-                  width: "100%", 
-                  padding: "0.5rem", 
-                  borderRadius: "4px", 
-                  border: "1px solid #ccc" 
-                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                 disabled={isSubmitting}
               />
-              <small style={{ color: "#666" }}>
+              <small className="text-gray-500 text-sm">
                 3〜30文字、英数字とアンダースコアのみ
               </small>
             </div>
             
             <div>
-              <label htmlFor="password" style={{ display: "block", marginBottom: "0.5rem" }}>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 パスワード:
               </label>
               <input
@@ -214,15 +184,10 @@ export default function AdminAdministrators() {
                 name="password"
                 required
                 minLength={8}
-                style={{ 
-                  width: "100%", 
-                  padding: "0.5rem", 
-                  borderRadius: "4px", 
-                  border: "1px solid #ccc" 
-                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                 disabled={isSubmitting}
               />
-              <small style={{ color: "#666" }}>
+              <small className="text-gray-500 text-sm">
                 8文字以上
               </small>
             </div>
@@ -231,108 +196,90 @@ export default function AdminAdministrators() {
           <button
             type="submit"
             disabled={isSubmitting}
-            style={{
-              marginTop: "1rem",
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              opacity: isSubmitting ? 0.6 : 1,
-            }}
+            className={`mt-4 px-6 py-3 text-white font-medium rounded-md text-base transition-all ${
+              isSubmitting 
+                ? "bg-blue-400 cursor-not-allowed opacity-60" 
+                : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+            }`}
           >
             {isSubmitting ? "作成中..." : "管理者作成"}
           </button>
         </Form>
       </div>
 
-      <div style={{ 
-        backgroundColor: "white",
-        borderRadius: "8px",
-        border: "1px solid #dee2e6",
-        overflow: "hidden"
-      }}>
-        <h2 style={{ margin: "0", padding: "1.5rem 1.5rem 1rem 1.5rem" }}>管理者一覧</h2>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <h2 className="text-xl font-semibold p-6 pb-4">管理者一覧</h2>
         
         {administrators.length === 0 ? (
-          <div style={{ 
-            textAlign: "center", 
-            padding: "2rem", 
-            color: "#666"
-          }}>
+          <div className="text-center py-8 text-gray-600">
             管理者が登録されていません
           </div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ backgroundColor: "#f8f9fa" }}>
-              <tr>
-                <th style={{ padding: "1rem", textAlign: "left", borderBottom: "1px solid #dee2e6" }}>
-                  ユーザー名
-                </th>
-                <th style={{ padding: "1rem", textAlign: "left", borderBottom: "1px solid #dee2e6" }}>
-                  作成日
-                </th>
-                <th style={{ padding: "1rem", textAlign: "left", borderBottom: "1px solid #dee2e6" }}>
-                  最終ログイン
-                </th>
-                <th style={{ padding: "1rem", textAlign: "center", borderBottom: "1px solid #dee2e6" }}>
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {administrators.map((admin) => (
-                <tr key={admin.id} style={{ borderBottom: "1px solid #f8f9fa" }}>
-                  <td style={{ padding: "1rem", fontWeight: "500" }}>
-                    {admin.username}
-                  </td>
-                  <td style={{ padding: "1rem", color: "#666" }}>
-                    {new Date(admin.createdAt).toLocaleDateString('ja-JP')}
-                  </td>
-                  <td style={{ padding: "1rem", color: "#666" }}>
-                    {admin.lastLogin 
-                      ? new Date(admin.lastLogin).toLocaleDateString('ja-JP')
-                      : 'なし'
-                    }
-                  </td>
-                  <td style={{ padding: "1rem", textAlign: "center" }}>
-                    {total > 1 ? (
-                      <Form method="delete" style={{ display: "inline" }}>
-                        <input type="hidden" name="adminId" value={admin.id} />
-                        <button
-                          type="submit"
-                          disabled={isSubmitting}
-                          onClick={(e) => {
-                            if (!confirm(`管理者「${admin.username}」を削除しますか？この操作は取り消せません。`)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          style={{
-                            padding: "0.25rem 0.75rem",
-                            backgroundColor: "#dc3545",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            fontSize: "0.875rem",
-                            cursor: isSubmitting ? "not-allowed" : "pointer",
-                            opacity: isSubmitting ? 0.6 : 1,
-                          }}
-                        >
-                          {isSubmitting ? "削除中..." : "削除"}
-                        </button>
-                      </Form>
-                    ) : (
-                      <span style={{ color: "#666", fontSize: "0.875rem" }}>
-                        最後の管理者
-                      </span>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+                    ユーザー名
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+                    作成日
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200">
+                    最終ログイン
+                  </th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 border-b border-gray-200">
+                    操作
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white">
+                {administrators.map((admin) => (
+                  <tr key={admin.id} className="border-b border-gray-100">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {admin.username}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {new Date(admin.createdAt).toLocaleDateString('ja-JP')}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {admin.lastLogin 
+                        ? new Date(admin.lastLogin).toLocaleDateString('ja-JP')
+                        : 'なし'
+                      }
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {total > 1 ? (
+                        <Form method="delete" className="inline">
+                          <input type="hidden" name="adminId" value={admin.id} />
+                          <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            onClick={(e) => {
+                              if (!confirm(`管理者「${admin.username}」を削除しますか？この操作は取り消せません。`)) {
+                                e.preventDefault();
+                              }
+                            }}
+                            className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                              isSubmitting 
+                                ? "bg-red-400 text-white cursor-not-allowed opacity-60" 
+                                : "bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+                            }`}
+                          >
+                            {isSubmitting ? "削除中..." : "削除"}
+                          </button>
+                        </Form>
+                      ) : (
+                        <span className="text-gray-500 text-sm">
+                          最後の管理者
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

@@ -4,7 +4,7 @@ import { AdminKV, AdminSessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import { getAdminSession, commitAdminSession } from "~/utils/session.server";
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   const session = await getAdminSession(request.headers.get("Cookie"));
 
@@ -87,7 +87,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
   }
 }
 
-export async function loader({ context }: { context: { cloudflare: { env: Env } } }) {
+export const loader = async ({ context }: { context: { cloudflare: { env: Env } } }) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
 
   // 管理者が存在しない場合はセットアップページへ
@@ -99,18 +99,17 @@ export async function loader({ context }: { context: { cloudflare: { env: Env } 
   return null;
 }
 
-export default function AdminLogin() {
+export default () => {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div style={{ maxWidth: "400px", margin: "0 auto", padding: "2rem" }}>
-      <h1>管理者ログイン</h1>
+    <div className="max-w-md mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-8">管理者ログイン</h1>
 
-      <Form method="post" style={{ marginTop: "2rem" }}>
-
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="username" style={{ display: "block", marginBottom: "0.5rem" }}>
+      <Form method="post">
+        <div className="mb-4">
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
             ユーザー名:
           </label>
           <input
@@ -118,18 +117,13 @@ export default function AdminLogin() {
             id="username"
             name="username"
             required
-            style={{
-              width: "100%",
-              padding: "0.5rem",
-              borderRadius: "4px",
-              border: "1px solid #ccc"
-            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             disabled={isSubmitting}
           />
         </div>
 
-        <div style={{ marginBottom: "2rem" }}>
-          <label htmlFor="password" style={{ display: "block", marginBottom: "0.5rem" }}>
+        <div className="mb-8">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
             パスワード:
           </label>
           <input
@@ -137,12 +131,7 @@ export default function AdminLogin() {
             id="password"
             name="password"
             required
-            style={{
-              width: "100%",
-              padding: "0.5rem",
-              borderRadius: "4px",
-              border: "1px solid #ccc"
-            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             disabled={isSubmitting}
           />
         </div>
@@ -150,17 +139,11 @@ export default function AdminLogin() {
         <button
           type="submit"
           disabled={isSubmitting}
-          style={{
-            width: "100%",
-            padding: "0.75rem",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "1rem",
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-            opacity: isSubmitting ? 0.6 : 1,
-          }}
+          className={`w-full py-3 px-4 text-white font-medium rounded-md text-base transition-all ${
+            isSubmitting 
+              ? "bg-blue-400 cursor-not-allowed opacity-60" 
+              : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+          }`}
         >
           {isSubmitting ? "ログイン中..." : "ログイン"}
         </button>

@@ -6,7 +6,7 @@
 /**
  * IPv4アドレスを32bit整数に変換
  */
-function ipv4ToInt(ip: string): number {
+const ipv4ToInt = (ip: string): number => {
   const parts = ip.split('.').map(Number);
   return (parts[0] << 24) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
 }
@@ -14,7 +14,7 @@ function ipv4ToInt(ip: string): number {
 /**
  * IPv4のCIDR判定
  */
-function isIPv4InCIDR(ip: string, cidr: string): boolean {
+const isIPv4InCIDR = (ip: string, cidr: string): boolean => {
   const [network, prefixStr] = cidr.split('/');
   const prefix = parseInt(prefixStr, 10);
 
@@ -30,7 +30,7 @@ function isIPv4InCIDR(ip: string, cidr: string): boolean {
 /**
  * IPv6アドレスを128bit配列に変換
  */
-function ipv6ToBytes(ip: string): Uint8Array {
+const ipv6ToBytes = (ip: string): Uint8Array => {
   // IPv6正規化（::の展開など）
   let normalized = ip;
   if (normalized.includes('::')) {
@@ -57,7 +57,7 @@ function ipv6ToBytes(ip: string): Uint8Array {
 /**
  * IPv6のCIDR判定
  */
-function isIPv6InCIDR(ip: string, cidr: string): boolean {
+const isIPv6InCIDR = (ip: string, cidr: string): boolean => {
   const [network, prefixStr] = cidr.split('/');
   const prefix = parseInt(prefixStr, 10);
 
@@ -88,14 +88,14 @@ function isIPv6InCIDR(ip: string, cidr: string): boolean {
 /**
  * IPアドレスがIPv6かどうか判定
  */
-function isIPv6(ip: string): boolean {
+const isIPv6 = (ip: string): boolean => {
   return ip.includes(':');
 }
 
 /**
  * IPアドレスがCIDR範囲内かチェック
  */
-export function isIPInCIDR(ip: string, cidr: string): boolean {
+export const isIPInCIDR = (ip: string, cidr: string): boolean => {
   if (!ip || !cidr) return false;
 
   try {
@@ -114,7 +114,7 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
 /**
  * 複数のCIDR範囲をチェック（カンマ区切り）
  */
-export function isIPInCIDRList(ip: string, cidrList: string): boolean {
+export const isIPInCIDRList = (ip: string, cidrList: string): boolean => {
   if (!ip || !cidrList) return false;
 
   const cidrs = cidrList.split(',').map(c => c.trim());

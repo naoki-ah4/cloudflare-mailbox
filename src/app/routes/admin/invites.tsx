@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { InviteKV } from "~/utils/kv";
 import { redirect } from "react-router";
 
-export async function loader({ context }: LoaderFunctionArgs) {
+export const loader = async ({ context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {
@@ -20,7 +20,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
   }
 }
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   if (request.method === "POST") {
@@ -82,96 +82,59 @@ export async function action({ request, context }: ActionFunctionArgs) {
   return { error: "許可されていないメソッドです" };
 }
 
-export default function AdminInvites() {
+export default () => {
   const { total } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "2rem" }}>
-      <header style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        marginBottom: "2rem",
-        borderBottom: "1px solid #eee",
-        paddingBottom: "1rem"
-      }}>
+    <div className="max-w-4xl mx-auto p-8">
+      <header className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
         <div>
-          <h1>招待URL管理</h1>
-          <p style={{ margin: "0.5rem 0 0 0", color: "#666" }}>
+          <h1 className="text-2xl font-bold">招待URL管理</h1>
+          <p className="text-gray-600 mt-2">
             招待数: {total}
           </p>
         </div>
         <a 
           href="/admin"
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#6c757d",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: "4px",
-          }}
+          className="px-4 py-2 bg-gray-500 text-white no-underline rounded-md hover:bg-gray-600 transition-colors"
         >
           ダッシュボードに戻る
         </a>
       </header>
 
       {actionData?.error && (
-        <div style={{ 
-          color: "red", 
-          backgroundColor: "#ffebee", 
-          padding: "1rem", 
-          borderRadius: "4px",
-          marginBottom: "1rem"
-        }}>
+        <div className="text-red-600 bg-red-50 p-4 rounded-md mb-4">
           {actionData.error}
         </div>
       )}
 
       {actionData?.success && actionData.invite && (
-        <div style={{ 
-          color: "#155724", 
-          backgroundColor: "#d4edda", 
-          border: "1px solid #c3e6cb",
-          padding: "1rem", 
-          borderRadius: "4px",
-          marginBottom: "1rem"
-        }}>
-          <h4 style={{ margin: "0 0 0.5rem 0" }}>招待URL生成完了</h4>
-          <p style={{ margin: "0.5rem 0", wordBreak: "break-all" }}>
+        <div className="text-green-700 bg-green-50 border border-green-200 p-4 rounded-md mb-4">
+          <h4 className="font-semibold mb-2">招待URL生成完了</h4>
+          <p className="mb-2 break-all">
             <strong>URL:</strong> {actionData.invite.url}
           </p>
-          <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>
+          <p className="text-sm text-green-600">
             有効期限: {new Date(actionData.invite.expiresAt).toLocaleString('ja-JP')}
           </p>
         </div>
       )}
 
-      <div style={{
-        backgroundColor: "white",
-        borderRadius: "8px",
-        border: "1px solid #dee2e6",
-        padding: "1.5rem",
-        marginBottom: "2rem"
-      }}>
-        <h2 style={{ margin: "0 0 1rem 0" }}>新しい招待URL生成</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">新しい招待URL生成</h2>
         <Form method="post">
-          <div style={{ marginBottom: "1rem" }}>
-            <label htmlFor="expiresInHours" style={{ display: "block", marginBottom: "0.5rem" }}>
+          <div className="mb-4">
+            <label htmlFor="expiresInHours" className="block text-sm font-medium text-gray-700 mb-2">
               有効期限（時間）:
             </label>
             <select
               id="expiresInHours"
               name="expiresInHours"
               defaultValue="24"
-              style={{ 
-                padding: "0.5rem", 
-                borderRadius: "4px", 
-                border: "1px solid #ccc",
-                width: "200px"
-              }}
+              className="px-3 py-2 border border-gray-300 rounded-md w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
               disabled={isSubmitting}
             >
               <option value="1">1時間</option>
@@ -185,30 +148,20 @@ export default function AdminInvites() {
           <button
             type="submit"
             disabled={isSubmitting}
-            style={{
-              padding: "0.75rem 1.5rem",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              opacity: isSubmitting ? 0.6 : 1,
-            }}
+            className={`px-6 py-3 text-white font-medium rounded-md text-base transition-all ${
+              isSubmitting 
+                ? "bg-blue-400 cursor-not-allowed opacity-60" 
+                : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+            }`}
           >
             {isSubmitting ? "生成中..." : "招待URL生成"}
           </button>
         </Form>
       </div>
 
-      <div style={{ 
-        backgroundColor: "white",
-        borderRadius: "8px",
-        border: "1px solid #dee2e6",
-        padding: "1.5rem"
-      }}>
-        <h2 style={{ margin: "0 0 1rem 0" }}>招待一覧</h2>
-        <p style={{ color: "#666", fontStyle: "italic" }}>
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold mb-4">招待一覧</h2>
+        <p className="text-gray-600 italic">
           招待一覧機能は実装中です。現在の招待数: {total}
         </p>
       </div>

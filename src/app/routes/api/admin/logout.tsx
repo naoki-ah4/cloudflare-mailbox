@@ -3,7 +3,7 @@ import { redirect } from "react-router";
 import { getAdminSession, destroyAdminSession } from "~/utils/session.server";
 import { AdminSessionKV } from "~/utils/kv";
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   const session = await getAdminSession(request.headers.get("Cookie"));
 
@@ -20,6 +20,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
   });
 }
 
-export async function loader() {
+export const loader = async () => {
   return redirect("/admin/login");
 }

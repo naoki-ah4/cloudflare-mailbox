@@ -22,6 +22,6 @@ export default defineConfig([
         }
     }
     ,
-    globalIgnores(["./*.*", ".react-router"])
+    globalIgnores(["./*.*", ".react-router", "build/", "dist/"])
 ]
 )

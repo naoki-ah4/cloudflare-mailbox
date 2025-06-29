@@ -4,7 +4,7 @@ import { UserKV, SessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   const session = await getUserSession(request.headers.get("Cookie"));
   

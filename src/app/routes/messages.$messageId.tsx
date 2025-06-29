@@ -5,7 +5,7 @@ import { getUserSession } from "~/utils/session.server";
 import { useState } from "react";
 import styles from "./messages.$messageId.module.scss";
 
-export async function loader({ request, params, context }: LoaderFunctionArgs) {
+export const loader = async ({ request, params, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {
@@ -56,7 +56,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
   }
 }
 
-export async function action({ request, params, context }: ActionFunctionArgs) {
+export const action = async ({ request, params, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {
@@ -176,7 +176,7 @@ const MessageDetail = () => {
           </div>
           
           <div>
-            <Form method="post" style={{ display: "inline" }}>
+            <Form method="post" className="inline">
               <input type="hidden" name="action" value="markRead" />
               <button
                 type="submit"
@@ -190,39 +190,23 @@ const MessageDetail = () => {
         
         {/* 添付ファイル */}
         {message.attachments.length > 0 && (
-          <div style={{ 
-            padding: "1rem",
-            borderBottom: "1px solid #f8f9fa",
-            backgroundColor: "#fafafa"
-          }}>
-            <h3 style={{ margin: "0 0 0.75rem 0", fontSize: "1rem" }}>添付ファイル</h3>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div className="p-4 border-b border-gray-100 bg-gray-50">
+            <h3 className="m-0 mb-3 text-base">添付ファイル</h3>
+            <div className="flex flex-wrap gap-2">
               {message.attachments.map((attachment, index) => (
                 <div
                   key={index}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "0.5rem 0.75rem",
-                    backgroundColor: "white",
-                    border: "1px solid #dee2e6",
-                    borderRadius: "4px",
-                    fontSize: "0.875rem"
-                  }}
+                  className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded text-sm"
                 >
-                  <span style={{ marginRight: "0.5rem" }}>📎</span>
+                  <span className="mr-2">📎</span>
                   <a 
                     href={`/api/attachments/${message.id}/${encodeURIComponent(attachment.filename)}`}
                     download={attachment.filename}
-                    style={{
-                      color: "#007bff",
-                      textDecoration: "none",
-                      marginRight: "0.5rem"
-                    }}
+                    className="text-blue-600 no-underline mr-2"
                   >
                     {attachment.filename}
                   </a>
-                  <span style={{ color: "#666", fontSize: "0.75rem" }}>
+                  <span className="text-gray-600 text-xs">
                     ({Math.round(attachment.size / 1024)}KB)
                   </span>
                 </div>
@@ -232,38 +216,23 @@ const MessageDetail = () => {
         )}
         
         {/* メッセージ本文 */}
-        <div style={{ padding: "1.5rem" }}>
+        <div className="p-6">
           {message.html ? (
-            <div style={{ marginBottom: "1rem" }}>
-              <div style={{ 
-                display: "flex", 
-                gap: "0.5rem", 
-                marginBottom: "1rem",
-                fontSize: "0.875rem"
-              }}>
+            <div className="mb-4">
+              <div className="flex gap-2 mb-4 text-sm">
                 <button
                   onClick={() => setDisplayMode('html')}
-                  style={{
-                    padding: "0.25rem 0.75rem",
-                    backgroundColor: displayMode === 'html' ? "#007bff" : "#6c757d",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
+                  className={`px-3 py-1 text-white border-none rounded cursor-pointer ${
+                    displayMode === 'html' ? 'bg-blue-600' : 'bg-gray-500'
+                  }`}
                 >
                   HTML表示
                 </button>
                 <button
                   onClick={() => setDisplayMode('text')}
-                  style={{
-                    padding: "0.25rem 0.75rem",
-                    backgroundColor: displayMode === 'text' ? "#007bff" : "#6c757d",
-                    color: "white", 
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
+                  className={`px-3 py-1 text-white border-none rounded cursor-pointer ${
+                    displayMode === 'text' ? 'bg-blue-600' : 'bg-gray-500'
+                  }`}
                 >
                   テキスト表示
                 </button>
@@ -272,58 +241,26 @@ const MessageDetail = () => {
               {/* HTML/テキスト表示 */}
               {displayMode === 'html' ? (
                 <div 
-                  style={{ 
-                    border: "1px solid #e9ecef",
-                    borderRadius: "4px",
-                    padding: "1rem",
-                    backgroundColor: "#fafafa",
-                    maxHeight: "400px",
-                    overflow: "auto"
-                  }}
+                  className={styles.htmlContent}
                   dangerouslySetInnerHTML={{ __html: message.html }}
                 />
               ) : (
-                <pre style={{ 
-                  whiteSpace: "pre-wrap",
-                  fontFamily: "inherit",
-                  margin: "0",
-                  padding: "1rem",
-                  backgroundColor: "#f8f9fa",
-                  border: "1px solid #e9ecef",
-                  borderRadius: "4px",
-                  maxHeight: "400px",
-                  overflow: "auto"
-                }}>
+                <pre className={styles.textContent}>
                   {message.text || "テキスト版がありません"}
                 </pre>
               )}
             </div>
           ) : message.text ? (
             <div>
-              <h4 style={{ margin: "0 0 0.5rem 0" }}>テキスト</h4>
-              <pre style={{ 
-                whiteSpace: "pre-wrap",
-                fontFamily: "inherit",
-                margin: "0",
-                padding: "1rem",
-                backgroundColor: "#f8f9fa",
-                border: "1px solid #e9ecef",
-                borderRadius: "4px",
-                maxHeight: "400px",
-                overflow: "auto"
-              }}>
+              <h4 className="m-0 mb-2">テキスト</h4>
+              <pre className={styles.textContent}>
                 {message.text}
               </pre>
             </div>
           ) : null}
           
           {!message.html && !message.text && (
-            <div style={{ 
-              textAlign: "center", 
-              padding: "2rem", 
-              color: "#666",
-              fontStyle: "italic"
-            }}>
+            <div className={styles.noContentMessage}>
               メッセージ本文がありません
             </div>
           )}

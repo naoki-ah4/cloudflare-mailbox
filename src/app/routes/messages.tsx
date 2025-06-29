@@ -5,7 +5,7 @@ import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/kv/schema";
 import styles from "./messages.module.scss";
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
+export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {
@@ -125,11 +125,11 @@ const Messages = () => {
         
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
-            <p style={{ color: "#007bff" }}>{stats.totalMessages}</p>
+            <p className="text-blue-600">{stats.totalMessages}</p>
             <h3>総数</h3>
           </div>
           <div className={styles.statCard}>
-            <p style={{ color: "#dc3545" }}>{stats.unreadMessages}</p>
+            <p className="text-red-600">{stats.unreadMessages}</p>
             <h3>未読</h3>
           </div>
         </div>
@@ -156,18 +156,11 @@ const Messages = () => {
                 <button
                   key={email}
                   onClick={() => handleMailboxChange(email)}
-                  style={{
-                    width: "100%",
-                    padding: "0.5rem 0.75rem",
-                    backgroundColor: selectedMailbox === email ? "#007bff" : "white",
-                    color: selectedMailbox === email ? "white" : "#333",
-                    border: "1px solid " + (selectedMailbox === email ? "#007bff" : "#dee2e6"),
-                    borderRadius: "4px",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    marginBottom: "0.25rem",
-                    fontSize: "0.875rem"
-                  }}
+                  className={`w-full px-3 py-2 rounded text-left cursor-pointer mb-1 text-sm border ${
+                    selectedMailbox === email 
+                      ? 'bg-blue-600 text-white border-blue-600' 
+                      : 'bg-white text-gray-800 border-gray-300'
+                  }`}
                 >
                   📧 {email.split('@')[0]} ({emailCount})
                 </button>
@@ -179,15 +172,7 @@ const Messages = () => {
         <div>
           <a 
             href="/dashboard"
-            style={{
-              display: "block",
-              padding: "0.75rem",
-              backgroundColor: "#6c757d",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "4px",
-              textAlign: "center"
-            }}
+            className="block p-3 bg-gray-500 text-white no-underline rounded text-center"
           >
             ダッシュボードに戻る
           </a>
@@ -195,20 +180,13 @@ const Messages = () => {
       </div>
       
       {/* メインコンテンツ */}
-      <div style={{ flex: 1, padding: "1rem" }}>
-        <header style={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
-          alignItems: "center",
-          marginBottom: "1rem",
-          borderBottom: "1px solid #eee",
-          paddingBottom: "1rem"
-        }}>
+      <div className={styles.mainContentArea}>
+        <header className={styles.contentHeader}>
           <div>
-            <h1 style={{ margin: "0" }}>
+            <h1>
               {selectedMailbox ? `${selectedMailbox}` : "すべてのメール"}
             </h1>
-            <p style={{ margin: "0.25rem 0 0 0", color: "#666" }}>
+            <p>
               {messages.length}件のメール
             </p>
           </div>
@@ -216,14 +194,7 @@ const Messages = () => {
           <form method="post" action="/api/logout">
             <button
               type="submit"
-              style={{
-                padding: "0.5rem 1rem",
-                backgroundColor: "#dc3545",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
+              className={styles.logoutBtn}
             >
               ログアウト
             </button>
@@ -231,7 +202,7 @@ const Messages = () => {
         </header>
         
         {/* 検索バー */}
-        <div style={{ marginBottom: "1rem" }}>
+        <div className={styles.searchBar}>
           <input
             type="text"
             placeholder="件名または送信者で検索..."
@@ -241,94 +212,45 @@ const Messages = () => {
               const timeoutId = setTimeout(() => handleSearch(value), 300);
               return () => clearTimeout(timeoutId);
             }}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-              fontSize: "1rem"
-            }}
           />
         </div>
         
         {/* メール一覧 */}
         {messages.length === 0 ? (
-          <div style={{ 
-            textAlign: "center", 
-            padding: "3rem", 
-            backgroundColor: "#f8f9fa",
-            borderRadius: "8px",
-            color: "#666"
-          }}>
+          <div className={styles.noMessagesContainer}>
             {searchQuery ? 
               `「${searchQuery}」に該当するメールが見つかりません` :
               "メールがありません"
             }
           </div>
         ) : (
-          <div style={{ 
-            backgroundColor: "white",
-            borderRadius: "8px",
-            border: "1px solid #dee2e6",
-            overflow: "hidden"
-          }}>
+          <div className={styles.messagesContainer}>
             {messages.map((message) => (
               <a
                 key={message.messageId}
                 href={`/messages/${message.messageId}`}
-                style={{
-                  display: "block",
-                  padding: "1rem",
-                  borderBottom: "1px solid #f8f9fa",
-                  textDecoration: "none",
-                  color: "inherit",
-                  backgroundColor: message.isRead ? "white" : "#f0f8ff"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f8f9fa";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = message.isRead ? "white" : "#f0f8ff";
-                }}
+                className={`${styles.messageItem} ${!message.isRead ? styles.unread : ''}`}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", marginBottom: "0.25rem" }}>
-                      <span style={{ 
-                        fontWeight: message.isRead ? "normal" : "bold",
-                        fontSize: "0.875rem"
-                      }}>
+                <div className={styles.messageItemContent}>
+                  <div className={styles.messageItemLeft}>
+                    <div className={styles.messageItemHeader}>
+                      <span className={`${styles.messageFrom} ${!message.isRead ? styles.unread : ''}`}>
                         {message.from}
                       </span>
                       {!selectedMailbox && (
-                        <span style={{ 
-                          marginLeft: "0.5rem",
-                          padding: "0.125rem 0.5rem",
-                          backgroundColor: "#e9ecef",
-                          borderRadius: "12px",
-                          fontSize: "0.75rem",
-                          color: "#666"
-                        }}>
+                        <span className={styles.messageMailboxTag}>
                           {message.mailbox}
                         </span>
                       )}
                       {message.hasAttachments && (
-                        <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem" }}>📎</span>
+                        <span className={styles.attachmentIcon}>📎</span>
                       )}
                     </div>
-                    <div style={{ 
-                      fontWeight: message.isRead ? "normal" : "bold",
-                      marginBottom: "0.25rem"
-                    }}>
+                    <div className={`${styles.messageSubject} ${!message.isRead ? styles.unread : ''}`}>
                       {message.subject || "(件名なし)"}
                     </div>
                   </div>
-                  <div style={{ 
-                    fontSize: "0.75rem", 
-                    color: "#666",
-                    textAlign: "right",
-                    minWidth: "100px"
-                  }}>
+                  <div className={styles.messageDate}>
                     {new Date(message.date).toLocaleString('ja-JP', {
                       month: 'numeric',
                       day: 'numeric',

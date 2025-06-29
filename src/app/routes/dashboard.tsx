@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV, InboxKV } from "~/utils/kv";
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
+export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
   
   try {

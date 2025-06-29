@@ -10,7 +10,7 @@ export type AuthResult = {
 /**
  * 管理者認証チェック
  */
-export async function authenticateAdmin(request: Request, env: Env): Promise<AuthResult> {
+export const authenticateAdmin = async (request: Request, env: Env): Promise<AuthResult> => {
   const url = new URL(request.url);
 
   // 1. IP制限チェック（開発環境ではスキップ）
@@ -63,7 +63,7 @@ export async function authenticateAdmin(request: Request, env: Env): Promise<Aut
 /**
  * ユーザー認証チェック
  */
-export async function authenticateUser(request: Request, env: Env): Promise<AuthResult> {
+export const authenticateUser = async (request: Request, env: Env): Promise<AuthResult> => {
   // React Routerセッション認証必須
   try {
     const session = await getUserSession(request.headers.get("Cookie"));

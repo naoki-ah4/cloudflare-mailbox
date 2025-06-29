@@ -280,3 +280,137 @@
     color: rgba(255, 255, 255, 0.8);
   }
 }
+
+// 新しいスタイル
+.mainContentArea {
+  flex: 1;
+  padding: 1rem;
+}
+
+.contentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+  
+  h1 {
+    margin: 0;
+  }
+  
+  p {
+    margin: 0.25rem 0 0 0;
+    color: #666;
+  }
+}
+
+.logoutBtn {
+  padding: 0.5rem 1rem;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.searchBar {
+  margin-bottom: 1rem;
+  
+  input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+}
+
+.noMessagesContainer {
+  text-align: center;
+  padding: 3rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+}
+
+.messagesContainer {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  overflow: hidden;
+}
+
+.messageItem {
+  display: block;
+  padding: 1rem;
+  border-bottom: 1px solid #f8f9fa;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #f8f9fa !important;
+  }
+  
+  &.unread {
+    background-color: #f0f8ff;
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.messageItemContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.messageItemLeft {
+  flex: 1;
+}
+
+.messageItemHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.messageFrom {
+  font-size: 0.875rem;
+  
+  &.unread {
+    font-weight: bold;
+  }
+}
+
+.messageMailboxTag {
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  background-color: #e9ecef;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.attachmentIcon {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.messageSubject {
+  margin-bottom: 0.25rem;
+  
+  &.unread {
+    font-weight: bold;
+  }
+}
+
+.messageDate {
+  font-size: 0.75rem;
+  color: #666;
+  text-align: right;
+  min-width: 100px;
+}
