@@ -12,3 +12,4 @@
 .dev.vars*
 
 wrangler.jsonc
+DEVELOPMENT_TASKS.md
