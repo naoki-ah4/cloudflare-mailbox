@@ -1,8 +1,6 @@
 import { createRequestHandler } from "react-router";
 import EmailApp from "~/email";
-import { AdminKV, AdminSessionKV, SessionKV } from "~/utils/kv";
-import { isIPInCIDRList } from "~/utils/cidr";
-import { getAdminSession, getUserSession } from "~/utils/session.server";
+import { authenticateAdmin, authenticateUser } from "~/utils/auth.server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -18,102 +16,18 @@ const requestHandler = createRequestHandler(
   import.meta.env.MODE
 );
 
-
-/**
- * 管理者認証チェック
- */
-async function authenticateAdmin(request: Request, env: Env): Promise<{ isAuthenticated: boolean; redirect?: string }> {
-  const url = new URL(request.url);
-
-  // 1. IP制限チェック（開発環境ではスキップ）
-  if (env.NODE_ENV !== 'development') {
-    const clientIP = request.headers.get('CF-Connecting-IP');
-    if (!clientIP || !isIPInCIDRList(clientIP, env.ADMIN_IPS)) {
-      return { isAuthenticated: false };
-    }
-  }
-
-  // 2. セットアップページは管理者0人時のみアクセス可能
-  if (url.pathname === '/admin/setup' || url.pathname === '/admin/setup.data') {
-    const adminCount = await AdminKV.count(env.USERS_KV);
-    return { isAuthenticated: adminCount === 0 };
-  }
-
-  // 3. ログインページはIP制限のみでアクセス可能
-  if (url.pathname === '/admin/login' || url.pathname === '/admin/login.data') {
-    return { isAuthenticated: true };
-  }
-
-  // 4. その他の管理者ページはReact Routerセッション認証必須
-  try {
-    const session = await getAdminSession(request.headers.get("Cookie"));
-    const sessionId = session.get("sessionId");
-
-    if (!sessionId) {
-      return { isAuthenticated: false, redirect: '/admin/login' };
-    }
-
-    // KVからセッションデータを取得
-    const kvSession = await AdminSessionKV.get(env.USERS_KV, sessionId);
-    if (!kvSession || kvSession.expiresAt < Date.now()) {
-      return { isAuthenticated: false, redirect: '/admin/login' };
-    }
-
-    // 管理者存在確認
-    const admin = await AdminKV.get(env.USERS_KV, kvSession.adminId);
-    if (!admin) {
-      return { isAuthenticated: false, redirect: '/admin/login' };
-    }
-
-    return { isAuthenticated: true };
-  } catch (error) {
-    console.error("Admin session check error:", error);
-    return { isAuthenticated: false, redirect: '/admin/login' };
-  }
-}
-
-/**
- * ユーザー認証チェック
- */
-async function authenticateUser(request: Request, env: Env): Promise<{ isAuthenticated: boolean; redirect?: string }> {
-  const url = new URL(request.url);
-
-  // ログイン・登録ページは認証不要
-  if (['/login', '/signup'].includes(url.pathname) ||
-    url.pathname.startsWith('/signup?') ||
-    url.pathname.startsWith('/login.') ||
-    url.pathname.startsWith('/signup.')) {
-    return { isAuthenticated: true };
-  }
-
-  // React Routerセッション認証必須
-  try {
-    const session = await getUserSession(request.headers.get("Cookie"));
-    const sessionId = session.get("sessionId");
-    
-    if (!sessionId) {
-      return { isAuthenticated: false, redirect: '/login' };
-    }
-    
-    // KVからセッションデータを取得
-    const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
-    if (!kvSession || kvSession.expiresAt < Date.now()) {
-      return { isAuthenticated: false, redirect: '/login' };
-    }
-    
-    return { isAuthenticated: true };
-  } catch (error) {
-    console.error("User session check error:", error);
-    return { isAuthenticated: false, redirect: '/login' };
-  }
-}
-
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // 管理者ページの認証チェック
-    if (url.pathname.startsWith('/admin')) {
+    // パス別認証チェック
+    if (["/", "/login", "/login.data", "/signup", "/signup.data"].includes(url.pathname)) {
+      // 公開ページは認証不要でそのまま通す
+      return requestHandler(request, {
+        cloudflare: { env, ctx },
+      });
+    } else if (url.pathname.startsWith('/admin')) {
+      // 管理者ページの認証チェック
       const authResult = await authenticateAdmin(request, env);
 
       if (!authResult.isAuthenticated) {
@@ -122,10 +36,8 @@ export default {
         }
         return new Response('Forbidden', { status: 403 });
       }
-    }
-
-    // ユーザーページの認証チェック
-    if (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/messages')) {
+    } else {
+      // その他のユーザーページは認証必須
       const authResult = await authenticateUser(request, env);
 
       if (!authResult.isAuthenticated) {

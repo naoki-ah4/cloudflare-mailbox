@@ -1,19 +1,8 @@
 import { useLoaderData, useActionData, Form } from "react-router";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
+import { getUserSession } from "~/utils/session.server";
 import { useState } from "react";
-
-/**
- * クッキーから値を取得
- */
-function getCookie(request: Request, name: string): string | null {
-  const cookieHeader = request.headers.get('Cookie');
-  if (!cookieHeader) return null;
-  
-  const cookies = cookieHeader.split(';').map(c => c.trim());
-  const cookie = cookies.find(c => c.startsWith(`${name}=`));
-  return cookie ? cookie.split('=')[1] : null;
-}
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -25,13 +14,15 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     }
     
     // セッションからユーザー情報を取得
-    const sessionId = getCookie(request, 'user-session');
+    const session = await getUserSession(request.headers.get("Cookie"));
+    const sessionId = session.get("sessionId");
+    
     if (!sessionId) {
       throw new Error("認証が必要です");
     }
     
-    const session = await SessionKV.get(env.USERS_KV, sessionId);
-    if (!session || session.expiresAt < Date.now()) {
+    const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
+    if (!kvSession || kvSession.expiresAt < Date.now()) {
       throw new Error("セッションが無効です");
     }
     
@@ -42,20 +33,20 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     }
     
     // アクセス権限チェック
-    const canAccess = message.to.some(email => session.managedEmails.includes(email));
+    const canAccess = message.to.some(email => kvSession.managedEmails.includes(email));
     if (!canAccess) {
       throw new Error("このメッセージにアクセスする権限がありません");
     }
     
     // 受信者メールアドレス特定（複数の場合は最初の管理対象）
-    const recipientEmail = message.to.find(email => session.managedEmails.includes(email));
+    const recipientEmail = message.to.find(email => kvSession.managedEmails.includes(email));
     
     return {
       message,
       recipientEmail,
       user: {
-        email: session.email,
-        managedEmails: session.managedEmails,
+        email: kvSession.email,
+        managedEmails: kvSession.managedEmails,
       }
     };
   } catch (error) {
@@ -74,13 +65,15 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
     }
     
     // セッション確認
-    const sessionId = getCookie(request, 'user-session');
+    const session = await getUserSession(request.headers.get("Cookie"));
+    const sessionId = session.get("sessionId");
+    
     if (!sessionId) {
       return { error: "認証が必要です" };
     }
     
-    const session = await SessionKV.get(env.USERS_KV, sessionId);
-    if (!session || session.expiresAt < Date.now()) {
+    const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
+    if (!kvSession || kvSession.expiresAt < Date.now()) {
       return { error: "セッションが無効です" };
     }
     
@@ -94,14 +87,14 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
         return { error: "メッセージが見つかりません" };
       }
       
-      const canAccess = message.to.some(email => session.managedEmails.includes(email));
+      const canAccess = message.to.some(email => kvSession.managedEmails.includes(email));
       if (!canAccess) {
         return { error: "権限がありません" };
       }
       
       // 各受信者のInboxで既読状態を更新
       const updatePromises = message.to
-        .filter(email => session.managedEmails.includes(email))
+        .filter(email => kvSession.managedEmails.includes(email))
         .map(email => InboxKV.updateReadStatus(env.MAILBOXES_KV, email, messageId, true));
       
       await Promise.all(updatePromises);
