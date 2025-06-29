@@ -1,6 +1,7 @@
 import { Form, useActionData, useNavigation } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { AdminKV, AdminSessionKV } from "~/utils/kv";
+import { createSecureCookieHeader } from "~/utils/cookie";
 import { redirect } from "react-router";
 
 export async function action({ request, context }: ActionFunctionArgs) {
@@ -9,7 +10,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
   // 管理者が既に存在するかチェック
   const adminCount = await AdminKV.count(env.USERS_KV);
   if (adminCount > 0) {
-    throw new Error("Setup already completed");
+    return { error: "セットアップは既に完了しています" };
   }
   
   const formData = await request.formData();
@@ -67,7 +68,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     
     // クッキー設定のためのヘッダー
     const headers = new Headers();
-    headers.set("Set-Cookie", `admin-session=${sessionId}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+    headers.set("Set-Cookie", createSecureCookieHeader("admin-session", sessionId, { env }));
     
     return redirect("/admin", { headers });
   } catch (error) {
@@ -136,7 +137,7 @@ export default function AdminSetup() {
           </small>
         </div>
         
-        <div style={{ marginBottom: "2rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
           <label htmlFor="password" style={{ display: "block", marginBottom: "0.5rem" }}>
             パスワード:
           </label>
@@ -164,14 +165,13 @@ export default function AdminSetup() {
           disabled={isSubmitting}
           style={{
             width: "100%",
-            padding: "0.75rem",
-            backgroundColor: "#007bff",
+            padding: "1rem",
+            backgroundColor: isSubmitting ? "#ccc" : "#007bff",
             color: "white",
             border: "none",
             borderRadius: "4px",
-            fontSize: "1rem",
             cursor: isSubmitting ? "not-allowed" : "pointer",
-            opacity: isSubmitting ? 0.6 : 1,
+            fontSize: "1rem",
           }}
         >
           {isSubmitting ? "作成中..." : "管理者アカウント作成"}

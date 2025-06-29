@@ -35,14 +35,16 @@ function getCookie(request: Request, name: string): string | null {
 async function authenticateAdmin(request: Request, env: Env): Promise<{ isAuthenticated: boolean; redirect?: string }> {
   const url = new URL(request.url);
   
-  // 1. IP制限チェック
-  const clientIP = request.headers.get('CF-Connecting-IP');
-  if (!clientIP || !isIPInCIDRList(clientIP, env.ADMIN_IPS)) {
-    return { isAuthenticated: false };
+  // 1. IP制限チェック（開発環境ではスキップ）
+  if (env.NODE_ENV !== 'development') {
+    const clientIP = request.headers.get('CF-Connecting-IP');
+    if (!clientIP || !isIPInCIDRList(clientIP, env.ADMIN_IPS)) {
+      return { isAuthenticated: false };
+    }
   }
   
   // 2. セットアップページは管理者0人時のみアクセス可能
-  if (url.pathname === '/admin/setup') {
+  if (url.pathname === '/admin/setup' || url.pathname === '/admin/setup.data') {
     const adminCount = await AdminKV.count(env.USERS_KV);
     return { isAuthenticated: adminCount === 0 };
   }
