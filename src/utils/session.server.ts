@@ -1,7 +1,7 @@
 import { createCookieSessionStorage } from "react-router";
 
 type AdminSessionData = {
-  adminId: string;
+  sessionId: string;
 };
 
 type AdminSessionFlashData = {

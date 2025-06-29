@@ -1,6 +1,6 @@
 import { createRequestHandler } from "react-router";
 import EmailApp from "~/email";
-import { AdminKV, SessionKV } from "~/utils/kv";
+import { AdminKV, AdminSessionKV, SessionKV } from "~/utils/kv";
 import { isIPInCIDRList } from "~/utils/cidr";
 import { getAdminSession, getUserSession } from "~/utils/session.server";
 
@@ -47,14 +47,20 @@ async function authenticateAdmin(request: Request, env: Env): Promise<{ isAuthen
   // 4. その他の管理者ページはReact Routerセッション認証必須
   try {
     const session = await getAdminSession(request.headers.get("Cookie"));
-    const adminId = session.get("adminId");
+    const sessionId = session.get("sessionId");
 
-    if (!adminId) {
+    if (!sessionId) {
+      return { isAuthenticated: false, redirect: '/admin/login' };
+    }
+
+    // KVからセッションデータを取得
+    const kvSession = await AdminSessionKV.get(env.USERS_KV, sessionId);
+    if (!kvSession || kvSession.expiresAt < Date.now()) {
       return { isAuthenticated: false, redirect: '/admin/login' };
     }
 
     // 管理者存在確認
-    const admin = await AdminKV.get(env.USERS_KV, adminId);
+    const admin = await AdminKV.get(env.USERS_KV, kvSession.adminId);
     if (!admin) {
       return { isAuthenticated: false, redirect: '/admin/login' };
     }

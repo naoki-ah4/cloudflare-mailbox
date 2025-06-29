@@ -1,6 +1,6 @@
 import { Form, useNavigation } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
-import { AdminKV } from "~/utils/kv";
+import { AdminKV, AdminSessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import { getAdminSession, commitAdminSession } from "~/utils/session.server";
 
@@ -51,14 +51,25 @@ export async function action({ request, context }: ActionFunctionArgs) {
       });
     }
 
+    // セッション作成（KVに保存）
+    const sessionId = crypto.randomUUID();
+    const kvSession = {
+      id: sessionId,
+      adminId: admin.id,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7日間
+    };
+
+    await AdminSessionKV.set(env.USERS_KV, sessionId, kvSession);
+
     // lastLogin更新
     await AdminKV.set(env.USERS_KV, admin.id, {
       ...admin,
       lastLogin: Date.now(),
     });
 
-    // React Routerセッションに管理者IDを保存
-    session.set("adminId", admin.id);
+    // React RouterセッションにsessionIdを保存
+    session.set("sessionId", sessionId);
 
     return redirect("/admin", {
       headers: {
