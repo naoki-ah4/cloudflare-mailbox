@@ -65,15 +65,15 @@ const Dashboard = () => {
   const { user, stats, mailboxStats } = useLoaderData<typeof loader>();
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <header className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
+    <div className="max-w-4xl mx-auto p-4 md:p-8">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 border-b border-gray-200 pb-4 gap-4 sm:gap-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">メールボックス</h1>
           <p className="mt-2 text-gray-600">
             ようこそ、{user.username}さん
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <a 
             href="/profile"
             className="px-4 py-2 bg-blue-600 text-white no-underline rounded hover:bg-blue-700 transition-colors"
@@ -91,41 +91,41 @@ const Dashboard = () => {
         </div>
       </header>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="p-6 bg-gray-50 rounded-lg text-center">
-          <h3 className="mb-2 text-blue-600 font-semibold">総メール数</h3>
-          <p className="text-3xl font-bold text-gray-900">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 md:mb-8">
+        <div className="p-4 md:p-6 bg-gray-50 rounded-lg text-center">
+          <h3 className="mb-2 text-blue-600 font-semibold text-sm md:text-base">総メール数</h3>
+          <p className="text-2xl md:text-3xl font-bold text-gray-900">
             {stats.totalMessages}
           </p>
         </div>
         
-        <div className="p-6 bg-gray-50 rounded-lg text-center">
-          <h3 className="mb-2 text-red-600 font-semibold">未読メール</h3>
-          <p className="text-3xl font-bold text-gray-900">
+        <div className="p-4 md:p-6 bg-gray-50 rounded-lg text-center">
+          <h3 className="mb-2 text-red-600 font-semibold text-sm md:text-base">未読メール</h3>
+          <p className="text-2xl md:text-3xl font-bold text-gray-900">
             {stats.unreadMessages}
           </p>
         </div>
         
-        <div className="p-6 bg-gray-50 rounded-lg text-center">
-          <h3 className="mb-2 text-green-600 font-semibold">管理メールボックス</h3>
-          <p className="text-3xl font-bold text-gray-900">
+        <div className="p-4 md:p-6 bg-gray-50 rounded-lg text-center sm:col-span-2 md:col-span-1">
+          <h3 className="mb-2 text-green-600 font-semibold text-sm md:text-base">管理メールボックス</h3>
+          <p className="text-2xl md:text-3xl font-bold text-gray-900">
             {user.managedEmails.length}
           </p>
         </div>
       </div>
       
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
         <h2 className="mb-4 text-xl font-semibold text-gray-900">管理中のメールアドレス</h2>
         <div className="flex flex-col gap-3">
           {mailboxStats.map((stat) => (
             <div 
               key={stat.email} 
-              className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
+              className="p-4 bg-gray-50 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0"
             >
               <div>
                 <strong className="text-base text-gray-900">{stat.email}</strong>
               </div>
-              <div className="flex gap-4 text-sm text-gray-600">
+              <div className="flex gap-4 text-sm text-gray-600 self-start sm:self-auto">
                 <span>総数: <strong className="text-gray-900">{stat.total}</strong></span>
                 <span>未読: <strong className={stat.unread > 0 ? "text-red-600" : "text-green-600"}>
                   {stat.unread}
@@ -136,9 +136,9 @@ const Dashboard = () => {
         </div>
       </div>
       
-      <div className="mt-8 text-center p-8 bg-blue-600 rounded-lg text-white">
-        <h3 className="text-xl font-semibold mb-4">メール閲覧</h3>
-        <p className="mb-6">メールの閲覧・管理を行えます。</p>
+      <div className="mt-6 md:mt-8 text-center p-6 md:p-8 bg-blue-600 rounded-lg text-white">
+        <h3 className="text-lg md:text-xl font-semibold mb-4">メール閲覧</h3>
+        <p className="mb-4 md:mb-6 text-sm md:text-base">メールの閲覧・管理を行えます。</p>
         <a 
           href="/messages"
           className="inline-block px-6 py-3 bg-white text-blue-600 no-underline rounded font-bold hover:bg-gray-50 transition-colors"

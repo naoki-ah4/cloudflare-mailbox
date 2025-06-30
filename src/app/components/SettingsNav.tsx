@@ -1,4 +1,6 @@
 import { useLocation } from "react-router";
+import { useState } from "react";
+import styles from "./SettingsNav.module.scss";
 
 interface SettingsNavProps {
   className?: string;
@@ -6,6 +8,7 @@ interface SettingsNavProps {
 
 const SettingsNav = ({ className = "" }: SettingsNavProps) => {
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
   
   const navItems = [
     {
@@ -36,37 +39,69 @@ const SettingsNav = ({ className = "" }: SettingsNavProps) => {
     );
   };
 
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const closeMenu = () => {
+    setIsOpen(false);
+  };
+
   return (
-    <nav className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">設定メニュー</h2>
-      <ul className="space-y-2">
-        {navItems.map((item) => (
-          <li key={item.href}>
-            <a 
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md no-underline transition-colors ${
-                isActiveItem(item.paths)
-                  ? 'text-blue-600 bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <span className="text-lg">{item.icon}</span>
-              <span>{item.label}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-      
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <a 
-          href="/dashboard"
-          className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:text-gray-900 rounded-md no-underline transition-colors"
+    <>
+      {/* モバイル用ハンバーガーメニューボタン */}
+      <button 
+        className={styles.mobileMenuButton}
+        onClick={toggleMenu}
+      >
+        ☰
+      </button>
+
+      {/* モバイル用オーバーレイ */}
+      <div 
+        className={`${styles.overlay} ${isOpen ? styles.open : ''}`}
+        onClick={closeMenu}
+      />
+
+      <nav className={`${styles.navigation} ${isOpen ? styles.open : ''} ${className}`}>
+        {/* モバイル用閉じるボタン */}
+        <button 
+          className={styles.closeButton}
+          onClick={closeMenu}
         >
-          <span className="text-lg">🏠</span>
-          <span>ダッシュボード</span>
-        </a>
-      </div>
-    </nav>
+          ✕
+        </button>
+
+        <h2 className={styles.header}>設定メニュー</h2>
+        <ul className={styles.navList}>
+          {navItems.map((item) => (
+            <li key={item.href}>
+              <a 
+                href={item.href}
+                className={`${styles.navItem} ${
+                  isActiveItem(item.paths) ? styles.active : ''
+                }`}
+                onClick={closeMenu}
+              >
+                <span className={styles.navIcon}>{item.icon}</span>
+                <span className={styles.navLabel}>{item.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        
+        <div className={styles.divider}>
+          <a 
+            href="/dashboard"
+            className={styles.dashboardLink}
+            onClick={closeMenu}
+          >
+            <span className={styles.navIcon}>🏠</span>
+            <span className={styles.navLabel}>ダッシュボード</span>
+          </a>
+        </div>
+      </nav>
+    </>
   );
 };
 

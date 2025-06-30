@@ -5,6 +5,7 @@ import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/kv/schema";
 import styles from "./messages.module.scss";
 import Pagination from "../components/Pagination";
+import { useState } from "react";
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -116,6 +117,7 @@ const Messages = () => {
     user 
   } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleMailboxChange = (mailbox: string) => {
     const params = new URLSearchParams(searchParams);
@@ -141,10 +143,32 @@ const Messages = () => {
     setSearchParams(params);
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
   return (
     <div className={styles.container}>
+      {/* モバイル用サイドバーオーバーレイ */}
+      <div 
+        className={`${styles.sidebarOverlay} ${sidebarOpen ? styles.open : ''}`}
+        onClick={closeSidebar}
+      />
+      
       {/* サイドバー */}
-      <div className={styles.sidebar}>
+      <div className={`${styles.sidebar} ${sidebarOpen ? styles.open : ''}`}>
+        {/* モバイル用閉じるボタン */}
+        <button 
+          className={styles.sidebarCloseButton}
+          onClick={closeSidebar}
+        >
+          ✕
+        </button>
+        
         <div className={styles.sidebarHeader}>
           <h2>メールボックス</h2>
           <p>{user.email}</p>
@@ -217,13 +241,22 @@ const Messages = () => {
       {/* メインコンテンツ */}
       <div className={styles.mainContentArea}>
         <header className={styles.contentHeader}>
-          <div>
-            <h1>
-              {selectedMailbox ? `${selectedMailbox}` : "すべてのメール"}
-            </h1>
-            <p>
-              {pagination.totalItems}件のメール（{pagination.currentPage}/{pagination.totalPages}ページ）
-            </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            {/* モバイル用ハンバーガーメニューボタン */}
+            <button 
+              className={styles.mobileMenuButton}
+              onClick={toggleSidebar}
+            >
+              ☰
+            </button>
+            <div>
+              <h1>
+                {selectedMailbox ? `${selectedMailbox}` : "すべてのメール"}
+              </h1>
+              <p>
+                {pagination.totalItems}件のメール（{pagination.currentPage}/{pagination.totalPages}ページ）
+              </p>
+            </div>
           </div>
           
           <form method="post" action="/api/logout">
