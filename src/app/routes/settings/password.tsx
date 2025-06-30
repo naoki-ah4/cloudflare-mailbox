@@ -1,10 +1,11 @@
-import { useActionData, Form, redirect } from "react-router";
+import { useActionData, Form, redirect, useNavigation } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
 import { hashPassword, verifyPassword } from "~/utils/crypto";
 import SettingsNav from "../../components/SettingsNav";
+import LoadingButton from "../../components/elements/LoadingButton";
 
 const PasswordChangeSchema = z.object({
   currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
@@ -94,6 +95,9 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
 const PasswordChange = () => {
   const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
+
+  const isSubmitting = navigation.state === "submitting";
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8">
@@ -188,12 +192,16 @@ const PasswordChange = () => {
           </div>
 
           <div className="pt-4">
-            <button
+            <LoadingButton
               type="submit"
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              loading={isSubmitting}
+              loadingText="変更中..."
+              variant="primary"
+              size="medium"
+              className="w-full"
             >
               パスワードを変更
-            </button>
+            </LoadingButton>
           </div>
         </Form>
           </div>

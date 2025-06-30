@@ -1,0 +1,96 @@
+// スケルトンローダーのアニメーション
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes wave {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  background-color: var(--color-background-secondary, #f3f4f6);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  
+  // バリアント
+  &.text {
+    border-radius: 4px;
+  }
+  
+  &.circular {
+    border-radius: 50%;
+  }
+  
+  &.rectangular {
+    border-radius: 4px;
+  }
+  
+  // アニメーション
+  &.pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  &.wave {
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.6),
+        transparent
+      );
+      animation: wave 1.6s linear infinite;
+    }
+  }
+  
+  &.none {
+    // アニメーションなし
+  }
+}
+
+// プリセットスタイル
+.card {
+  padding: 1rem;
+  background-color: var(--color-card-bg, white);
+  border: 1px solid var(--color-card-border, #e5e7eb);
+  border-radius: 8px;
+}
+
+.messageItem {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.messageHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.messageInfo {
+  flex: 1;
+}

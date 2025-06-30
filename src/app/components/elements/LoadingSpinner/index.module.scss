@@ -1,0 +1,62 @@
+// ローディングスピナーのアニメーション
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  display: inline-block;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  
+  // サイズバリエーション
+  &.small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+  }
+  
+  &.medium {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+  }
+  
+  &.large {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+  }
+  
+  // カラーバリエーション
+  &.primary {
+    border: 2px solid var(--color-border, #e5e7eb);
+    border-top-color: var(--color-primary, #2563eb);
+  }
+  
+  &.white {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+  }
+  
+  &.gray {
+    border: 2px solid var(--color-background-tertiary, #e9ecef);
+    border-top-color: var(--color-text-secondary, #6b7280);
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

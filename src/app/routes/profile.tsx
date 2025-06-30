@@ -1,9 +1,10 @@
-import { useLoaderData, useActionData, Form, redirect } from "react-router";
+import { useLoaderData, useActionData, Form, redirect, useNavigation } from "react-router";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
 import SettingsNav from "../components/SettingsNav";
+import LoadingButton from "../components/elements/LoadingButton";
 
 const ProfileUpdateSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
@@ -142,6 +143,9 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 const Profile = () => {
   const { user } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
+
+  const isSubmitting = navigation.state === "submitting";
   
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString("ja-JP");
@@ -251,12 +255,16 @@ const Profile = () => {
                   </p>
                 </div>
 
-                <button
+                <LoadingButton
                   type="submit"
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  loading={isSubmitting}
+                  loadingText="更新中..."
+                  variant="primary"
+                  size="medium"
+                  className="w-full"
                 >
                   プロフィールを更新
-                </button>
+                </LoadingButton>
               </Form>
             </div>
           </div>

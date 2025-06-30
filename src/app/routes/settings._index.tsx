@@ -1,4 +1,4 @@
-import { useLoaderData, useActionData, Form, redirect } from "react-router";
+import { useLoaderData, useActionData, Form, redirect, useNavigation } from "react-router";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { getUserSession } from "~/utils/session.server";
@@ -6,6 +6,7 @@ import { SessionKV, UserKV, SettingsKV } from "~/utils/kv";
 import type { UserSettings } from "~/utils/kv/schema";
 import SettingsNav from "../components/SettingsNav";
 import { useTheme } from "~/utils/theme";
+import LoadingButton from "../components/elements/LoadingButton";
 
 const SettingsUpdateSchema = z.object({
   emailNotifications: z.string().transform(val => val === "true"),
@@ -129,7 +130,10 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 const Settings = () => {
   const { user, settings } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
   const { theme, setTheme } = useTheme(settings.theme);
+
+  const isSubmitting = navigation.state === "submitting";
 
   const handleThemeChange = (newTheme: "light" | "dark" | "auto") => {
     setTheme(newTheme);
@@ -289,12 +293,15 @@ const Settings = () => {
               </div>
 
               <div className="pt-4">
-                <button
+                <LoadingButton
                   type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  loading={isSubmitting}
+                  loadingText="保存中..."
+                  variant="primary"
+                  size="medium"
                 >
                   設定を保存
-                </button>
+                </LoadingButton>
               </div>
             </Form>
           </div>

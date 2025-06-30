@@ -1,4 +1,4 @@
-import { useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData, useSearchParams, useNavigation } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { SessionKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
@@ -6,6 +6,7 @@ import type { EmailMetadata } from "~/utils/kv/schema";
 import styles from "./messages.module.scss";
 import Pagination from "../components/Pagination";
 import { useState } from "react";
+import { SkeletonMessageItem } from "../components/elements/SkeletonLoader";
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -118,6 +119,9 @@ const Messages = () => {
   } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigation = useNavigation();
+
+  const isLoading = navigation.state === "loading";
 
   const handleMailboxChange = (mailbox: string) => {
     const params = new URLSearchParams(searchParams);
@@ -284,7 +288,13 @@ const Messages = () => {
         </div>
         
         {/* メール一覧 */}
-        {messages.length === 0 ? (
+        {isLoading ? (
+          <div className={styles.messagesContainer}>
+            {Array.from({ length: 5 }, (_, index) => (
+              <SkeletonMessageItem key={index} />
+            ))}
+          </div>
+        ) : messages.length === 0 ? (
           <div className={styles.noMessagesContainer}>
             {searchQuery ? 
               `「${searchQuery}」に該当するメールが見つかりません` :
