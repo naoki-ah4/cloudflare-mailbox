@@ -4,6 +4,7 @@ import { SessionKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/kv/schema";
 import styles from "./messages.module.scss";
+import Pagination from "../components/Pagination";
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -25,6 +26,11 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     const url = new URL(request.url);
     const selectedMailbox = url.searchParams.get("mailbox");
     const searchQuery = url.searchParams.get("search") || "";
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const itemsPerPage = 50; // 1ページあたりのアイテム数
+    
+    // サイドバー用統計情報を並列取得（効率化）
+    const mailboxStats = await InboxKV.getMultipleStats(env.MAILBOXES_KV, kvSession.managedEmails);
     
     // メールボックス取得
     let allMessages: (EmailMetadata & { mailbox: string })[] = [];
@@ -36,16 +42,14 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
         allMessages = messages.map(msg => ({ ...msg, mailbox: selectedMailbox }));
       }
     } else {
-      // 全メールボックス統合
-      for (const email of kvSession.managedEmails) {
+      // 全メールボックス統合（並列処理で効率化）
+      const messagePromises = kvSession.managedEmails.map(async (email) => {
         const messages = await InboxKV.get(env.MAILBOXES_KV, email);
-        // メールボックス情報を追加
-        const messagesWithMailbox = messages.map(msg => ({
-          ...msg,
-          mailbox: email
-        }));
-        allMessages.push(...messagesWithMailbox);
-      }
+        return messages.map(msg => ({ ...msg, mailbox: email }));
+      });
+      
+      const messagesArrays = await Promise.all(messagePromises);
+      allMessages = messagesArrays.flat();
       
       // 日付順ソート（新しい順）
       allMessages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -60,19 +64,36 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
       );
     }
     
-    // 統計計算
+    // 統計計算（ページネーション前の全体）
     const totalMessages = allMessages.length;
     const unreadMessages = allMessages.filter(msg => !msg.isRead).length;
     
+    // ページネーション処理
+    const totalPages = Math.ceil(totalMessages / itemsPerPage);
+    const currentPage = Math.max(1, Math.min(page, totalPages || 1)); // ページ番号を有効範囲に制限
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedMessages = allMessages.slice(startIndex, endIndex);
+    
     return {
-      messages: allMessages,
+      messages: paginatedMessages,
       managedEmails: kvSession.managedEmails,
       selectedMailbox,
       searchQuery,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalItems: totalMessages,
+        itemsPerPage,
+        hasNextPage: currentPage < totalPages,
+        hasPrevPage: currentPage > 1,
+      },
       stats: {
         totalMessages,
         unreadMessages,
       },
+      mailboxStats, // 各メールボックス別統計
       user: {
         email: kvSession.email,
       }
@@ -89,7 +110,9 @@ const Messages = () => {
     managedEmails, 
     selectedMailbox, 
     searchQuery, 
+    pagination,
     stats,
+    mailboxStats,
     user 
   } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,6 +124,8 @@ const Messages = () => {
     } else {
       params.set("mailbox", mailbox);
     }
+    // メールボックス変更時は1ページ目に戻る
+    params.delete("page");
     setSearchParams(params);
   };
 
@@ -111,6 +136,8 @@ const Messages = () => {
     } else {
       params.delete("search");
     }
+    // 検索時は1ページ目に戻る
+    params.delete("page");
     setSearchParams(params);
   };
 
@@ -146,11 +173,7 @@ const Messages = () => {
             </button>
             
             {managedEmails.map((email) => {
-              const emailMessages = messages.filter(msg => 
-                selectedMailbox ? msg.mailbox === email : msg.mailbox === email
-              );
-              const emailCount = selectedMailbox ? emailMessages.length : 
-                messages.filter(msg => msg.mailbox === email).length;
+              const emailStats = mailboxStats[email] || { total: 0, unread: 0 };
               
               return (
                 <button
@@ -162,7 +185,19 @@ const Messages = () => {
                       : 'bg-white text-gray-800 border-gray-300'
                   }`}
                 >
-                  📧 {email.split('@')[0]} ({emailCount})
+                  <div className="flex justify-between items-center">
+                    <span>📧 {email.split('@')[0]}</span>
+                    <div className="flex gap-2 text-xs">
+                      <span>({emailStats.total})</span>
+                      {emailStats.unread > 0 && (
+                        <span className={`px-1 rounded ${
+                          selectedMailbox === email ? 'bg-white text-blue-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {emailStats.unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </button>
               );
             })}
@@ -187,7 +222,7 @@ const Messages = () => {
               {selectedMailbox ? `${selectedMailbox}` : "すべてのメール"}
             </h1>
             <p>
-              {messages.length}件のメール
+              {pagination.totalItems}件のメール（{pagination.currentPage}/{pagination.totalPages}ページ）
             </p>
           </div>
           
@@ -224,44 +259,56 @@ const Messages = () => {
             }
           </div>
         ) : (
-          <div className={styles.messagesContainer}>
-            {messages.map((message) => (
-              <a
-                key={message.messageId}
-                href={`/messages/${message.messageId}`}
-                className={`${styles.messageItem} ${!message.isRead ? styles.unread : ''}`}
-              >
-                <div className={styles.messageItemContent}>
-                  <div className={styles.messageItemLeft}>
-                    <div className={styles.messageItemHeader}>
-                      <span className={`${styles.messageFrom} ${!message.isRead ? styles.unread : ''}`}>
-                        {message.from}
-                      </span>
-                      {!selectedMailbox && (
-                        <span className={styles.messageMailboxTag}>
-                          {message.mailbox}
+          <>
+            <div className={styles.messagesContainer}>
+              {messages.map((message) => (
+                <a
+                  key={message.messageId}
+                  href={`/messages/${message.messageId}`}
+                  className={`${styles.messageItem} ${!message.isRead ? styles.unread : ''}`}
+                >
+                  <div className={styles.messageItemContent}>
+                    <div className={styles.messageItemLeft}>
+                      <div className={styles.messageItemHeader}>
+                        <span className={`${styles.messageFrom} ${!message.isRead ? styles.unread : ''}`}>
+                          {message.from}
                         </span>
-                      )}
-                      {message.hasAttachments && (
-                        <span className={styles.attachmentIcon}>📎</span>
-                      )}
+                        {!selectedMailbox && (
+                          <span className={styles.messageMailboxTag}>
+                            {message.mailbox}
+                          </span>
+                        )}
+                        {message.hasAttachments && (
+                          <span className={styles.attachmentIcon}>📎</span>
+                        )}
+                      </div>
+                      <div className={`${styles.messageSubject} ${!message.isRead ? styles.unread : ''}`}>
+                        {message.subject || "(件名なし)"}
+                      </div>
                     </div>
-                    <div className={`${styles.messageSubject} ${!message.isRead ? styles.unread : ''}`}>
-                      {message.subject || "(件名なし)"}
+                    <div className={styles.messageDate}>
+                      {new Date(message.date).toLocaleString('ja-JP', {
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </div>
                   </div>
-                  <div className={styles.messageDate}>
-                    {new Date(message.date).toLocaleString('ja-JP', {
-                      month: 'numeric',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
+                </a>
+              ))}
+            </div>
+            
+            {/* ページネーション */}
+            {pagination.totalPages > 1 && (
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.totalItems}
+                itemsPerPage={pagination.itemsPerPage}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

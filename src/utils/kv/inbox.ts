@@ -60,4 +60,47 @@ export const InboxKV = {
   async delete(kv: KVNamespace, recipient: string): Promise<void> {
     await kv.delete(`inbox:${recipient}`);
   },
+
+  /**
+   * 統計情報のみを取得（大量メール対応）
+   */
+  async getStats(kv: KVNamespace, recipient: string): Promise<{
+    total: number;
+    unread: number;
+  }> {
+    try {
+      const messages = await this.get(kv, recipient);
+      return {
+        total: messages.length,
+        unread: messages.filter(msg => !msg.isRead).length,
+      };
+    } catch (error) {
+      console.error(`Failed to get stats for ${recipient}:`, error);
+      return { total: 0, unread: 0 };
+    }
+  },
+
+  /**
+   * 複数メールボックスの統計を並列取得
+   */
+  async getMultipleStats(kv: KVNamespace, recipients: string[]): Promise<{
+    [email: string]: { total: number; unread: number };
+  }> {
+    try {
+      const statsPromises = recipients.map(async (recipient) => {
+        const stats = await this.getStats(kv, recipient);
+        return { recipient, stats };
+      });
+
+      const results = await Promise.all(statsPromises);
+      
+      return results.reduce((acc, { recipient, stats }) => {
+        acc[recipient] = stats;
+        return acc;
+      }, {} as { [email: string]: { total: number; unread: number } });
+    } catch (error) {
+      console.error('Failed to get multiple stats:', error);
+      return {};
+    }
+  },
 };
