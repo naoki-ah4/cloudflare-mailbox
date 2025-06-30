@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
 import { hashPassword, verifyPassword } from "~/utils/crypto";
+import SettingsNav from "../../components/SettingsNav";
 
 const PasswordChangeSchema = z.object({
   currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
@@ -95,17 +96,11 @@ const PasswordChange = () => {
   const actionData = useActionData<typeof action>();
 
   return (
-    <div className="max-w-lg mx-auto p-8">
+    <div className="max-w-4xl mx-auto p-8">
       <header className="mb-8 border-b border-gray-200 pb-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">パスワード変更</h1>
           <div className="flex gap-2">
-            <a 
-              href="/profile"
-              className="px-4 py-2 text-gray-600 hover:text-gray-900 no-underline"
-            >
-              プロフィール
-            </a>
             <a 
               href="/dashboard"
               className="px-4 py-2 text-gray-600 hover:text-gray-900 no-underline"
@@ -128,7 +123,15 @@ const PasswordChange = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* サイドバーナビゲーション */}
+        <div className="lg:col-span-1">
+          <SettingsNav />
+        </div>
+
+        {/* メインコンテンツ */}
+        <div className="lg:col-span-3">
+          <div className="max-w-lg bg-white rounded-lg border border-gray-200 p-6">
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">パスワードを変更</h2>
           <p className="text-gray-600 text-sm">
@@ -189,16 +192,18 @@ const PasswordChange = () => {
             </button>
           </div>
         </Form>
-      </div>
+          </div>
 
-      <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-        <h3 className="text-sm font-medium text-yellow-800 mb-2">セキュリティに関する注意</h3>
-        <ul className="text-sm text-yellow-700 space-y-1">
-          <li>• 強力なパスワードを使用してください</li>
-          <li>• 他のサービスと同じパスワードは使用しないでください</li>
-          <li>• 定期的にパスワードを変更することをお勧めします</li>
-          <li>• パスワードを第三者と共有しないでください</li>
-        </ul>
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+            <h3 className="text-sm font-medium text-yellow-800 mb-2">セキュリティに関する注意</h3>
+            <ul className="text-sm text-yellow-700 space-y-1">
+              <li>• 強力なパスワードを使用してください</li>
+              <li>• 他のサービスと同じパスワードは使用しないでください</li>
+              <li>• 定期的にパスワードを変更することをお勧めします</li>
+              <li>• パスワードを第三者と共有しないでください</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );

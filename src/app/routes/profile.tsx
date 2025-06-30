@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
+import SettingsNav from "../components/SettingsNav";
 
 const ProfileUpdateSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
@@ -147,7 +148,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
+    <div className="max-w-4xl mx-auto p-8">
       <header className="mb-8 border-b border-gray-200 pb-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">プロフィール</h1>
@@ -157,12 +158,6 @@ const Profile = () => {
               className="px-4 py-2 text-gray-600 hover:text-gray-900 no-underline"
             >
               ダッシュボード
-            </a>
-            <a 
-              href="/settings/password"
-              className="px-4 py-2 bg-blue-600 text-white no-underline rounded hover:bg-blue-700"
-            >
-              パスワード変更
             </a>
           </div>
         </div>
@@ -180,94 +175,104 @@ const Profile = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* ユーザー情報表示 */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">アカウント情報</h2>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">ユーザー名</label>
-              <p className="text-gray-900 font-mono bg-white px-3 py-2 rounded border">
-                {user.username}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">※ユーザー名は変更できません</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">作成日</label>
-              <p className="text-gray-600">{formatDate(user.createdAt)}</p>
-            </div>
-            {user.lastLogin && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">最終ログイン</label>
-                <p className="text-gray-600">{formatDate(user.lastLogin)}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* サイドバーナビゲーション */}
+        <div className="lg:col-span-1">
+          <SettingsNav />
+        </div>
+
+        {/* メインコンテンツ */}
+        <div className="lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* ユーザー情報表示 */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">アカウント情報</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">ユーザー名</label>
+                  <p className="text-gray-900 font-mono bg-white px-3 py-2 rounded border">
+                    {user.username}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">※ユーザー名は変更できません</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">作成日</label>
+                  <p className="text-gray-600">{formatDate(user.createdAt)}</p>
+                </div>
+                {user.lastLogin && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">最終ログイン</label>
+                    <p className="text-gray-600">{formatDate(user.lastLogin)}</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* プロフィール編集フォーム */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">プロフィール編集</h2>
+              <Form method="post" className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    連絡先メールアドレス
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    defaultValue={actionData?.data?.email || user.email}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    システムからの通知を受信するメールアドレス
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="managedEmails" className="block text-sm font-medium text-gray-700 mb-1">
+                    管理メールアドレス
+                  </label>
+                  <textarea
+                    id="managedEmails"
+                    name="managedEmails"
+                    rows={4}
+                    defaultValue={actionData?.data?.managedEmails || user.managedEmails.join('\n')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="user1@example.com&#10;user2@example.com"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    実際にメールを受信・管理するアドレス（1行に1つ、またはカンマ区切り）
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  プロフィールを更新
+                </button>
+              </Form>
+            </div>
           </div>
-        </div>
 
-        {/* プロフィール編集フォーム */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">プロフィール編集</h2>
-          <Form method="post" className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                連絡先メールアドレス
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                defaultValue={actionData?.data?.email || user.email}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                システムからの通知を受信するメールアドレス
-              </p>
+          {/* 管理メールアドレス一覧 */}
+          <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              現在の管理メールアドレス ({user.managedEmails.length}件)
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {user.managedEmails.map((email, index) => (
+                <div 
+                  key={index}
+                  className="px-3 py-2 bg-gray-50 rounded border font-mono text-sm"
+                >
+                  {email}
+                </div>
+              ))}
             </div>
-
-            <div>
-              <label htmlFor="managedEmails" className="block text-sm font-medium text-gray-700 mb-1">
-                管理メールアドレス
-              </label>
-              <textarea
-                id="managedEmails"
-                name="managedEmails"
-                rows={4}
-                defaultValue={actionData?.data?.managedEmails || user.managedEmails.join('\n')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="user1@example.com&#10;user2@example.com"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                実際にメールを受信・管理するアドレス（1行に1つ、またはカンマ区切り）
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              プロフィールを更新
-            </button>
-          </Form>
-        </div>
-      </div>
-
-      {/* 管理メールアドレス一覧 */}
-      <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          現在の管理メールアドレス ({user.managedEmails.length}件)
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {user.managedEmails.map((email, index) => (
-            <div 
-              key={index}
-              className="px-3 py-2 bg-gray-50 rounded border font-mono text-sm"
-            >
-              {email}
-            </div>
-          ))}
+          </div>
         </div>
       </div>
     </div>
