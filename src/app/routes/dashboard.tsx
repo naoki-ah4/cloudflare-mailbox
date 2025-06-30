@@ -73,14 +73,22 @@ const Dashboard = () => {
             ようこそ、{user.username}さん
           </p>
         </div>
-        <form method="post" action="/api/logout">
-          <button
-            type="submit"
-            className="px-4 py-2 bg-red-600 text-white border-0 rounded cursor-pointer hover:bg-red-700 transition-colors"
+        <div className="flex gap-2">
+          <a 
+            href="/profile"
+            className="px-4 py-2 bg-blue-600 text-white no-underline rounded hover:bg-blue-700 transition-colors"
           >
-            ログアウト
-          </button>
-        </form>
+            プロフィール
+          </a>
+          <form method="post" action="/api/logout">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-red-600 text-white border-0 rounded cursor-pointer hover:bg-red-700 transition-colors"
+            >
+              ログアウト
+            </button>
+          </form>
+        </div>
       </header>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
