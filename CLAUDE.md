@@ -159,24 +159,28 @@ React Router v7 Cookie:
 - **Administrator Management**: Admin addition, listing, deletion
 
 #### UI Implementation
-- **Responsive Design**: Desktop and mobile support
+- **Responsive Design**: Complete mobile support for all pages
+  - Unified breakpoints: 768px (mobile), 1024px (tablet)
+  - Mobile drawer navigation + desktop sidebar
+  - CSS Modules for scoped style management
 - **Landing Page**: Home page for unauthenticated users
 - **User Dashboard**: Main screen after authentication
 
-### 🚧 In Progress / Incomplete Features
-
-#### User Settings
-- **Profile Management**: `/profile` - User information display and editing
+#### User Settings Features
+- **Basic Settings Page**: `/settings` - Theme, language, timezone, notification settings
+- **Profile Management**: `/profile` - User information display and editing, managed email configuration
 - **Password Change**: `/settings/password` - Secure password updates
-- **Managed Email Settings**: Add/remove functionality
+- **Unified Settings Navigation**: Responsive navigation system
 
 #### Email Feature Extensions
-- **Pagination**: Improved list display for handling large volumes of emails
+- **Pagination**: Efficient pagination with 50 items per page (completed)
 - **Folder Management**: Custom folder creation and email movement
 - **Signed URLs**: External access support for attachments
 
+### 🚧 In Progress / Incomplete Features
+
 #### UI/UX Improvements
-- **Dark Mode Support**: Theme switching functionality
+- **Dark Mode Support**: Theme switching functionality (settings items implemented)
 - **Notifications & Toasts**: Enhanced user feedback
 - **Loading States**: Proper state display during operations
 
@@ -200,9 +204,9 @@ React Router v7 Cookie:
 ## Future Expansion Plans
 
 ### Short-term Plans (1-2 months)
-- Complete user profile and settings screens
-- Implement pagination
-- UI/UX improvements (dark mode, notification features)
+- Dark mode implementation (settings items completed)
+- UI/UX improvements (notification features, loading states)
+- Signed URL support for attachments
 
 ### Medium-term Plans (3-6 months)
 - Custom folder functionality
@@ -217,4 +221,47 @@ React Router v7 Cookie:
 
 ---
 
-Last updated: June 29, 2025 (Session management specification updated)
+## Frontend Design Specifications
+
+### Responsive Design
+
+#### Breakpoint Strategy
+```scss
+// Unified breakpoints
+@media (max-width: 768px)  // Mobile
+@media (max-width: 1024px) // Tablet
+// 1024px and above: Desktop
+```
+
+#### Layout Patterns
+- **Mobile (~768px)**: Drawer navigation + fullscreen content
+- **Tablet (769px~1024px)**: Adaptive layout
+- **Desktop (1025px~)**: Sidebar + main content
+
+#### Navigation Design
+- **SettingsNav**: CSS Modules + React state management
+  - Mobile: Hamburger menu + overlay drawer
+  - Desktop: Fixed sidebar
+  - Auto-close functionality (on link click/overlay tap)
+
+### CSS Architecture
+
+#### Styling Strategy
+- **CSS Modules**: Component-specific styles (`.module.scss`)
+- **Tailwind CSS**: Utility classes (layout, colors, spacing)
+- **SCSS**: Complex responsive logic and nested structures
+
+#### File Structure
+```
+src/app/
+├── components/
+│   ├── SettingsNav.tsx
+│   └── SettingsNav.module.scss
+├── routes/
+│   ├── messages.tsx
+│   └── messages.module.scss
+```
+
+---
+
+Last updated: June 30, 2025 (Responsive design specifications added)
