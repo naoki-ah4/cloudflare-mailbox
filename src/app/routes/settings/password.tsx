@@ -1,7 +1,7 @@
-import { useActionData, Form, redirect, useNavigation } from "react-router";
+import { useActionData, Form, useNavigation } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
-import { getUserSession, commitUserSession } from "~/utils/session.server";
+import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
 import { hashPassword, verifyPassword } from "~/utils/crypto";
 import SettingsNav from "../../components/SettingsNav";
@@ -18,27 +18,27 @@ const PasswordChangeSchema = z.object({
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   try {
     // セッションからユーザー情報を取得
     const session = await getUserSession(request.headers.get("Cookie"));
     const sessionId = session.get("sessionId");
-    
+
     if (!sessionId) {
       return { error: "認証が必要です" };
     }
-    
+
     const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
     if (!kvSession || kvSession.expiresAt < Date.now()) {
       return { error: "セッションが無効です" };
     }
-    
+
     // 現在のユーザー情報を取得
     const currentUser = await UserKV.get(env.USERS_KV, kvSession.userId);
     if (!currentUser) {
       return { error: "ユーザーが見つかりません" };
     }
-    
+
     // フォームデータの検証
     const formData = await request.formData();
     const rawData = {
@@ -46,47 +46,47 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       newPassword: formData.get("newPassword") as string,
       confirmPassword: formData.get("confirmPassword") as string,
     };
-    
+
     const validationResult = PasswordChangeSchema.safeParse(rawData);
     if (!validationResult.success) {
-      return { 
+      return {
         error: validationResult.error.errors[0].message,
-        data: rawData 
+        data: rawData
       };
     }
-    
+
     const { currentPassword, newPassword } = validationResult.data;
-    
+
     // 現在のパスワードを検証
     const isCurrentPasswordValid = await verifyPassword(currentPassword, currentUser.passwordHash);
     if (!isCurrentPasswordValid) {
-      return { 
+      return {
         error: "現在のパスワードが正しくありません",
-        data: rawData 
+        data: rawData
       };
     }
-    
+
     // 新しいパスワードが現在のパスワードと同じでないかチェック
     if (currentPassword === newPassword) {
-      return { 
+      return {
         error: "新しいパスワードは現在のパスワードと異なる必要があります",
-        data: rawData 
+        data: rawData
       };
     }
-    
+
     // 新しいパスワードをハッシュ化
     const newPasswordHash = await hashPassword(newPassword);
-    
+
     // ユーザー情報を更新
     const updatedUser = {
       ...currentUser,
       passwordHash: newPasswordHash,
     };
-    
+
     await UserKV.set(env.USERS_KV, currentUser.id, updatedUser);
-    
+
     return { success: "パスワードを変更しました" };
-    
+
   } catch (error) {
     console.error("Failed to change password:", error);
     return { error: "パスワードの変更に失敗しました" };
@@ -109,7 +109,7 @@ const PasswordChange = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">パスワード変更</h1>
           <div className="flex gap-2">
-            <a 
+            <a
               href="/dashboard"
               className="px-4 py-2 text-gray-600 hover:text-gray-900 no-underline"
             >
@@ -140,70 +140,70 @@ const PasswordChange = () => {
         {/* メインコンテンツ */}
         <div className="lg:col-span-3">
           <div className="max-w-lg bg-white rounded-lg border border-gray-200 p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">パスワードを変更</h2>
-          <p className="text-gray-600 text-sm">
-            セキュリティのため、現在のパスワードの入力が必要です。
-          </p>
-        </div>
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">パスワードを変更</h2>
+              <p className="text-gray-600 text-sm">
+                セキュリティのため、現在のパスワードの入力が必要です。
+              </p>
+            </div>
 
-        <Form method="post" className="space-y-4">
-          <div>
-            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              現在のパスワード
-            </label>
-            <input
-              type="password"
-              id="currentPassword"
-              name="currentPassword"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
+            <Form method="post" className="space-y-4">
+              <div>
+                <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  現在のパスワード
+                </label>
+                <input
+                  type="password"
+                  id="currentPassword"
+                  name="currentPassword"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
 
-          <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              新しいパスワード
-            </label>
-            <input
-              type="password"
-              id="newPassword"
-              name="newPassword"
-              minLength={8}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              8文字以上で入力してください
-            </p>
-          </div>
+              <div>
+                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  新しいパスワード
+                </label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  name="newPassword"
+                  minLength={8}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  8文字以上で入力してください
+                </p>
+              </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              新しいパスワード（確認）
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  新しいパスワード（確認）
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
 
-          <div className="pt-4">
-            <LoadingButton
-              type="submit"
-              loading={isSubmitting}
-              loadingText="変更中..."
-              variant="primary"
-              size="medium"
-              className="w-full"
-            >
-              パスワードを変更
-            </LoadingButton>
-          </div>
-        </Form>
+              <div className="pt-4">
+                <LoadingButton
+                  type="submit"
+                  loading={isSubmitting}
+                  loadingText="変更中..."
+                  variant="primary"
+                  size="medium"
+                  className="w-full"
+                >
+                  パスワードを変更
+                </LoadingButton>
+              </div>
+            </Form>
           </div>
 
           <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">

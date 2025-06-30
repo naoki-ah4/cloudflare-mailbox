@@ -1,7 +1,7 @@
 import { useLoaderData, useActionData, Form, redirect, useNavigation } from "react-router";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { z } from "zod";
-import { getUserSession, commitUserSession } from "~/utils/session.server";
+import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
 import SettingsNav from "../components/SettingsNav";
 import LoadingButton from "../components/elements/LoadingButton";
@@ -13,27 +13,27 @@ const ProfileUpdateSchema = z.object({
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   try {
     // セッションからユーザー情報を取得
     const session = await getUserSession(request.headers.get("Cookie"));
     const sessionId = session.get("sessionId");
-    
+
     if (!sessionId) {
       return redirect("/login");
     }
-    
+
     const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
     if (!kvSession || kvSession.expiresAt < Date.now()) {
       return redirect("/login");
     }
-    
+
     // ユーザー詳細情報を取得
     const user = await UserKV.get(env.USERS_KV, kvSession.userId);
     if (!user) {
       return redirect("/login");
     }
-    
+
     return {
       user: {
         id: user.id,
@@ -52,88 +52,88 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   try {
     // セッションからユーザー情報を取得
     const session = await getUserSession(request.headers.get("Cookie"));
     const sessionId = session.get("sessionId");
-    
+
     if (!sessionId) {
       return { error: "認証が必要です" };
     }
-    
+
     const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
     if (!kvSession || kvSession.expiresAt < Date.now()) {
       return { error: "セッションが無効です" };
     }
-    
+
     // 現在のユーザー情報を取得
     const currentUser = await UserKV.get(env.USERS_KV, kvSession.userId);
     if (!currentUser) {
       return { error: "ユーザーが見つかりません" };
     }
-    
+
     // フォームデータの検証
     const formData = await request.formData();
     const rawData = {
       email: formData.get("email") as string,
       managedEmails: formData.get("managedEmails") as string,
     };
-    
+
     const validationResult = ProfileUpdateSchema.safeParse(rawData);
     if (!validationResult.success) {
-      return { 
+      return {
         error: validationResult.error.errors[0].message,
-        data: rawData 
+        data: rawData
       };
     }
-    
+
     const { email, managedEmails } = validationResult.data;
-    
+
     // 管理メールアドレスをパース（改行またはカンマ区切り）
     const parsedManagedEmails = managedEmails
       .split(/[\n,]/)
       .map(email => email.trim())
       .filter(email => email.length > 0);
-    
+
     // 各メールアドレスの検証
     for (const managedEmail of parsedManagedEmails) {
       if (!z.string().email().safeParse(managedEmail).success) {
-        return { 
+        return {
           error: `無効なメールアドレス: ${managedEmail}`,
-          data: rawData 
+          data: rawData
         };
       }
     }
-    
+
     // 連絡先メールアドレスと管理メールアドレスの重複チェック
     if (parsedManagedEmails.includes(email)) {
-      return { 
+      return {
         error: "連絡先メールアドレスは管理メールアドレスと重複できません",
-        data: rawData 
+        data: rawData
       };
     }
-    
+
     // ユーザー情報を更新
     const updatedUser = {
       ...currentUser,
       email,
       managedEmails: parsedManagedEmails,
     };
-    
+
     await UserKV.set(env.USERS_KV, currentUser.id, updatedUser);
-    
+
     // セッション情報も更新
     const updatedSession = {
       ...kvSession,
       email,
       managedEmails: parsedManagedEmails,
     };
-    
+
     await SessionKV.set(env.USERS_KV, sessionId, updatedSession);
-    
+
     return { success: "プロフィールを更新しました" };
-    
+
   } catch (error) {
     console.error("Failed to update profile:", error);
     return { error: "プロフィールの更新に失敗しました" };
@@ -146,7 +146,7 @@ const Profile = () => {
   const navigation = useNavigation();
 
   const isSubmitting = navigation.state === "submitting";
-  
+
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString("ja-JP");
   };
@@ -161,7 +161,7 @@ const Profile = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">プロフィール</h1>
           <div className="flex gap-2">
-            <a 
+            <a
               href="/dashboard"
               className="px-4 py-2 text-gray-600 hover:text-gray-900 no-underline"
             >
@@ -276,7 +276,7 @@ const Profile = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {user.managedEmails.map((email, index) => (
-                <div 
+                <div
                   key={index}
                   className="px-3 py-2 bg-gray-50 rounded border font-mono text-sm"
                 >

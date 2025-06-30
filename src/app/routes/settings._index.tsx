@@ -5,7 +5,7 @@ import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV, SettingsKV } from "~/utils/kv";
 import type { UserSettings } from "~/utils/kv/schema";
 import SettingsNav from "../components/SettingsNav";
-import { useTheme } from "~/utils/theme";
+import { useTheme } from "~/app/utils/theme";
 import LoadingButton from "../components/elements/LoadingButton";
 
 const SettingsUpdateSchema = z.object({
@@ -17,30 +17,30 @@ const SettingsUpdateSchema = z.object({
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   try {
     // セッションからユーザー情報を取得
     const session = await getUserSession(request.headers.get("Cookie"));
     const sessionId = session.get("sessionId");
-    
+
     if (!sessionId) {
       return redirect("/login");
     }
-    
+
     const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
     if (!kvSession || kvSession.expiresAt < Date.now()) {
       return redirect("/login");
     }
-    
+
     // ユーザー情報を取得
     const user = await UserKV.get(env.USERS_KV, kvSession.userId);
     if (!user) {
       return redirect("/login");
     }
-    
+
     // ユーザー設定を取得（存在しない場合はデフォルト値）
     let userSettings = await SettingsKV.get(env.MAILBOXES_KV, kvSession.userId);
-    
+
     if (!userSettings) {
       // 初回アクセス時のデフォルト設定を作成
       const defaultSettings: UserSettings = {
@@ -52,11 +52,11 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
-      
+
       await SettingsKV.set(env.MAILBOXES_KV, kvSession.userId, defaultSettings);
       userSettings = defaultSettings;
     }
-    
+
     return {
       user: {
         username: user.username,
@@ -73,21 +73,21 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   try {
     // セッションからユーザー情報を取得
     const session = await getUserSession(request.headers.get("Cookie"));
     const sessionId = session.get("sessionId");
-    
+
     if (!sessionId) {
       return { error: "認証が必要です" };
     }
-    
+
     const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
     if (!kvSession || kvSession.expiresAt < Date.now()) {
       return { error: "セッションが無効です" };
     }
-    
+
     // フォームデータの検証
     const formData = await request.formData();
     const rawData = {
@@ -96,17 +96,17 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       language: formData.get("language") as string,
       timezone: formData.get("timezone") as string,
     };
-    
+
     const validationResult = SettingsUpdateSchema.safeParse(rawData);
     if (!validationResult.success) {
-      return { 
+      return {
         error: validationResult.error.errors[0].message,
-        data: rawData 
+        data: rawData
       };
     }
-    
+
     const { emailNotifications, theme, language, timezone } = validationResult.data;
-    
+
     // 設定を更新
     const updatedSettings = await SettingsKV.update(env.MAILBOXES_KV, kvSession.userId, {
       emailNotifications,
@@ -114,13 +114,13 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       language,
       timezone,
     });
-    
+
     if (!updatedSettings) {
       return { error: "設定の更新に失敗しました" };
     }
-    
+
     return { success: "設定を保存しました" };
-    
+
   } catch (error) {
     console.error("Failed to update settings:", error);
     return { error: "設定の保存に失敗しました" };
@@ -149,7 +149,7 @@ const Settings = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">設定</h1>
           <div className="flex gap-2">
-            <a 
+            <a
               href="/dashboard"
               className="px-4 py-2 text-gray-600 hover:text-gray-900 no-underline"
             >
@@ -200,7 +200,7 @@ const Settings = () => {
               <label className="block text-sm font-medium text-gray-700">管理メールアドレス ({user.managedEmails.length}件)</label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {user.managedEmails.map((email, index) => (
-                  <span 
+                  <span
                     key={index}
                     className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                   >

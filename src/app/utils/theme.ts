@@ -28,16 +28,16 @@ export const getResolvedTheme = (theme: Theme): "light" | "dark" => {
 
 export const applyTheme = (theme: Theme): void => {
   if (typeof window === "undefined") return;
-  
+
   const resolvedTheme = getResolvedTheme(theme);
   const root = document.documentElement;
-  
+
   if (resolvedTheme === "dark") {
     root.classList.add("dark");
   } else {
     root.classList.remove("dark");
   }
-  
+
   // CSS変数でテーマを設定
   root.setAttribute("data-theme", resolvedTheme);
 };
@@ -55,7 +55,7 @@ export const useTheme = (serverTheme?: Theme) => {
   useEffect(() => {
     // システムテーマ変更の監視
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    
+
     const handleSystemThemeChange = () => {
       if (theme === "auto") {
         const newResolvedTheme = getSystemTheme();
@@ -65,7 +65,7 @@ export const useTheme = (serverTheme?: Theme) => {
     };
 
     mediaQuery.addEventListener("change", handleSystemThemeChange);
-    
+
     // 初期テーマ適用
     applyTheme(theme);
     setResolvedTheme(getResolvedTheme(theme));

@@ -2,7 +2,7 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
   index("routes/home.tsx"),
-  
+
   // 管理者認証・管理
   route("/admin/setup", "routes/admin/setup.tsx"),
   route("/admin/login", "routes/admin/login.tsx"),
@@ -10,16 +10,20 @@ export default [
   route("/admin/users", "routes/admin/users.tsx"),
   route("/admin/invites", "routes/admin/invites.tsx"),
   route("/admin/administrators", "routes/admin/administrators.tsx"),
-  
+
   // ユーザー認証・ダッシュボード
   route("/signup", "routes/signup.tsx"),
   route("/login", "routes/login.tsx"),
   route("/dashboard", "routes/dashboard.tsx"),
-  
+  route("/settings", "routes/settings._index.tsx"),
+  route("/settings/password", "routes/settings/password.tsx"),
+  route("/profile", "routes/profile.tsx"),
+
+
   // メール閲覧機能
   route("/messages", "routes/messages.tsx"),
   route("/messages/:messageId", "routes/messages.$messageId.tsx"),
-  
+
   // 専用APIエンドポイント（UIなし）
   route("/api/admin/logout", "routes/api/admin/logout.tsx"),
   route("/api/logout", "routes/api/logout.tsx"),
