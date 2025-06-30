@@ -1,0 +1,183 @@
+// ダークモードのCSS変数定義
+:root {
+  // ライトテーマ（デフォルト）
+  --color-background: #ffffff;
+  --color-background-secondary: #f8f9fa;
+  --color-background-tertiary: #e9ecef;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  
+  // ブランドカラー
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #eff6ff;
+  
+  // セマンティックカラー
+  --color-success: #059669;
+  --color-success-light: #ecfdf5;
+  --color-warning: #d97706;
+  --color-warning-light: #fffbeb;
+  --color-error: #dc2626;
+  --color-error-light: #fef2f2;
+  
+  // サイドバー・ナビゲーション
+  --color-sidebar-bg: #f8f9fa;
+  --color-sidebar-border: #dee2e6;
+  --color-nav-item-hover: #e9ecef;
+  --color-nav-item-active: #007bff;
+  
+  // カード・コンテナ
+  --color-card-bg: #ffffff;
+  --color-card-border: #e5e7eb;
+  --color-card-shadow: rgba(0, 0, 0, 0.1);
+}
+
+// ダークテーマ
+:root.dark,
+[data-theme="dark"] {
+  --color-background: #111827;
+  --color-background-secondary: #1f2937;
+  --color-background-tertiary: #374151;
+  --color-text-primary: #f9fafb;
+  --color-text-secondary: #d1d5db;
+  --color-text-tertiary: #9ca3af;
+  --color-border: #374151;
+  --color-border-light: #4b5563;
+  
+  // ブランドカラー（ダーク用に調整）
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-light: #1e3a8a;
+  
+  // セマンティックカラー（ダーク用に調整）
+  --color-success: #10b981;
+  --color-success-light: #064e3b;
+  --color-warning: #f59e0b;
+  --color-warning-light: #78350f;
+  --color-error: #ef4444;
+  --color-error-light: #7f1d1d;
+  
+  // サイドバー・ナビゲーション
+  --color-sidebar-bg: #1f2937;
+  --color-sidebar-border: #374151;
+  --color-nav-item-hover: #374151;
+  --color-nav-item-active: #3b82f6;
+  
+  // カード・コンテナ
+  --color-card-bg: #1f2937;
+  --color-card-border: #374151;
+  --color-card-shadow: rgba(0, 0, 0, 0.3);
+}
+
+// ベースクラス定義
+.theme-bg {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--color-background-secondary);
+}
+
+.theme-bg-tertiary {
+  background-color: var(--color-background-tertiary);
+}
+
+.theme-text-primary {
+  color: var(--color-text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.theme-text-tertiary {
+  color: var(--color-text-tertiary);
+}
+
+.theme-border {
+  border-color: var(--color-border);
+}
+
+.theme-card {
+  background-color: var(--color-card-bg);
+  border-color: var(--color-card-border);
+  box-shadow: 0 1px 3px var(--color-card-shadow);
+}
+
+.theme-sidebar {
+  background-color: var(--color-sidebar-bg);
+  border-color: var(--color-sidebar-border);
+}
+
+.theme-nav-item {
+  &:hover {
+    background-color: var(--color-nav-item-hover);
+  }
+  
+  &.active {
+    background-color: var(--color-primary-light);
+    color: var(--color-nav-item-active);
+  }
+}
+
+.theme-button-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  
+  &:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+}
+
+// Tailwindクラスの上書きでダークモード対応
+.dark {
+  // 基本カラーの上書き
+  .bg-white { background-color: var(--color-card-bg) !important; }
+  .bg-gray-50 { background-color: var(--color-background-secondary) !important; }
+  .bg-gray-100 { background-color: var(--color-background-tertiary) !important; }
+  
+  .text-gray-900 { color: var(--color-text-primary) !important; }
+  .text-gray-700 { color: var(--color-text-secondary) !important; }
+  .text-gray-600 { color: var(--color-text-secondary) !important; }
+  .text-gray-500 { color: var(--color-text-tertiary) !important; }
+  
+  .border-gray-200 { border-color: var(--color-border) !important; }
+  .border-gray-300 { border-color: var(--color-border) !important; }
+  
+  // 入力フィールド
+  input, textarea, select {
+    background-color: var(--color-background-secondary) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text-primary) !important;
+    
+    &::placeholder {
+      color: var(--color-text-tertiary) !important;
+    }
+    
+    &:focus {
+      border-color: var(--color-primary) !important;
+    }
+  }
+  
+  // ボタンのカラー調整
+  .bg-blue-600 {
+    background-color: var(--color-primary) !important;
+    
+    &:hover {
+      background-color: var(--color-primary-hover) !important;
+    }
+  }
+  
+  .bg-blue-50 {
+    background-color: var(--color-primary-light) !important;
+  }
+  
+  .text-blue-600 {
+    color: var(--color-primary) !important;
+  }
+}

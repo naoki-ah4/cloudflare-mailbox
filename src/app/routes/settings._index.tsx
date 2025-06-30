@@ -5,6 +5,7 @@ import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV, SettingsKV } from "~/utils/kv";
 import type { UserSettings } from "~/utils/kv/schema";
 import SettingsNav from "../components/SettingsNav";
+import { useTheme } from "~/utils/theme";
 
 const SettingsUpdateSchema = z.object({
   emailNotifications: z.string().transform(val => val === "true"),
@@ -128,6 +129,11 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 const Settings = () => {
   const { user, settings } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const { theme, setTheme } = useTheme(settings.theme);
+
+  const handleThemeChange = (newTheme: "light" | "dark" | "auto") => {
+    setTheme(newTheme);
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8">
@@ -213,7 +219,8 @@ const Settings = () => {
                   <select
                     id="theme"
                     name="theme"
-                    defaultValue={actionData?.data?.theme || settings.theme}
+                    value={theme}
+                    onChange={(e) => handleThemeChange(e.target.value as "light" | "dark" | "auto")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="auto">システム設定に従う</option>
@@ -266,6 +273,11 @@ const Settings = () => {
                     value="true"
                     defaultChecked={actionData?.data?.emailNotifications === "true" || settings.emailNotifications}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <input
+                    type="hidden"
+                    name="theme"
+                    value={theme}
                   />
                   <label htmlFor="emailNotifications" className="ml-2 block text-sm text-gray-900">
                     重要なお知らせをメールで受信する
