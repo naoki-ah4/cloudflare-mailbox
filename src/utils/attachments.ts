@@ -31,5 +31,7 @@ const createS3Client = (env: Cloudflare.Env) => {
             secretAccessKey: env.R2_SECRET_ACCESS_KEY,
         },
         endpoint: `https://${env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        requestChecksumCalculation: "WHEN_REQUIRED",
+        responseChecksumValidation: "WHEN_REQUIRED",
     });
 }
