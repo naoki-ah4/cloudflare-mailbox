@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
+import { validateEmailDomains } from "~/utils/domain-validation";
 import SettingsNav from "../components/SettingsNav";
 import LoadingButton from "../components/elements/LoadingButton";
 
@@ -110,6 +111,15 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     if (parsedManagedEmails.includes(email)) {
       return {
         error: "連絡先メールアドレスは管理メールアドレスと重複できません",
+        data: rawData
+      };
+    }
+
+    // ドメイン検証（許可ドメインチェック）
+    const domainValidation = await validateEmailDomains(parsedManagedEmails, env.SYSTEM_KV);
+    if (!domainValidation.isValid) {
+      return {
+        error: domainValidation.message || "許可されていないドメインが含まれています",
         data: rawData
       };
     }

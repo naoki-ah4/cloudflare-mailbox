@@ -1,7 +1,6 @@
 import { Form, useLoaderData, useActionData, useNavigation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { SystemKV } from "~/utils/kv/system";
-import { redirect } from "react-router";
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;

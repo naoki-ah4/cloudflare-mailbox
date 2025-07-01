@@ -1,6 +1,7 @@
 import { Form, useLoaderData, useActionData, useNavigation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { UserKV, InviteKV, SessionKV } from "~/utils/kv";
+import { validateEmailDomains } from "~/utils/domain-validation";
 import { redirect } from "react-router";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 
@@ -101,6 +102,12 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     // 連絡先メールと管理メールの重複チェック
     if (managedEmails.includes(email)) {
       return { error: "連絡先メールアドレスと管理メールアドレスは異なるものを指定してください" };
+    }
+    
+    // ドメイン検証（許可ドメインチェック）
+    const domainValidation = await validateEmailDomains(managedEmails, env.SYSTEM_KV);
+    if (!domainValidation.isValid) {
+      return { error: domainValidation.message || "許可されていないドメインが含まれています" };
     }
     
     // ユーザー名重複チェック
