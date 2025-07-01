@@ -121,7 +121,7 @@ const Pagination = ({
               ) : (
                 <button
                   key={page}
-                  onClick={() => handlePageChange(page as number)}
+                  onClick={() => handlePageChange(page)}
                   className={`relative inline-flex items-center px-3 py-2 text-sm font-medium border ${
                     currentPage === page
                       ? "bg-blue-600 text-white border-blue-600"
