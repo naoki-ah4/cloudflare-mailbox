@@ -73,7 +73,7 @@ const Dashboard = () => {
             ようこそ、{user.username}さん
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-2 sm:w-auto">
           <a 
             href="/profile"
             className="px-4 py-2 bg-blue-600 text-white no-underline rounded hover:bg-blue-700 transition-colors"
