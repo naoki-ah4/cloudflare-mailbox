@@ -109,6 +109,23 @@ export const UserSettingsSchema = z.object({
   updatedAt: z.number(),
 });
 
+// システム設定スキーマ
+export const SystemSettingsSchema = z.object({
+  allowedDomains: z.array(z.string().min(1)).default([]),
+  updatedAt: z.number(),
+});
+
+// システム設定編集履歴エントリ
+export const SystemSettingsHistoryEntrySchema = z.object({
+  allowedDomains: z.array(z.string()),
+  updatedAt: z.number(),
+  updatedBy: z.string(), // 管理者ID
+  changes: z.string(), // 変更内容の説明
+});
+
+// システム設定編集履歴
+export const SystemSettingsHistorySchema = z.array(SystemSettingsHistoryEntrySchema);
+
 // KVキー別のスキーママッピング
 export const KVSchemas = {
   // USERS_KV
@@ -126,6 +143,10 @@ export const KVSchemas = {
   inbox: InboxMessagesSchema,
   folder: FolderMessagesSchema,
   settings: UserSettingsSchema,
+
+  // SYSTEM_KV
+  'system-settings': SystemSettingsSchema,
+  'system-settings-history': SystemSettingsHistorySchema,
 } as const;
 
 // 型定義をエクスポート
@@ -141,6 +162,9 @@ export type ThreadMessages = z.infer<typeof ThreadMessagesSchema>;
 export type InboxMessages = z.infer<typeof InboxMessagesSchema>;
 export type FolderMessages = z.infer<typeof FolderMessagesSchema>;
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
+export type SystemSettings = z.infer<typeof SystemSettingsSchema>;
+export type SystemSettingsHistoryEntry = z.infer<typeof SystemSettingsHistoryEntrySchema>;
+export type SystemSettingsHistory = z.infer<typeof SystemSettingsHistorySchema>;
 
 // KVキーからスキーマ型を推論するヘルパー型
 export type KVKeyPrefix = keyof typeof KVSchemas;

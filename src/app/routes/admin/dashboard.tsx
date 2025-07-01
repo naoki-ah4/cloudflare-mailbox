@@ -61,6 +61,11 @@ export default () => {
           <h3>管理者管理</h3>
           <p>管理者の追加、一覧表示、削除</p>
         </a>
+        
+        <a href="/admin/system-settings" className={styles.actionCard}>
+          <h3>システム設定</h3>
+          <p>許可ドメインの管理、システム設定の変更</p>
+        </a>
       </div>
     </div>
   );
