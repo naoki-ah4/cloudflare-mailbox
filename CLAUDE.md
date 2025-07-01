@@ -2,7 +2,7 @@
 
 This document contains guidelines for developing this repository. Since the developers are Japanese, please write PR and Issue content in Japanese.
 
-Therefore, all English documents included in the repository are translated from Japanese. For example, CLAUDE.md is an English translation of CLAUDE_ja.md. Therefore, please avoid editing only CLAUDE.md. After creating a commit that edits CLAUDE_ja.md, please create a commit to update CLAUDE.md.
+Therefore, all English documents included in the repository are translated from Japanese. For example, CLAUDE.md is an English translation of CLAUDE_ja.md. Please avoid editing only CLAUDE.md. Create a commit to update CLAUDE.md after committing edits to CLAUDE_ja.md.
 
 ## Coding Rules
 
@@ -10,11 +10,11 @@ This repository adopts the following coding rules.
 
 ### TypeScript (mainly type-related rules)
 
-- Do not use assertions at all; if used, include the reason in comments
+- Do not use assertions at all; if you must use them, provide a comment explaining the reason
   - However, `as const` and `satisfies` may be used
 - Do not use `any` or `unknown`
 - Do not use `interface` when it can be substituted with `type`
-- Define complex types with `type`; they may also be exported
+- Define complex types with `type`; exporting them is also acceptable
 
 ### Naming Conventions
 
@@ -32,96 +32,63 @@ This repository adopts the following coding rules.
 
 ### JavaScript (mainly syntax-related rules)
 
-- Avoid using `let` as much as possible; use `const`
-- Avoid using `forEach` as much as possible; use `map` or `filter`
-  - `for of` may be used
-- Avoid using the `function` keyword as much as possible; define with `const` and arrow functions in principle
-- Avoid using Promise `then` as much as possible; use `async/await`
-- Object property order should be in the following order:
+- Avoid using `let`; use `const` instead
+- Avoid using `forEach`; use `map` or `filter` instead
+  - `for of` is acceptable
+- Avoid using the `function` keyword; in principle, define with `const` and arrow functions
+- Avoid using `then` for Promises; use `async/await` instead
+- Object property order should be as follows:
   - Property names
   - Constructor
   - Methods
-  - Getters/setters
+  - getter/setter
 
 ## Development Environment Guidelines
 
 ### Package Management
 
-- **Use bun instead of npm**: Please use `bun` instead of `npm`
+- **Use bun**: Use `bun` instead of `npm`
   - Installation: `bun install`
   - Execution: `bun run dev`, `bun run build`, etc.
 
 ### Git Management
 
-- **Do not commit ignored files**: Do not commit files excluded by `.gitignore` (such as `wrangler.jsonc`) even with the `-f` flag
-- **Commit only related files**: When implementing features, commit only related files in stages
+- **Do not commit ignored files**: Do not commit files excluded by `.gitignore` (such as `wrangler.jsonc`) using the `-f` flag
+- **Commit only related files**: When implementing features, commit only related files incrementally
 
 ### React Router v7 Routing
 
-- **File-based routing limitations**: Creating files alone does not automatically generate routes
 - **Explicit route definition required**: When creating new pages, add route definitions to `src/app/routes.ts`
   - Example: `route("/admin/new-page", "routes/admin/new-page.tsx")`
-- **Nested routes**: Sub-pages also require individual definitions
+- **Nested routes**: Sub-pages also need individual definitions
   - Example: `route("/admin/settings/history", "routes/admin/settings/history.tsx")`
 
 ### Guidelines for AI Assistants
 
-- **Do not start development servers**: AI assistants like Claude or Gemini must not execute server startup commands like `npm run dev` or `bun run dev`
-  - Reason: Processes do not stop, causing sessions to become unresponsive
-  - Alternative: Use static checks (`bun run typecheck`, `bun run lint`)
-- **When creating new pages**: Always add route definitions to `src/app/routes.ts` after creating files
+- **Do not start development servers**: AIs like Claude or Gemini must not execute server startup commands like `npm run dev` or `bun run dev`
+  - Reason: The process does not stop, making the session unresponsive
 
-# Cloudflare Mailbox System Specification
+# Cloudflare Mailbox System Specifications
 
 ## Overview
 
-A mailbox management system using Cloudflare Workers and KV. Centrally manages multiple email addresses and provides efficient email processing.
+A mailbox management system using Cloudflare Workers and KV. Provides centralized management of multiple email addresses and efficient email processing.
 
 ## Key Features
 
 ### 1. User Management System
 
-#### Authentication Method
-
 - **Username-based authentication**: Login with username instead of email address
 - **Invitation-only**: Registration only through invitation tokens issued by administrators
 - **Hybrid session management**: React Router v7 + KV integration approach
   - Cookie: sessionId only (React Router managed)
-  - KV: Session data persistence (expiration management & force logout support)
-
-#### User Information
-
-```typescript
-User {
-  id: string (UUID)
-  username: string (3-30 characters, alphanumeric and underscore)
-  email: string (contact email address)
-  managedEmails: string[] (list of managed email addresses)
-  passwordHash: string
-  createdAt: number
-  lastLogin?: number
-}
-```
-
-**Important constraints**:
-
-- `email` (for contact) and `managedEmails` (for management) cannot overlap
-- `email`: Contact address for system notifications, password resets, etc.
-- `managedEmails`: Addresses that actually receive and manage emails
+  - KV: Session data persistence (expiration management & forced logout support)
 
 ### 2. Multiple Mailbox Management
 
-#### Basic Concept
-
 - One user can manage multiple email addresses
-- Each email address has its own independent inbox
-- Integrated view for batch display is also possible
-
-#### API Features
-
-- **Integrated display**: Integrated display of all managed mailboxes
-- **Individual display**: Display of specific mailboxes only
-- **Access control**: Access only to managed email addresses
+- Each email address has an independent inbox
+- Unified view for batch display is also possible
 
 ### 3. Performance Optimization
 
@@ -133,119 +100,16 @@ User {
 
 #### Data Structure
 
-```
-KV structure:
-- user:{userId} → User information
-- username:{username} → userId (index)
-- session:{sessionId} → User session information
-- admin:{adminId} → Admin information
-- admin-username:{username} → adminId (index)
-- admin-session:{sessionId} → Admin session information
-- inbox:{email} → EmailMetadata[]
-- msg:{messageId} → EmailMessage
-- thread:{threadId} → messageId[]
+- src/utils/kv contains data structures for KV storage.
+  - src/utils/kv/schema.ts: Validation schema for data stored in KV
+  - Others contain utility functions for KV storage operations.
 
-React Router v7 Cookie:
-- __user_session: {sessionId: string}
-- __admin_session: {sessionId: string}
-```
-
-### KV Optimization Strategy
-
-1. **Index utilization**: Create dedicated indexes for frequently accessed data
-2. **Avoiding list operations**: Use list only for low-frequency operations like admin screens
-3. **Parallel processing**: Efficient data retrieval using Promise.all
-4. **Client-side processing**: Sorting and filtering on the client side
-
-### Performance Considerations
-
-- O(1) user search during login
-- Parallel retrieval of multiple mailboxes
-- Client-side email integration and sorting
-- Minimizing high-cost list operations
-
-## Current Implementation Status
-
-### ✅ Completed Features
-
-#### Authentication & Session Management
-- **React Router v7 + KV Integration**: Hybrid architecture with Cookie (sessionId) + KV (session data)
-- **Admin Authentication**: IP restriction + session authentication with initial setup support
-- **User Authentication**: Invitation-based registration, username-based login
-- **Unified Session Management**: Both admin and user sessions managed through `session.server.ts`
-
-#### Email Features
-- **Email List**: Integrated display of multiple mailboxes, individual mailbox switching
-- **Email Details**: HTML/text display with attachment support
-- **Read Status Management**: Individual email read status, unread count display
-- **Search & Filter**: Filtering by sender, subject, date range
-
-#### Admin Features
-- **Dashboard**: Statistics display (user count, admin count)
-- **User Management**: List view, deletion functionality
-- **Invitation Management**: Invitation URL generation and management screen
-- **Administrator Management**: Admin addition, listing, deletion
-
-#### UI Implementation
-- **Responsive Design**: Complete mobile support for all pages
-  - Unified breakpoints: 768px (mobile), 1024px (tablet)
-  - Mobile drawer navigation + desktop sidebar
-  - CSS Modules for scoped style management
-- **Landing Page**: Home page for unauthenticated users
-- **User Dashboard**: Main screen after authentication
-
-#### User Settings Features
-- **Basic Settings Page**: `/settings` - Theme, language, timezone, notification settings
-- **Profile Management**: `/profile` - User information display and editing, managed email configuration
-- **Password Change**: `/settings/password` - Secure password updates
-- **Unified Settings Navigation**: Responsive navigation system
-
-#### Email Feature Extensions
-- **Pagination**: Efficient pagination with 50 items per page (completed)
-- **Folder Management**: Custom folder creation and email movement
-- **Signed URLs**: External access support for attachments
-
-### 🚧 In Progress / Incomplete Features
-
-#### UI/UX Improvements
-- **Dark Mode Support**: Theme switching functionality (settings items implemented)
-- **Notifications & Toasts**: Enhanced user feedback
-- **Loading States**: Proper state display during operations
+**Always use utility functions when accessing KV storage. Avoid direct access**
 
 ### 🏗️ Architecture Features
 
-#### React Router v7 Support
-- **File-based routing**: Intuitive route structure
-- **Loader/Action pattern**: Separation of data fetching and updates
-- **Type-safe**: Full TypeScript support
-
-#### Cloudflare Workers Optimization
-- **Edge computing**: Low-latency delivery worldwide
-- **KV Storage**: Efficient data persistence
-- **R2 Storage**: Secure attachment storage
-
-#### Security Measures
-- **IP Restrictions**: Geographic restrictions for admin access
-- **Session Management**: Proper expiration and invalidation
-- **Access Control**: Permission control based on managed email addresses
-
-## Future Expansion Plans
-
-### Short-term Plans (1-2 months)
-- Dark mode implementation (settings items completed)
-- UI/UX improvements (notification features, loading states)
-- Signed URL support for attachments
-
-### Medium-term Plans (3-6 months)
-- Custom folder functionality
-- Email sending functionality
-- Advanced search and filtering
-
-### Long-term Plans (6+ months)
-- Metrics and log collection
-- Failure monitoring and alerts
-- Backup and recovery systems
-- Scaling support
+- **React Router v7**: Utilizing the latest routing capabilities
+- **Cloudflare Workers**: High-speed edge computing
 
 ---
 
@@ -253,42 +117,21 @@ React Router v7 Cookie:
 
 ### Responsive Design
 
-#### Breakpoint Strategy
-```scss
-// Unified breakpoints
-@media (max-width: 768px)  // Mobile
-@media (max-width: 1024px) // Tablet
-// 1024px and above: Desktop
-```
-
 #### Layout Patterns
-- **Mobile (~768px)**: Drawer navigation + fullscreen content
-- **Tablet (769px~1024px)**: Adaptive layout
-- **Desktop (1025px~)**: Sidebar + main content
 
-#### Navigation Design
-- **SettingsNav**: CSS Modules + React state management
-  - Mobile: Hamburger menu + overlay drawer
-  - Desktop: Fixed sidebar
-  - Auto-close functionality (on link click/overlay tap)
+- **Mobile (~768px)**: Drawer navigation + full-screen content
+- **Tablet (769px ~ 1024px)**: Adaptive layout
+- **Desktop (1025px ~)**: Sidebar + main content
 
 ### CSS Architecture
 
 #### Styling Strategy
-- **CSS Modules**: Component-specific styles (`.module.scss`)
-- **Tailwind CSS**: Utility classes (layout, colors, spacing)
-- **SCSS**: Complex responsive logic and nested structures
 
-#### File Structure
-```
-src/app/
-├── components/
-│   ├── SettingsNav.tsx
-│   └── SettingsNav.module.scss
-├── routes/
-│   ├── messages.tsx
-│   └── messages.module.scss
-```
+Styling is performed in the following priority order:
+
+1. **Tailwind CSS**: Basically implement all styles with Tailwind CSS.
+2. **CSS Modules + SCSS**: For styles that cannot be implemented with Tailwind CSS, use CSS Modules and SCSS.
+3. **Inline Styles**: When you need to dynamically change CSS, use React inline styles. However, try to implement dynamic styles using CSS Modules or Tailwind CSS whenever possible.
 
 ---
 
