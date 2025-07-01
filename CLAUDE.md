@@ -43,6 +43,34 @@ This repository adopts the following coding rules.
   - Methods
   - Getters/setters
 
+## Development Environment Guidelines
+
+### Package Management
+
+- **Use bun instead of npm**: Please use `bun` instead of `npm`
+  - Installation: `bun install`
+  - Execution: `bun run dev`, `bun run build`, etc.
+
+### Git Management
+
+- **Do not commit ignored files**: Do not commit files excluded by `.gitignore` (such as `wrangler.jsonc`) even with the `-f` flag
+- **Commit only related files**: When implementing features, commit only related files in stages
+
+### React Router v7 Routing
+
+- **File-based routing limitations**: Creating files alone does not automatically generate routes
+- **Explicit route definition required**: When creating new pages, add route definitions to `src/app/routes.ts`
+  - Example: `route("/admin/new-page", "routes/admin/new-page.tsx")`
+- **Nested routes**: Sub-pages also require individual definitions
+  - Example: `route("/admin/settings/history", "routes/admin/settings/history.tsx")`
+
+### Guidelines for AI Assistants
+
+- **Do not start development servers**: AI assistants like Claude or Gemini must not execute server startup commands like `npm run dev` or `bun run dev`
+  - Reason: Processes do not stop, causing sessions to become unresponsive
+  - Alternative: Use static checks (`bun run typecheck`, `bun run lint`)
+- **When creating new pages**: Always add route definitions to `src/app/routes.ts` after creating files
+
 # Cloudflare Mailbox System Specification
 
 ## Overview
