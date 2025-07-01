@@ -1,5 +1,6 @@
 import { Form, useLoaderData, useActionData, useNavigation } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { useState } from "react";
 import { SystemKV } from "~/utils/kv/system";
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
@@ -58,6 +59,29 @@ export default () => {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
+  // ドメインリストの状態管理
+  const [domains, setDomains] = useState<string[]>(settings.allowedDomains);
+  const [newDomain, setNewDomain] = useState("");
+
+  // ドメイン追加
+  const addDomain = () => {
+    const trimmedDomain = newDomain.trim();
+    if (trimmedDomain && !domains.includes(trimmedDomain)) {
+      // 簡易ドメイン形式チェック
+      if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(trimmedDomain)) {
+        alert("無効なドメイン形式です");
+        return;
+      }
+      setDomains([...domains, trimmedDomain]);
+      setNewDomain("");
+    }
+  };
+
+  // ドメイン削除
+  const removeDomain = (index: number) => {
+    setDomains(domains.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-8">
       <header className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
@@ -95,22 +119,72 @@ export default () => {
         </p>
         
         <Form method="post">
-          <div className="mb-4">
-            <label htmlFor="domains" className="block text-sm font-medium text-gray-700 mb-2">
-              許可ドメイン（1行に1つずつ入力）:
+          {/* 隠しフィールドでドメインリストを送信 */}
+          <input type="hidden" name="domains" value={domains.join('\n')} />
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              許可ドメイン設定:
             </label>
-            <textarea
-              id="domains"
-              name="domains"
-              rows={10}
-              defaultValue={settings.allowedDomains.join('\n')}
-              placeholder="example.com&#10;company.jp&#10;organization.org"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 font-mono text-sm"
-              disabled={isSubmitting}
-            />
+            
+            {/* ドメイン追加UI */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={newDomain}
+                onChange={(e) => setNewDomain(e.target.value)}
+                placeholder="example.com"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isSubmitting}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addDomain();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={addDomain}
+                disabled={isSubmitting || !newDomain.trim()}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                追加
+              </button>
+            </div>
+            
+            {/* ドメインリスト表示 */}
+            {domains.length > 0 ? (
+              <div className="bg-gray-50 p-4 rounded-md">
+                <p className="text-sm text-gray-600 mb-3">
+                  許可ドメイン ({domains.length}個):
+                </p>
+                <div className="space-y-2">
+                  {domains.map((domain, index) => (
+                    <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                      <span className="font-mono text-sm">{domain}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeDomain(index)}
+                        disabled={isSubmitting}
+                        className="text-red-600 hover:text-red-800 disabled:opacity-50 text-sm px-2 py-1"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 p-4 rounded-md">
+                <p className="text-sm text-gray-600">
+                  ドメインが設定されていません。全てのドメインが許可されます。
+                </p>
+              </div>
+            )}
+            
             <small className="text-gray-500 text-sm block mt-2">
-              例: example.com, company.jp など<br />
-              空にすると全てのドメインが許可されます
+              例: example.com, company.jp など
             </small>
           </div>
           

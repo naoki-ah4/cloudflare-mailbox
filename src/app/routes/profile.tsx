@@ -1,8 +1,10 @@
 import { useLoaderData, useActionData, Form, redirect, useNavigation } from "react-router";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { z } from "zod";
+import { useState } from "react";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
+import { SystemKV } from "~/utils/kv/system";
 import { validateEmailDomains } from "~/utils/domain-validation";
 import SettingsNav from "../components/SettingsNav";
 import LoadingButton from "../components/elements/LoadingButton";
@@ -29,8 +31,12 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
       return redirect("/login");
     }
 
-    // ユーザー詳細情報を取得
-    const user = await UserKV.get(env.USERS_KV, kvSession.userId);
+    // ユーザー詳細情報と許可ドメインを並列取得
+    const [user, systemSettings] = await Promise.all([
+      UserKV.get(env.USERS_KV, kvSession.userId),
+      SystemKV.getSettings(env.SYSTEM_KV),
+    ]);
+    
     if (!user) {
       return redirect("/login");
     }
@@ -44,6 +50,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
         createdAt: user.createdAt,
         lastLogin: user.lastLogin,
       },
+      allowedDomains: systemSettings?.allowedDomains || [],
     };
   } catch (error) {
     console.error("Failed to load profile:", error);
@@ -151,11 +158,38 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 };
 
 const Profile = () => {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, allowedDomains } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
 
   const isSubmitting = navigation.state === "submitting";
+
+  // 管理メールアドレスの状態管理
+  const [managedEmails, setManagedEmails] = useState<string[]>(user.managedEmails);
+  const [newEmailLocal, setNewEmailLocal] = useState("");
+  const [newEmailDomain, setNewEmailDomain] = useState(allowedDomains[0] || "");
+
+  // メールアドレス追加
+  const addEmail = () => {
+    const localPart = newEmailLocal.trim();
+    if (!localPart || !newEmailDomain) return;
+    
+    const fullEmail = `${localPart}@${newEmailDomain}`;
+    
+    // 重複チェック
+    if (managedEmails.includes(fullEmail)) {
+      alert("このメールアドレスは既に追加されています");
+      return;
+    }
+    
+    setManagedEmails([...managedEmails, fullEmail]);
+    setNewEmailLocal("");
+  };
+
+  // メールアドレス削除
+  const removeEmail = (index: number) => {
+    setManagedEmails(managedEmails.filter((_, i) => i !== index));
+  };
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString("ja-JP");
@@ -201,7 +235,7 @@ const Profile = () => {
 
         {/* メインコンテンツ */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+          <div className="space-y-12">
             {/* ユーザー情報表示 */}
             <div className="bg-gray-50 rounded-lg p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">アカウント情報</h2>
@@ -229,7 +263,8 @@ const Profile = () => {
             {/* プロフィール編集フォーム */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">プロフィール編集</h2>
-              <Form method="post" className="space-y-4">
+              <Form method="post" className="space-y-6">
+                
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     連絡先メールアドレス
@@ -247,23 +282,6 @@ const Profile = () => {
                   </p>
                 </div>
 
-                <div>
-                  <label htmlFor="managedEmails" className="block text-sm font-medium text-gray-700 mb-1">
-                    管理メールアドレス
-                  </label>
-                  <textarea
-                    id="managedEmails"
-                    name="managedEmails"
-                    rows={4}
-                    defaultValue={actionData?.data?.managedEmails || user.managedEmails.join('\n')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="user1@example.com&#10;user2@example.com"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    実際にメールを受信・管理するアドレス（1行に1つ、またはカンマ区切り）
-                  </p>
-                </div>
 
                 <LoadingButton
                   type="submit"
@@ -273,26 +291,164 @@ const Profile = () => {
                   size="medium"
                   className="w-full"
                 >
-                  プロフィールを更新
+                  連絡先メールアドレスを更新
                 </LoadingButton>
               </Form>
             </div>
-          </div>
 
-          {/* 管理メールアドレス一覧 */}
-          <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              現在の管理メールアドレス ({user.managedEmails.length}件)
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {user.managedEmails.map((email, index) => (
-                <div
-                  key={index}
-                  className="px-3 py-2 bg-gray-50 rounded border font-mono text-sm"
-                >
-                  {email}
+            {/* 管理メールアドレス設定 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">管理メールアドレス設定</h2>
+            <Form method="post">
+              {/* 隠しフィールド */}
+              <input type="hidden" name="email" value={user.email} />
+              <input type="hidden" name="managedEmails" value={managedEmails.join('\n')} />
+              
+              <div className="space-y-6">
+                {/* メールアドレス追加UI */}
+                {allowedDomains.length > 0 ? (
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <p className="text-sm font-medium text-gray-700 mb-3">新しいメールアドレスを追加</p>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">ユーザー名</label>
+                        <input
+                          type="text"
+                          value={newEmailLocal}
+                          onChange={(e) => setNewEmailLocal(e.target.value)}
+                          placeholder="username"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          disabled={isSubmitting}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addEmail();
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">ドメイン</label>
+                        <select
+                          value={newEmailDomain}
+                          onChange={(e) => setNewEmailDomain(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          disabled={isSubmitting}
+                        >
+                          {allowedDomains.map((domain) => (
+                            <option key={domain} value={domain}>
+                              {domain}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="text-sm text-gray-600">
+                          プレビュー: <span className="font-mono">{newEmailLocal || 'username'}@{newEmailDomain}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={addEmail}
+                          disabled={isSubmitting || !newEmailLocal.trim()}
+                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          追加
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-yellow-50 p-4 rounded-md">
+                    <p className="text-sm text-gray-600 mb-3">
+                      管理者がドメイン制限を設定していないため、任意のメールアドレスを入力できます。
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={newEmailLocal}
+                        onChange={(e) => setNewEmailLocal(e.target.value)}
+                        placeholder="user@example.com"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isSubmitting}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (newEmailLocal.includes("@")) {
+                              const fullEmail = newEmailLocal.trim();
+                              if (!managedEmails.includes(fullEmail)) {
+                                setManagedEmails([...managedEmails, fullEmail]);
+                                setNewEmailLocal("");
+                              }
+                            }
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const fullEmail = newEmailLocal.trim();
+                          if (fullEmail.includes("@") && !managedEmails.includes(fullEmail)) {
+                            setManagedEmails([...managedEmails, fullEmail]);
+                            setNewEmailLocal("");
+                          }
+                        }}
+                        disabled={isSubmitting || !newEmailLocal.trim() || !newEmailLocal.includes("@")}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        追加
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* 現在のメールアドレス一覧 */}
+                {managedEmails.length > 0 ? (
+                  <div>
+                    <h3 className="text-md font-medium text-gray-700 mb-3">
+                      現在の管理メールアドレス ({managedEmails.length}個)
+                    </h3>
+                    <div className="space-y-2">
+                      {managedEmails.map((email, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded border">
+                          <span className="font-mono text-sm">{email}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeEmail(index)}
+                            disabled={isSubmitting || managedEmails.length <= 1}
+                            className="text-red-600 hover:text-red-800 disabled:opacity-50 text-sm px-2 py-1"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-red-50 p-4 rounded-md">
+                    <p className="text-sm text-red-600">
+                      管理メールアドレスが設定されていません。最低1つのメールアドレスが必要です。
+                    </p>
+                  </div>
+                )}
+                
+                <div className="pt-4 border-t">
+                  <LoadingButton
+                    type="submit"
+                    loading={isSubmitting}
+                    loadingText="更新中..."
+                    variant="primary"
+                    size="medium"
+                    className="w-full"
+                    disabled={managedEmails.length === 0}
+                  >
+                    管理メールアドレスを更新
+                  </LoadingButton>
+                  <p className="text-xs text-gray-500 mt-2">
+                    実際にメールを受信・管理するアドレスです
+                  </p>
                 </div>
-              ))}
+              </div>
+            </Form>
             </div>
           </div>
         </div>
