@@ -10,6 +10,8 @@ export default [
   route("/admin/users", "routes/admin/users.tsx"),
   route("/admin/invites", "routes/admin/invites.tsx"),
   route("/admin/administrators", "routes/admin/administrators.tsx"),
+  route("/admin/system-settings", "routes/admin/system-settings.tsx"),
+  route("/admin/system-settings/history", "routes/admin/system-settings/history.tsx"),
 
   // ユーザー認証・ダッシュボード
   route("/signup", "routes/signup.tsx"),
