@@ -56,11 +56,20 @@
 - **ignore されたファイルはコミットしないこと**: `.gitignore` で除外されているファイル（`wrangler.jsonc` など）は `-f` フラグを使用してもコミットしないでください
 - **関連ファイルのみコミット**: 機能実装時は関連するファイルのみを段階的にコミットしてください
 
+### React Router v7 ルーティング
+
+- **ファイルベースルーティングの制限**: ファイルを作成するだけでは自動的にルートが生成されません
+- **明示的なルート定義が必要**: 新しいページを作成した場合は `src/app/routes.ts` にルート定義を追加してください
+  - 例: `route("/admin/new-page", "routes/admin/new-page.tsx")`
+- **ネストしたルート**: サブページも個別に定義が必要
+  - 例: `route("/admin/settings/history", "routes/admin/settings/history.tsx")`
+
 ### AI アシスタント向けガイドライン
 
 - **開発用サーバーを起動しないこと**: Claude や Gemini などの AI は `npm run dev` や `bun run dev` などのサーバー起動コマンドを実行してはいけません
   - 理由: プロセスが停止せず、セッションが応答不能になるため
   - 代替案: 静的チェック（`bun run typecheck`, `bun run lint`）を使用してください
+- **新しいページ作成時**: ファイル作成後は必ず `src/app/routes.ts` にルート定義を追加してください
 
 # Cloudflare Mailbox システム仕様書
 
