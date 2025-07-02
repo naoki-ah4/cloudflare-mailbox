@@ -8,8 +8,11 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { useState } from "react";
 import { SystemKV } from "~/utils/kv/system";
 import LoadingButton from "~/app/components/elements/LoadingButton";
+import type { SystemSettings } from "~/utils/kv/schema";
 
-export const loader = async ({ context }: LoaderFunctionArgs) => {
+export const loader = async ({
+  context,
+}: LoaderFunctionArgs): Promise<{ settings: SystemSettings }> => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
 
   try {
@@ -122,16 +125,16 @@ export default () => {
 
   // 受信可能メールアドレスリストの状態管理
   const [emails, setEmails] = useState<string[]>(
-    settings.allowedEmailAddresses ?? []
+    settings.allowedEmailAddresses
   );
   const [newEmail, setNewEmail] = useState("");
 
   // 未許可メール処理方式の状態管理
   const [handlingMode, setHandlingMode] = useState<"REJECT" | "CATCH_ALL">(
-    settings.unauthorizedEmailHandling ?? "REJECT"
+    settings.unauthorizedEmailHandling
   );
   const [catchAllEmail, setCatchAllEmail] = useState<string>(
-    settings.catchAllEmailAddress ?? ""
+    settings.catchAllEmailAddress || ""
   );
 
   // ドメイン追加
@@ -474,29 +477,27 @@ export default () => {
               受信可能メールアドレス:
             </h3>
             <p className="text-lg font-semibold text-gray-900">
-              {settings.allowedEmailAddresses?.length === 0 ||
-              !settings.allowedEmailAddresses
+              {settings.allowedEmailAddresses.length === 0
                 ? "制限なし（全アドレス受信）"
                 : `${settings.allowedEmailAddresses.length}個のアドレス`}
             </p>
 
-            {settings.allowedEmailAddresses &&
-              settings.allowedEmailAddresses.length > 0 && (
-                <div className="bg-gray-50 p-3 rounded-md mt-2">
-                  <ul className="list-disc list-inside space-y-1">
-                    {settings.allowedEmailAddresses.map(
-                      (email: string, index: number) => (
-                        <li
-                          key={index}
-                          className="text-sm text-gray-700 font-mono"
-                        >
-                          {email}
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              )}
+            {settings.allowedEmailAddresses.length > 0 && (
+              <div className="bg-gray-50 p-3 rounded-md mt-2">
+                <ul className="list-disc list-inside space-y-1">
+                  {settings.allowedEmailAddresses.map(
+                    (email: string, index: number) => (
+                      <li
+                        key={index}
+                        className="text-sm text-gray-700 font-mono"
+                      >
+                        {email}
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* 未許可メール処理方式 */}
