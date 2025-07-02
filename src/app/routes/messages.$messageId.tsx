@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import { useState } from "react";
+import { sanitizeHTML, sanitizeFileName, sanitizeEmailText } from "~/utils/sanitize";
 import styles from "./messages.$messageId.module.scss";
 
 export const loader = async ({ request, params, context }: LoaderFunctionArgs) => {
@@ -114,6 +115,7 @@ const MessageDetail = () => {
   const { message, recipientEmail } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const [displayMode, setDisplayMode] = useState<'html' | 'text'>('html');
+  const [allowExternalImages, setAllowExternalImages] = useState(false);
 
   return (
     <div className={styles.container}>
@@ -152,11 +154,11 @@ const MessageDetail = () => {
       <div className={styles.messageCard}>
         {/* メッセージヘッダー */}
         <div className={styles.messageHeader}>
-          <h1>{message.subject || "(件名なし)"}</h1>
+          <h1>{sanitizeEmailText(message.subject) || "(件名なし)"}</h1>
 
           <div className={styles.messageMetaGrid}>
             <strong>送信者:</strong>
-            <span>{message.from}</span>
+            <span>{sanitizeEmailText(message.from)}</span>
 
             <strong>受信者:</strong>
             <span>{message.to.join(", ")}</span>
@@ -200,7 +202,7 @@ const MessageDetail = () => {
                       <span className="mr-3 text-lg">📎</span>
                       <div>
                         <div className="font-medium text-gray-900">
-                          {attachment.filename}
+                          {sanitizeFileName(attachment.filename)}
                         </div>
                         <div className="text-xs text-gray-500">
                           {Math.round(attachment.size / 1024)}KB • {attachment.contentType || 'application/octet-stream'}
@@ -227,7 +229,7 @@ const MessageDetail = () => {
         <div className="p-6">
           {message.html ? (
             <div className="mb-4">
-              <div className="flex gap-2 mb-4 text-sm">
+              <div className="flex gap-2 mb-4 text-sm flex-wrap">
                 <button
                   onClick={() => setDisplayMode('html')}
                   className={`px-3 py-1 text-white border-none rounded cursor-pointer ${displayMode === 'html' ? 'bg-blue-600' : 'bg-gray-500'
@@ -242,13 +244,22 @@ const MessageDetail = () => {
                 >
                   テキスト表示
                 </button>
+                {displayMode === 'html' && (
+                  <button
+                    onClick={() => setAllowExternalImages(!allowExternalImages)}
+                    className={`px-3 py-1 text-white border-none rounded cursor-pointer ${allowExternalImages ? 'bg-green-600' : 'bg-orange-500'
+                      }`}
+                  >
+                    {allowExternalImages ? '🖼️ 外部画像: 許可中' : '🖼️ 外部画像: ブロック中'}
+                  </button>
+                )}
               </div>
 
               {/* HTML/テキスト表示 */}
               {displayMode === 'html' ? (
                 <div
                   className={styles.htmlContent}
-                  dangerouslySetInnerHTML={{ __html: message.html }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(message.html, { allowExternalImages }) }}
                 />
               ) : (
                 <pre className={styles.textContent}>

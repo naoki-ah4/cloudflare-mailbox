@@ -2,14 +2,15 @@ import { Form, useLoaderData, useActionData, useNavigation } from "react-router"
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { useState } from "react";
 import { SystemKV } from "~/utils/kv/system";
+import LoadingButton from "~/app/components/elements/LoadingButton";
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   try {
     // システム設定を取得（認証チェックはworkers/app.tsで実施済み）
     const settings = await SystemKV.getSettings(env.SYSTEM_KV);
-    
+
     return {
       settings: settings || await SystemKV.getDefaultSettings(),
     };
@@ -21,35 +22,35 @@ export const loader = async ({ context }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   if (request.method === "POST") {
     try {
       const formData = await request.formData();
       const domainsText = formData.get("domains") as string;
-      
+
       // ドメインリストを解析
       const domains = domainsText
         .split('\n')
         .map(d => d.trim())
         .filter(d => d.length > 0);
-      
+
       // ドメイン形式の簡易バリデーション
       for (const domain of domains) {
         if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
           return { error: `無効なドメイン形式です: ${domain}` };
         }
       }
-      
+
       // システム設定を更新（管理者IDは仮でsystemを使用）
       await SystemKV.updateSettings(env.SYSTEM_KV, domains, 'system');
-      
+
       return { success: "システム設定を更新しました" };
     } catch (error) {
       console.error("Failed to update system settings:", error);
       return { error: "システム設定の更新に失敗しました" };
     }
   }
-  
+
   return { error: "許可されていないメソッドです" };
 }
 
@@ -91,7 +92,7 @@ export default () => {
             ユーザーが設定可能なメールドメインを管理します
           </p>
         </div>
-        <a 
+        <a
           href="/admin"
           className="px-4 py-2 bg-gray-500 text-white no-underline rounded-md hover:bg-gray-600 transition-colors"
         >
@@ -117,16 +118,16 @@ export default () => {
           ユーザーが設定可能なメールアドレスのドメインを制限します。
           空にすると全てのドメインが許可されます。
         </p>
-        
+
         <Form method="post">
           {/* 隠しフィールドでドメインリストを送信 */}
           <input type="hidden" name="domains" value={domains.join('\n')} />
-          
+
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
               許可ドメイン設定:
             </label>
-            
+
             {/* ドメイン追加UI */}
             <div className="flex gap-2 mb-4">
               <input
@@ -152,7 +153,7 @@ export default () => {
                 追加
               </button>
             </div>
-            
+
             {/* ドメインリスト表示 */}
             {domains.length > 0 ? (
               <div className="bg-gray-50 p-4 rounded-md">
@@ -182,37 +183,35 @@ export default () => {
                 </p>
               </div>
             )}
-            
+
             <small className="text-gray-500 text-sm block mt-2">
               例: example.com, company.jp など
             </small>
           </div>
-          
-          <button
+
+          <LoadingButton
             type="submit"
-            disabled={isSubmitting}
-            className={`px-6 py-3 text-white font-medium rounded-md text-base transition-all ${
-              isSubmitting 
-                ? "bg-blue-400 cursor-not-allowed opacity-60" 
-                : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-            }`}
+            loading={isSubmitting}
+            loadingText="更新中..."
+            variant="primary"
+            size="medium"
           >
-            {isSubmitting ? "更新中..." : "設定を更新"}
-          </button>
+            設定を更新
+          </LoadingButton>
         </Form>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">現在の設定</h2>
-          <a 
+          <a
             href="/admin/system-settings/history"
             className="px-3 py-2 bg-gray-100 text-gray-700 no-underline rounded-md hover:bg-gray-200 transition-colors text-sm"
           >
             変更履歴を見る
           </a>
         </div>
-        
+
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">許可ドメイン数:</h3>
@@ -220,7 +219,7 @@ export default () => {
               {settings.allowedDomains.length === 0 ? "制限なし" : `${settings.allowedDomains.length}個`}
             </p>
           </div>
-          
+
           {settings.allowedDomains.length > 0 && (
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">許可ドメイン一覧:</h3>
@@ -235,7 +234,7 @@ export default () => {
               </div>
             </div>
           )}
-          
+
           {settings.updatedAt > 0 && (
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">最終更新:</h3>

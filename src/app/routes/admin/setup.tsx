@@ -3,6 +3,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { AdminKV, AdminSessionKV } from "~/utils/kv";
 import { getAdminSession, commitAdminSession } from "~/utils/session.server";
 import { redirect } from "react-router";
+import LoadingButton from "~/app/components/elements/LoadingButton";
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -148,17 +149,16 @@ export default () => {
           </small>
         </div>
 
-        <button
+        <LoadingButton
           type="submit"
-          disabled={isSubmitting}
-          className={`w-full py-3 px-4 text-white font-medium rounded-md text-base transition-colors ${
-            isSubmitting 
-              ? "bg-gray-400 cursor-not-allowed" 
-              : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-          }`}
+          loading={isSubmitting}
+          loadingText="作成中..."
+          variant="primary"
+          size="large"
+          className="w-full"
         >
-          {isSubmitting ? "作成中..." : "管理者アカウント作成"}
-        </button>
+          管理者アカウント作成
+        </LoadingButton>
       </Form>
     </div>
   );

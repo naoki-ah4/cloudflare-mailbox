@@ -8,6 +8,7 @@ export { ThreadKV } from './thread';
 export { InboxKV } from './inbox';
 export { FolderKV } from './folder';
 export { SettingsKV } from './settings';
+export { RateLimitKV } from './rate-limit';
 
 // 型定義も再エクスポート
 export type {
@@ -23,4 +24,6 @@ export type {
   InboxMessages,
   FolderMessages,
   UserSettings,
+  RateLimitRecord,
+  RateLimitResult,
 } from './schema';

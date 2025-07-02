@@ -16,7 +16,7 @@ export const useFormSubmit = (options: UseFormSubmitOptions = {}) => {
   ) => {
     try {
       setIsSubmitting(true);
-      submit(formData, submitOptions);
+      void submit(formData, submitOptions);
       options.onSuccess?.();
     } catch (error) {
       options.onError?.(error as Error);

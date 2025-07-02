@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { SessionKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/kv/schema";
+import { sanitizeEmailText, sanitizeSearchQuery } from "~/utils/sanitize";
 import styles from "./messages.module.scss";
 import Pagination from "../components/Pagination";
 import { useState } from "react";
@@ -297,7 +298,7 @@ const Messages = () => {
         ) : messages.length === 0 ? (
           <div className={styles.noMessagesContainer}>
             {searchQuery ? 
-              `「${searchQuery}」に該当するメールが見つかりません` :
+              `「${sanitizeSearchQuery(searchQuery)}」に該当するメールが見つかりません` :
               "メールがありません"
             }
           </div>
@@ -314,7 +315,7 @@ const Messages = () => {
                     <div className={styles.messageItemLeft}>
                       <div className={styles.messageItemHeader}>
                         <span className={`${styles.messageFrom} ${!message.isRead ? styles.unread : ''}`}>
-                          {message.from}
+                          {sanitizeEmailText(message.from)}
                         </span>
                         {!selectedMailbox && (
                           <span className={styles.messageMailboxTag}>
@@ -326,7 +327,7 @@ const Messages = () => {
                         )}
                       </div>
                       <div className={`${styles.messageSubject} ${!message.isRead ? styles.unread : ''}`}>
-                        {message.subject || "(件名なし)"}
+                        {sanitizeEmailText(message.subject) || "(件名なし)"}
                       </div>
                     </div>
                     <div className={styles.messageDate}>

@@ -166,6 +166,23 @@ export type SystemSettings = z.infer<typeof SystemSettingsSchema>;
 export type SystemSettingsHistoryEntry = z.infer<typeof SystemSettingsHistoryEntrySchema>;
 export type SystemSettingsHistory = z.infer<typeof SystemSettingsHistorySchema>;
 
+// レートリミット関連スキーマ
+export const RateLimitRecordSchema = z.object({
+  attempts: z.number().min(0),
+  firstAttempt: z.number(),
+  lastAttempt: z.number(),
+});
+
+export const RateLimitResultSchema = z.object({
+  allowed: z.boolean(),
+  remaining: z.number().min(0),
+  resetTime: z.number().optional(),
+  message: z.string().optional(),
+});
+
+export type RateLimitRecord = z.infer<typeof RateLimitRecordSchema>;
+export type RateLimitResult = z.infer<typeof RateLimitResultSchema>;
+
 // KVキーからスキーマ型を推論するヘルパー型
 export type KVKeyPrefix = keyof typeof KVSchemas;
 export type KVSchemaType<T extends KVKeyPrefix> = z.infer<
