@@ -6,7 +6,9 @@ const THEME_STORAGE_KEY = "cloudflare-mailbox-theme";
 
 export const getSystemTheme = (): "light" | "dark" => {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 };
 
 export const getStoredTheme = (): Theme | null => {

@@ -18,8 +18,8 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       "Set-Cookie": await destroyAdminSession(session),
     },
   });
-}
+};
 
 export const loader = async () => {
   return redirect("/admin/login");
-}
+};

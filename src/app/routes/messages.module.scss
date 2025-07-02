@@ -1,7 +1,7 @@
 .container {
   display: flex;
   min-height: 100vh;
-  
+
   // タブレット以下でサイドバーを隠す
   @media (max-width: 1024px) {
     flex-direction: column;
@@ -13,7 +13,7 @@
   background-color: var(--color-sidebar-bg, #f8f9fa);
   border-right: 1px solid var(--color-sidebar-border, #dee2e6);
   padding: 1rem;
-  
+
   // タブレット・モバイル対応
   @media (max-width: 1024px) {
     width: 100%;
@@ -21,7 +21,7 @@
     border-bottom: 1px solid #dee2e6;
     padding: 1rem;
   }
-  
+
   @media (max-width: 768px) {
     display: none; // モバイルでは初期非表示
     position: fixed;
@@ -31,7 +31,7 @@
     width: 300px;
     z-index: 1000;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-    
+
     &.open {
       display: block;
     }
@@ -40,12 +40,12 @@
 
 .sidebarHeader {
   margin-bottom: 2rem;
-  
+
   h2 {
     margin: 0 0 0.5rem 0;
     font-size: 1.25rem;
   }
-  
+
   p {
     margin: 0;
     font-size: 0.875rem;
@@ -66,13 +66,13 @@
   border-radius: 4px;
   text-align: center;
   border: 1px solid var(--color-card-border, #dee2e6);
-  
+
   h3 {
     margin: 0 0 0.25rem 0;
     font-size: 0.75rem;
     color: #666;
   }
-  
+
   p {
     margin: 0;
     font-size: 1.25rem;
@@ -82,7 +82,7 @@
 
 .mailboxSection {
   margin-bottom: 2rem;
-  
+
   h3 {
     margin: 0 0 0.75rem 0;
     font-size: 1rem;
@@ -102,26 +102,26 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
-  
+
   &:hover {
     background-color: var(--color-nav-item-hover, #e9ecef);
   }
-  
+
   &.active {
     background-color: #007bff;
     color: white;
     border-color: #007bff;
   }
-  
+
   .mailboxName {
     font-weight: bold;
     font-size: 0.875rem;
   }
-  
+
   .mailboxStats {
     font-size: 0.75rem;
     margin-top: 0.25rem;
-    
+
     .active & {
       color: rgba(255, 255, 255, 0.8);
     }
@@ -137,7 +137,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.875rem;
-  
+
   &:hover {
     background-color: #c82333;
   }
@@ -163,7 +163,7 @@
     margin: 0 0 0.5rem 0;
     font-size: 1.5rem;
   }
-  
+
   p {
     margin: 0;
     color: #666;
@@ -172,7 +172,7 @@
 
 .searchSection {
   margin-bottom: 1.5rem;
-  
+
   input {
     width: 100%;
     padding: 0.75rem;
@@ -201,11 +201,11 @@
   margin-bottom: 0.5rem;
   overflow: hidden;
   transition: box-shadow 0.2s;
-  
+
   &:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
-  
+
   &.unread {
     border-left: 4px solid #007bff;
     font-weight: bold;
@@ -222,17 +222,17 @@
 
 .messageInfo {
   flex: 1;
-  
+
   .messageFrom {
     font-weight: bold;
     margin-bottom: 0.25rem;
   }
-  
+
   .messageSubject {
     margin-bottom: 0.25rem;
     color: #333;
   }
-  
+
   .messagePreview {
     color: #666;
     font-size: 0.875rem;
@@ -244,18 +244,18 @@
   text-align: right;
   font-size: 0.75rem;
   color: #666;
-  
+
   .messageDate {
     margin-bottom: 0.25rem;
   }
-  
+
   .messageMailbox {
     background-color: #e9ecef;
     padding: 0.125rem 0.5rem;
     border-radius: 10px;
     margin-bottom: 0.25rem;
   }
-  
+
   .messageSize {
     // Additional meta info
   }
@@ -287,11 +287,11 @@
   cursor: pointer;
   margin-bottom: 0.25rem;
   transition: all 0.2s;
-  
+
   &:hover {
     background-color: #f8f9fa;
   }
-  
+
   &.selected {
     background-color: #007bff;
     color: white;
@@ -303,7 +303,7 @@
   font-size: 0.75rem;
   color: #666;
   margin-top: 0.25rem;
-  
+
   .selected & {
     color: rgba(255, 255, 255, 0.8);
   }
@@ -313,7 +313,7 @@
 .mainContentArea {
   flex: 1;
   padding: 1rem;
-  
+
   // モバイル対応
   @media (max-width: 768px) {
     padding: 0.75rem;
@@ -327,26 +327,26 @@
   margin-bottom: 1rem;
   border-bottom: 1px solid #eee;
   padding-bottom: 1rem;
-  
+
   h1 {
     margin: 0;
-    
+
     // モバイルでタイトルサイズ調整
     @media (max-width: 768px) {
       font-size: 1.25rem;
     }
   }
-  
+
   p {
     margin: 0.25rem 0 0 0;
     color: #666;
-    
+
     // モバイルで文字サイズ調整
     @media (max-width: 768px) {
       font-size: 0.875rem;
     }
   }
-  
+
   // モバイルでヘッダーを縦積み
   @media (max-width: 768px) {
     flex-direction: column;
@@ -366,7 +366,7 @@
 
 .searchBar {
   margin-bottom: 1rem;
-  
+
   input {
     width: 100%;
     padding: 0.75rem;
@@ -398,15 +398,15 @@
   text-decoration: none;
   color: inherit;
   transition: background-color 0.2s;
-  
+
   &:hover {
     background-color: #f8f9fa !important;
   }
-  
+
   &.unread {
     background-color: #f0f8ff;
   }
-  
+
   &:last-child {
     border-bottom: none;
   }
@@ -416,7 +416,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  
+
   // モバイルで縦積みレイアウト
   @media (max-width: 480px) {
     flex-direction: column;
@@ -436,7 +436,7 @@
 
 .messageFrom {
   font-size: 0.875rem;
-  
+
   &.unread {
     font-weight: bold;
   }
@@ -458,7 +458,7 @@
 
 .messageSubject {
   margin-bottom: 0.25rem;
-  
+
   &.unread {
     font-weight: bold;
   }
@@ -469,7 +469,7 @@
   color: #666;
   text-align: right;
   min-width: 100px;
-  
+
   // モバイルで左寄せ
   @media (max-width: 480px) {
     text-align: left;
@@ -480,7 +480,7 @@
 // モバイル用のハンバーガーメニューとオーバーレイ
 .mobileMenuButton {
   display: none;
-  
+
   @media (max-width: 768px) {
     display: block;
     background: none;
@@ -494,7 +494,7 @@
 
 .sidebarOverlay {
   display: none;
-  
+
   @media (max-width: 768px) {
     position: fixed;
     top: 0;
@@ -503,7 +503,7 @@
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 999;
-    
+
     &.open {
       display: block;
     }
@@ -512,7 +512,7 @@
 
 .sidebarCloseButton {
   display: none;
-  
+
   @media (max-width: 768px) {
     display: block;
     position: absolute;

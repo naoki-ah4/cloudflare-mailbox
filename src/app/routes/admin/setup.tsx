@@ -39,12 +39,12 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
   try {
     // パスワードハッシュ化（本来はbcryptを使用）
     const passwordHash = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(password + 'salt')
+      "SHA-256",
+      new TextEncoder().encode(password + "salt")
     );
     const hashHex = Array.from(new Uint8Array(passwordHash))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
     // 管理者作成
     const adminId = crypto.randomUUID();
@@ -63,7 +63,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       id: sessionId,
       adminId,
       createdAt: Date.now(),
-      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7日間
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7日間
     };
 
     await AdminSessionKV.set(env.USERS_KV, sessionId, kvSession);
@@ -80,9 +80,13 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     console.error("Admin setup error:", error);
     return { error: "セットアップに失敗しました。もう一度お試しください。" };
   }
-}
+};
 
-export const loader = async ({ context }: { context: { cloudflare: { env: Env } } }) => {
+export const loader = async ({
+  context,
+}: {
+  context: { cloudflare: { env: Env } };
+}) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
 
   // 管理者が既に存在する場合はリダイレクト
@@ -92,7 +96,7 @@ export const loader = async ({ context }: { context: { cloudflare: { env: Env } 
   }
 
   return null;
-}
+};
 
 export default () => {
   const actionData = useActionData<typeof action>();
@@ -102,7 +106,9 @@ export default () => {
   return (
     <div className="max-w-md mx-auto p-8">
       <h1 className="text-2xl font-bold mb-4">管理者初期設定</h1>
-      <p className="text-gray-600 mb-8">システムの初期管理者アカウントを作成してください。</p>
+      <p className="text-gray-600 mb-8">
+        システムの初期管理者アカウントを作成してください。
+      </p>
 
       <Form method="post">
         {actionData?.error && (
@@ -112,7 +118,10 @@ export default () => {
         )}
 
         <div className="mb-4">
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="username"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             ユーザー名:
           </label>
           <input
@@ -132,7 +141,10 @@ export default () => {
         </div>
 
         <div className="mb-6">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             パスワード:
           </label>
           <input
@@ -144,9 +156,7 @@ export default () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <small className="text-gray-500 text-sm">
-            8文字以上
-          </small>
+          <small className="text-gray-500 text-sm">8文字以上</small>
         </div>
 
         <LoadingButton
@@ -162,4 +172,4 @@ export default () => {
       </Form>
     </div>
   );
-}
+};

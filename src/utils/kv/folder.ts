@@ -2,7 +2,7 @@ import {
   FolderMessagesSchema,
   type FolderMessages,
   type EmailMetadata,
-} from './schema';
+} from "./schema";
 
 export const FolderKV = {
   async get(
@@ -74,7 +74,7 @@ export const FolderKV = {
   async list(kv: KVNamespace, userId: string): Promise<string[]> {
     const folderList = await kv.list({ prefix: `folder:${userId}:` });
     return folderList.keys.map((key) =>
-      key.name.replace(`folder:${userId}:`, '')
+      key.name.replace(`folder:${userId}:`, "")
     );
   },
 };

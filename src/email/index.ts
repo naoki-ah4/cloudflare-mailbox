@@ -1,8 +1,8 @@
-import PostalMime from 'postal-mime';
-import { maxAttachmentsSize } from '../utils/size';
-import { saveAttachments } from './attachments';
-import { saveEmailToKV, updateInboxIndex } from './storage';
-import { createEmailMessage } from './utils';
+import PostalMime from "postal-mime";
+import { maxAttachmentsSize } from "../utils/size";
+import { saveAttachments } from "./attachments";
+import { saveEmailToKV, updateInboxIndex } from "./storage";
+import { createEmailMessage } from "./utils";
 
 const emailHandler = async (
   message: ForwardableEmailMessage,
@@ -28,7 +28,7 @@ const emailHandler = async (
     await saveEmailToKV(emailMessage, env.MESSAGES_KV);
     await updateInboxIndex(emailMessage, env.MAILBOXES_KV);
   } catch (error) {
-    console.error('Error processing email:', error);
+    console.error("Error processing email:", error);
   }
 };
 

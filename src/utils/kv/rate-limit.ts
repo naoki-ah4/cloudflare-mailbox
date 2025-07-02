@@ -1,4 +1,9 @@
-import { RateLimitRecordSchema, RateLimitResultSchema, type RateLimitRecord, type RateLimitResult } from './schema';
+import {
+  RateLimitRecordSchema,
+  RateLimitResultSchema,
+  type RateLimitRecord,
+  type RateLimitResult,
+} from "./schema";
 
 export const RateLimitKV = {
   /**
@@ -39,7 +44,7 @@ export const RateLimitKV = {
           allowed: false,
           remaining: 0,
           resetTime,
-          message: `試行回数が上限に達しました。${Math.ceil(remainingMs / 1000 / 60)}分後に再試行してください。`
+          message: `試行回数が上限に達しました。${Math.ceil(remainingMs / 1000 / 60)}分後に再試行してください。`,
         });
       }
 
@@ -47,22 +52,21 @@ export const RateLimitKV = {
       const newRecord: RateLimitRecord = {
         attempts: attempts + 1,
         firstAttempt,
-        lastAttempt: now
+        lastAttempt: now,
       };
 
       await this.set(kv, key, newRecord, Math.ceil(windowMs / 1000));
 
       return RateLimitResultSchema.parse({
         allowed: true,
-        remaining: limit - attempts - 1
+        remaining: limit - attempts - 1,
       });
-
     } catch (error) {
-      console.error('Rate limit check failed:', error);
+      console.error("Rate limit check failed:", error);
       // エラー時は制限を適用しない（可用性優先）
       return RateLimitResultSchema.parse({
         allowed: true,
-        remaining: limit - 1
+        remaining: limit - 1,
       });
     }
   },
@@ -151,7 +155,7 @@ export const RateLimitKV = {
       return {
         allowed: true,
         remaining: 999,
-        message: "管理者レート制限は無効化されています"
+        message: "管理者レート制限は無効化されています",
       };
     }
 
@@ -197,24 +201,18 @@ export const RateLimitKV = {
   /**
    * レート制限をクリア（成功ログイン時など）
    */
-  async clearRateLimit(
-    kv: KVNamespace,
-    key: string
-  ): Promise<void> {
+  async clearRateLimit(kv: KVNamespace, key: string): Promise<void> {
     try {
       await this.delete(kv, key);
     } catch (error) {
-      console.error('Failed to clear rate limit:', error);
+      console.error("Failed to clear rate limit:", error);
     }
   },
 
   /**
    * ログイン成功時のレート制限クリア
    */
-  async clearLoginRateLimit(
-    kv: KVNamespace,
-    ip: string
-  ): Promise<void> {
+  async clearLoginRateLimit(kv: KVNamespace, ip: string): Promise<void> {
     await this.clearRateLimit(kv, `login:${ip}`);
   },
 
@@ -230,7 +228,7 @@ export const RateLimitKV = {
     if (env?.DISABLE_ADMIN_RATE_LIMIT === "true") {
       return;
     }
-    
+
     await this.clearRateLimit(kv, `admin_login:${ip}`);
-  }
+  },
 };

@@ -12,8 +12,14 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
   try {
     // レート制限チェック
-    const clientIP = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "unknown";
-    const rateLimit = await RateLimitKV.checkLoginRateLimit(env.USERS_KV, clientIP);
+    const clientIP =
+      request.headers.get("CF-Connecting-IP") ||
+      request.headers.get("X-Forwarded-For") ||
+      "unknown";
+    const rateLimit = await RateLimitKV.checkLoginRateLimit(
+      env.USERS_KV,
+      clientIP
+    );
 
     if (!rateLimit.allowed) {
       console.warn(`Login rate limit exceeded for IP: ${clientIP}`);
@@ -51,12 +57,12 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
     // パスワード検証
     const passwordHash = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(password + 'salt')
+      "SHA-256",
+      new TextEncoder().encode(password + "salt")
     );
     const hashHex = Array.from(new Uint8Array(passwordHash))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
     if (user.passwordHash !== hashHex) {
       session.flash("error", "ユーザー名またはパスワードが正しくありません");
@@ -75,7 +81,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       email: user.email,
       managedEmails: user.managedEmails,
       createdAt: Date.now(),
-      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7日間
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7日間
     };
 
     await SessionKV.set(env.USERS_KV, sessionId, kvSession);
@@ -95,7 +101,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     console.info(`User login successful:`, {
       userId: user.id,
       username: user.username,
-      ip: clientIP
+      ip: clientIP,
     });
 
     return redirect("/dashboard", {
@@ -112,7 +118,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       },
     });
   }
-}
+};
 
 const Login = () => {
   const navigation = useNavigation();
@@ -126,9 +132,11 @@ const Login = () => {
       </p>
 
       <Form method="post">
-
         <div className="mb-4">
-          <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-700">
+          <label
+            htmlFor="username"
+            className="block mb-2 text-sm font-medium text-gray-700"
+          >
             ユーザー名:
           </label>
           <input
@@ -142,7 +150,10 @@ const Login = () => {
         </div>
 
         <div className="mb-8">
-          <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-700">
+          <label
+            htmlFor="password"
+            className="block mb-2 text-sm font-medium text-gray-700"
+          >
             パスワード:
           </label>
           <input

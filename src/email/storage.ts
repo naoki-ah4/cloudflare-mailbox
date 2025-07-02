@@ -1,5 +1,5 @@
-import type { EmailMessage, EmailMetadata } from './types';
-import { MessageKV, InboxKV, ThreadKV } from '../utils/kv';
+import type { EmailMessage, EmailMetadata } from "./types";
+import { MessageKV, InboxKV, ThreadKV } from "../utils/kv";
 /**
  * メールメッセージをKVに保存します。
  * @returns {Promise<void>}

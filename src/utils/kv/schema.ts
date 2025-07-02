@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // ユーザー関連スキーマ
 export const UserSchema = z
@@ -16,8 +16,8 @@ export const UserSchema = z
     lastLogin: z.number().optional(),
   })
   .refine((data) => !data.managedEmails.includes(data.email), {
-    message: 'Contact email cannot be included in managed emails',
-    path: ['email'],
+    message: "Contact email cannot be included in managed emails",
+    path: ["email"],
   });
 
 export const SessionSchema = z.object({
@@ -102,9 +102,9 @@ export const FolderMessagesSchema = z.array(EmailMetadataSchema);
 export const UserSettingsSchema = z.object({
   userId: z.string().uuid(),
   emailNotifications: z.boolean().default(true),
-  theme: z.enum(['light', 'dark', 'auto']).default('auto'),
-  language: z.enum(['ja', 'en']).default('ja'),
-  timezone: z.string().default('Asia/Tokyo'),
+  theme: z.enum(["light", "dark", "auto"]).default("auto"),
+  language: z.enum(["ja", "en"]).default("ja"),
+  timezone: z.string().default("Asia/Tokyo"),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
@@ -124,7 +124,9 @@ export const SystemSettingsHistoryEntrySchema = z.object({
 });
 
 // システム設定編集履歴
-export const SystemSettingsHistorySchema = z.array(SystemSettingsHistoryEntrySchema);
+export const SystemSettingsHistorySchema = z.array(
+  SystemSettingsHistoryEntrySchema
+);
 
 // KVキー別のスキーママッピング
 export const KVSchemas = {
@@ -133,7 +135,7 @@ export const KVSchemas = {
   session: SessionSchema,
   invite: InviteSchema,
   admin: AdminSchema,
-  'admin-session': AdminSessionSchema,
+  "admin-session": AdminSessionSchema,
 
   // MESSAGES_KV
   msg: EmailMessageSchema,
@@ -145,8 +147,8 @@ export const KVSchemas = {
   settings: UserSettingsSchema,
 
   // SYSTEM_KV
-  'system-settings': SystemSettingsSchema,
-  'system-settings-history': SystemSettingsHistorySchema,
+  "system-settings": SystemSettingsSchema,
+  "system-settings-history": SystemSettingsHistorySchema,
 } as const;
 
 // 型定義をエクスポート
@@ -163,7 +165,9 @@ export type InboxMessages = z.infer<typeof InboxMessagesSchema>;
 export type FolderMessages = z.infer<typeof FolderMessagesSchema>;
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 export type SystemSettings = z.infer<typeof SystemSettingsSchema>;
-export type SystemSettingsHistoryEntry = z.infer<typeof SystemSettingsHistoryEntrySchema>;
+export type SystemSettingsHistoryEntry = z.infer<
+  typeof SystemSettingsHistoryEntrySchema
+>;
 export type SystemSettingsHistory = z.infer<typeof SystemSettingsHistorySchema>;
 
 // レートリミット関連スキーマ

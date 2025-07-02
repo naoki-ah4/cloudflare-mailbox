@@ -3,10 +3,18 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import { useState } from "react";
-import { sanitizeHTML, sanitizeFileName, sanitizeEmailText } from "~/utils/sanitize";
+import {
+  sanitizeHTML,
+  sanitizeFileName,
+  sanitizeEmailText,
+} from "~/utils/sanitize";
 import styles from "./messages.$messageId.module.scss";
 
-export const loader = async ({ request, params, context }: LoaderFunctionArgs) => {
+export const loader = async ({
+  request,
+  params,
+  context,
+}: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
 
   try {
@@ -35,13 +43,17 @@ export const loader = async ({ request, params, context }: LoaderFunctionArgs) =
     }
 
     // アクセス権限チェック
-    const canAccess = message.to.some(email => kvSession.managedEmails.includes(email));
+    const canAccess = message.to.some((email) =>
+      kvSession.managedEmails.includes(email)
+    );
     if (!canAccess) {
       throw new Error("このメッセージにアクセスする権限がありません");
     }
 
     // 受信者メールアドレス特定（複数の場合は最初の管理対象）
-    const recipientEmail = message.to.find(email => kvSession.managedEmails.includes(email));
+    const recipientEmail = message.to.find((email) =>
+      kvSession.managedEmails.includes(email)
+    );
 
     return {
       message,
@@ -49,15 +61,19 @@ export const loader = async ({ request, params, context }: LoaderFunctionArgs) =
       user: {
         email: kvSession.email,
         managedEmails: kvSession.managedEmails,
-      }
+      },
     };
   } catch (error) {
     console.error("Failed to load message:", error);
     throw new Error("メッセージの取得に失敗しました");
   }
-}
+};
 
-export const action = async ({ request, params, context }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+  params,
+  context,
+}: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
 
   try {
@@ -89,15 +105,19 @@ export const action = async ({ request, params, context }: ActionFunctionArgs) =
         return { error: "メッセージが見つかりません" };
       }
 
-      const canAccess = message.to.some(email => kvSession.managedEmails.includes(email));
+      const canAccess = message.to.some((email) =>
+        kvSession.managedEmails.includes(email)
+      );
       if (!canAccess) {
         return { error: "権限がありません" };
       }
 
       // 各受信者のInboxで既読状態を更新
       const updatePromises = message.to
-        .filter(email => kvSession.managedEmails.includes(email))
-        .map(email => InboxKV.updateReadStatus(env.MAILBOXES_KV, email, messageId, true));
+        .filter((email) => kvSession.managedEmails.includes(email))
+        .map((email) =>
+          InboxKV.updateReadStatus(env.MAILBOXES_KV, email, messageId, true)
+        );
 
       await Promise.all(updatePromises);
 
@@ -109,46 +129,36 @@ export const action = async ({ request, params, context }: ActionFunctionArgs) =
     console.error("Failed to perform action:", error);
     return { error: "操作に失敗しました" };
   }
-}
+};
 
 const MessageDetail = () => {
   const { message, recipientEmail } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
-  const [displayMode, setDisplayMode] = useState<'html' | 'text'>('html');
+  const [displayMode, setDisplayMode] = useState<"html" | "text">("html");
   const [allowExternalImages, setAllowExternalImages] = useState(false);
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <a
-            href="/messages"
-            className={styles.backLink}
-          >
+          <a href="/messages" className={styles.backLink}>
             ← メール一覧に戻る
           </a>
         </div>
 
         <form method="post" action="/api/logout">
-          <button
-            type="submit"
-            className={styles.logoutButton}
-          >
+          <button type="submit" className={styles.logoutButton}>
             ログアウト
           </button>
         </form>
       </header>
 
       {actionData?.error && (
-        <div className={styles.errorMessage}>
-          {actionData.error}
-        </div>
+        <div className={styles.errorMessage}>{actionData.error}</div>
       )}
 
       {actionData?.success && (
-        <div className={styles.successMessage}>
-          {actionData.message}
-        </div>
+        <div className={styles.successMessage}>{actionData.message}</div>
       )}
 
       <div className={styles.messageCard}>
@@ -167,7 +177,7 @@ const MessageDetail = () => {
             <span>{recipientEmail}</span>
 
             <strong>日時:</strong>
-            <span>{new Date(message.date).toLocaleString('ja-JP')}</span>
+            <span>{new Date(message.date).toLocaleString("ja-JP")}</span>
 
             {message.attachments.length > 0 && (
               <>
@@ -180,10 +190,7 @@ const MessageDetail = () => {
           <div>
             <Form method="post" className="inline">
               <input type="hidden" name="action" value="markRead" />
-              <button
-                type="submit"
-                className={styles.markReadButton}
-              >
+              <button type="submit" className={styles.markReadButton}>
                 既読にする
               </button>
             </Form>
@@ -193,10 +200,15 @@ const MessageDetail = () => {
         {/* 添付ファイル */}
         {message.attachments.length > 0 && (
           <div className="p-4 border-b border-gray-100 bg-gray-50">
-            <h3 className="m-0 mb-3 text-base">添付ファイル ({message.attachments.length}個)</h3>
+            <h3 className="m-0 mb-3 text-base">
+              添付ファイル ({message.attachments.length}個)
+            </h3>
             <div className="space-y-3">
               {message.attachments.map((attachment, index) => (
-                <div key={index} className="bg-white border border-gray-300 rounded-lg p-3">
+                <div
+                  key={index}
+                  className="bg-white border border-gray-300 rounded-lg p-3"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <span className="mr-3 text-lg">📎</span>
@@ -205,7 +217,8 @@ const MessageDetail = () => {
                           {sanitizeFileName(attachment.filename)}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {Math.round(attachment.size / 1024)}KB • {attachment.contentType || 'application/octet-stream'}
+                          {Math.round(attachment.size / 1024)}KB •{" "}
+                          {attachment.contentType || "application/octet-stream"}
                         </div>
                       </div>
                     </div>
@@ -231,35 +244,42 @@ const MessageDetail = () => {
             <div className="mb-4">
               <div className="flex gap-2 mb-4 text-sm flex-wrap">
                 <button
-                  onClick={() => setDisplayMode('html')}
-                  className={`px-3 py-1 text-white border-none rounded cursor-pointer ${displayMode === 'html' ? 'bg-blue-600' : 'bg-gray-500'
-                    }`}
+                  onClick={() => setDisplayMode("html")}
+                  className={`px-3 py-1 text-white border-none rounded cursor-pointer ${
+                    displayMode === "html" ? "bg-blue-600" : "bg-gray-500"
+                  }`}
                 >
                   HTML表示
                 </button>
                 <button
-                  onClick={() => setDisplayMode('text')}
-                  className={`px-3 py-1 text-white border-none rounded cursor-pointer ${displayMode === 'text' ? 'bg-blue-600' : 'bg-gray-500'
-                    }`}
+                  onClick={() => setDisplayMode("text")}
+                  className={`px-3 py-1 text-white border-none rounded cursor-pointer ${
+                    displayMode === "text" ? "bg-blue-600" : "bg-gray-500"
+                  }`}
                 >
                   テキスト表示
                 </button>
-                {displayMode === 'html' && (
+                {displayMode === "html" && (
                   <button
                     onClick={() => setAllowExternalImages(!allowExternalImages)}
-                    className={`px-3 py-1 text-white border-none rounded cursor-pointer ${allowExternalImages ? 'bg-green-600' : 'bg-orange-500'
-                      }`}
+                    className={`px-3 py-1 text-white border-none rounded cursor-pointer ${
+                      allowExternalImages ? "bg-green-600" : "bg-orange-500"
+                    }`}
                   >
-                    {allowExternalImages ? '🖼️ 外部画像: 許可中' : '🖼️ 外部画像: ブロック中'}
+                    {allowExternalImages
+                      ? "🖼️ 外部画像: 許可中"
+                      : "🖼️ 外部画像: ブロック中"}
                   </button>
                 )}
               </div>
 
               {/* HTML/テキスト表示 */}
-              {displayMode === 'html' ? (
+              {displayMode === "html" ? (
                 <div
                   className={styles.htmlContent}
-                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(message.html, { allowExternalImages }) }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHTML(message.html, { allowExternalImages }),
+                  }}
                 />
               ) : (
                 <pre className={styles.textContent}>
@@ -270,9 +290,7 @@ const MessageDetail = () => {
           ) : message.text ? (
             <div>
               <h4 className="m-0 mb-2">テキスト</h4>
-              <pre className={styles.textContent}>
-                {message.text}
-              </pre>
+              <pre className={styles.textContent}>{message.text}</pre>
             </div>
           ) : null}
 

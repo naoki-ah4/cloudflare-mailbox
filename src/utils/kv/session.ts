@@ -1,4 +1,4 @@
-import { SessionSchema, type Session } from './schema';
+import { SessionSchema, type Session } from "./schema";
 
 export const SessionKV = {
   async get(kv: KVNamespace, sessionId: string): Promise<Session | null> {
@@ -35,14 +35,14 @@ export const SessionKV = {
   },
 
   async deleteByUserId(kv: KVNamespace, userId: string): Promise<number> {
-    const sessionList = await kv.list({ prefix: 'session:' });
+    const sessionList = await kv.list({ prefix: "session:" });
     let deletedCount = 0;
 
     for (const key of sessionList.keys) {
       try {
-        const session = await this.get(kv, key.name.replace('session:', ''));
+        const session = await this.get(kv, key.name.replace("session:", ""));
         if (session?.userId === userId) {
-          await this.delete(kv, key.name.replace('session:', ''));
+          await this.delete(kv, key.name.replace("session:", ""));
           deletedCount++;
         }
       } catch (error) {

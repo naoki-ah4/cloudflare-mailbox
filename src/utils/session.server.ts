@@ -61,4 +61,9 @@ export {
   destroyUserSession,
 };
 
-export type { AdminSessionData, AdminSessionFlashData, UserSessionData, UserSessionFlashData };
+export type {
+  AdminSessionData,
+  AdminSessionFlashData,
+  UserSessionData,
+  UserSessionFlashData,
+};

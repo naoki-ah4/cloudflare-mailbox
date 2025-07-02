@@ -11,7 +11,10 @@ export default [
   route("/admin/invites", "routes/admin/invites.tsx"),
   route("/admin/administrators", "routes/admin/administrators.tsx"),
   route("/admin/system-settings", "routes/admin/system-settings.tsx"),
-  route("/admin/system-settings/history", "routes/admin/system-settings/history.tsx"),
+  route(
+    "/admin/system-settings/history",
+    "routes/admin/system-settings/history.tsx"
+  ),
 
   // ユーザー認証・ダッシュボード
   route("/signup", "routes/signup.tsx"),
@@ -21,7 +24,6 @@ export default [
   route("/settings/password", "routes/settings/password.tsx"),
   route("/profile", "routes/profile.tsx"),
 
-
   // メール閲覧機能
   route("/messages", "routes/messages.tsx"),
   route("/messages/:messageId", "routes/messages.$messageId.tsx"),
@@ -29,5 +31,8 @@ export default [
   // 専用APIエンドポイント（UIなし）
   route("/api/admin/logout", "routes/api/admin/logout.tsx"),
   route("/api/logout", "routes/api/logout.tsx"),
-  route("/api/attachments/:messageId/:filename", "routes/api/attachments.$messageId.$filename.tsx"),
+  route(
+    "/api/attachments/:messageId/:filename",
+    "routes/api/attachments.$messageId.$filename.tsx"
+  ),
 ] satisfies RouteConfig;

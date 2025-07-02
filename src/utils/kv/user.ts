@@ -1,4 +1,4 @@
-import { UserSchema, type User } from './schema';
+import { UserSchema, type User } from "./schema";
 
 export const UserKV = {
   async get(kv: KVNamespace, userId: string): Promise<User | null> {
@@ -33,12 +33,12 @@ export const UserKV = {
   },
 
   async list(kv: KVNamespace): Promise<User[]> {
-    const userList = await kv.list({ prefix: 'user:' });
+    const userList = await kv.list({ prefix: "user:" });
     const users: User[] = [];
 
     for (const key of userList.keys) {
       try {
-        const user = await this.get(kv, key.name.replace('user:', ''));
+        const user = await this.get(kv, key.name.replace("user:", ""));
         if (user) users.push(user);
       } catch (error) {
         console.warn(`Skipping invalid user data for key ${key.name}:`, error);
@@ -60,7 +60,7 @@ export const UserKV = {
   },
 
   async count(kv: KVNamespace): Promise<number> {
-    const userList = await kv.list({ prefix: 'user:' });
+    const userList = await kv.list({ prefix: "user:" });
     return userList.keys.length;
   },
 };

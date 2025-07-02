@@ -11,17 +11,18 @@ export const useLoading = (initialState = false) => {
     setLoading(false);
   }, []);
 
-  const withLoading = useCallback(async <T>(
-    asyncFunction: () => Promise<T>
-  ): Promise<T> => {
-    try {
-      startLoading();
-      const result = await asyncFunction();
-      return result;
-    } finally {
-      stopLoading();
-    }
-  }, [startLoading, stopLoading]);
+  const withLoading = useCallback(
+    async <T>(asyncFunction: () => Promise<T>): Promise<T> => {
+      try {
+        startLoading();
+        const result = await asyncFunction();
+        return result;
+      } finally {
+        stopLoading();
+      }
+    },
+    [startLoading, stopLoading]
+  );
 
   return {
     loading,

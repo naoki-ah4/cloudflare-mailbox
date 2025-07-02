@@ -8,18 +8,18 @@ interface PaginationProps {
   onPageChange?: (page: number) => void;
 }
 
-const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  totalItems, 
+const Pagination = ({
+  currentPage,
+  totalPages,
+  totalItems,
   itemsPerPage,
-  onPageChange 
+  onPageChange,
 }: PaginationProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
-    
+
     if (onPageChange) {
       onPageChange(page);
     } else {
@@ -47,7 +47,7 @@ const Pagination = ({
     } else {
       // 多い場合は省略表示
       pages.push(1);
-      
+
       if (currentPage <= 4) {
         // 現在ページが前の方の場合
         for (let i = 2; i <= 5; i++) {
@@ -110,9 +110,9 @@ const Pagination = ({
 
           {/* ページ番号 */}
           <div className="hidden md:flex space-x-1">
-            {getPageNumbers().map((page, index) => (
+            {getPageNumbers().map((page, index) =>
               page === "..." ? (
-                <span 
+                <span
                   key={`ellipsis-${index}`}
                   className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700"
                 >
@@ -131,7 +131,7 @@ const Pagination = ({
                   {page}
                 </button>
               )
-            ))}
+            )}
           </div>
 
           {/* モバイル用ページ表示 */}

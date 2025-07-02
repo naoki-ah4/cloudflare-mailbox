@@ -1,4 +1,4 @@
-import { SystemKV } from './kv/system';
+import { SystemKV } from "./kv/system";
 
 export interface DomainValidationResult {
   isValid: boolean;
@@ -12,7 +12,7 @@ export const validateEmailDomains = async (
 ): Promise<DomainValidationResult> => {
   try {
     const settings = await SystemKV.getSettings(systemKv);
-    
+
     // 許可ドメインが設定されていない場合は全て許可
     if (!settings || settings.allowedDomains.length === 0) {
       return {
@@ -22,9 +22,9 @@ export const validateEmailDomains = async (
     }
 
     const invalidEmails: string[] = [];
-    
+
     for (const email of emails) {
-      const domain = email.split('@')[1];
+      const domain = email.split("@")[1];
       if (!settings.allowedDomains.includes(domain)) {
         invalidEmails.push(email);
       }
@@ -34,7 +34,7 @@ export const validateEmailDomains = async (
       return {
         isValid: false,
         invalidEmails,
-        message: `以下のドメインは許可されていません: ${invalidEmails.map(e => e.split('@')[1]).join(', ')}`,
+        message: `以下のドメインは許可されていません: ${invalidEmails.map((e) => e.split("@")[1]).join(", ")}`,
       };
     }
 
@@ -43,7 +43,7 @@ export const validateEmailDomains = async (
       invalidEmails: [],
     };
   } catch (error) {
-    console.error('Domain validation error:', error);
+    console.error("Domain validation error:", error);
     // エラーが発生した場合は安全側に倒して全て許可
     return {
       isValid: true,

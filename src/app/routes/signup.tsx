@@ -1,4 +1,9 @@
-import { Form, useLoaderData, useActionData, useNavigation } from "react-router";
+import {
+  Form,
+  useLoaderData,
+  useActionData,
+  useNavigation,
+} from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { UserKV, InviteKV, SessionKV } from "~/utils/kv";
 import { validateEmailDomains } from "~/utils/domain-validation";
@@ -40,7 +45,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     console.error("Invite validation error:", error);
     throw new Error("招待URLの検証に失敗しました");
   }
-}
+};
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -80,9 +85,10 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     }
 
     // メールアドレス解析
-    const managedEmails = managedEmailsStr.split('\n')
-      .map(email => email.trim())
-      .filter(email => email.length > 0);
+    const managedEmails = managedEmailsStr
+      .split("\n")
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
 
     if (managedEmails.length === 0) {
       return { error: "管理するメールアドレスを最低1つ入力してください" };
@@ -102,13 +108,23 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
     // 連絡先メールと管理メールの重複チェック
     if (managedEmails.includes(email)) {
-      return { error: "連絡先メールアドレスと管理メールアドレスは異なるものを指定してください" };
+      return {
+        error:
+          "連絡先メールアドレスと管理メールアドレスは異なるものを指定してください",
+      };
     }
 
     // ドメイン検証（許可ドメインチェック）
-    const domainValidation = await validateEmailDomains(managedEmails, env.SYSTEM_KV);
+    const domainValidation = await validateEmailDomains(
+      managedEmails,
+      env.SYSTEM_KV
+    );
     if (!domainValidation.isValid) {
-      return { error: domainValidation.message || "許可されていないドメインが含まれています" };
+      return {
+        error:
+          domainValidation.message ||
+          "許可されていないドメインが含まれています",
+      };
     }
 
     // ユーザー名重複チェック
@@ -119,12 +135,12 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
     // パスワードハッシュ化
     const passwordHash = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(password + 'salt')
+      "SHA-256",
+      new TextEncoder().encode(password + "salt")
     );
     const hashHex = Array.from(new Uint8Array(passwordHash))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
     // ユーザー作成
     const userId = crypto.randomUUID();
@@ -150,7 +166,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       email: user.email,
       managedEmails: user.managedEmails,
       createdAt: Date.now(),
-      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7日間
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7日間
     };
 
     await SessionKV.set(env.USERS_KV, sessionId, kvSession);
@@ -167,7 +183,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     console.error("User registration error:", error);
     return { error: "アカウント作成に失敗しました。もう一度お試しください。" };
   }
-}
+};
 
 export default () => {
   const { inviteToken } = useLoaderData<typeof loader>();
@@ -179,7 +195,8 @@ export default () => {
     <div className="max-w-2xl mx-auto p-8">
       <h1 className="text-2xl font-bold mb-4">ユーザー登録</h1>
       <p className="text-gray-600 mb-8 leading-relaxed">
-        招待を受けたメールボックス管理システムへようこそ。<br />
+        招待を受けたメールボックス管理システムへようこそ。
+        <br />
         アカウント情報を入力してください。
       </p>
 
@@ -193,7 +210,10 @@ export default () => {
         )}
 
         <div className="mb-4">
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="username"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             ユーザー名 *
           </label>
           <input
@@ -213,7 +233,10 @@ export default () => {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             パスワード *
           </label>
           <input
@@ -225,13 +248,14 @@ export default () => {
             className="w-full px-3 py-3 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             disabled={isSubmitting}
           />
-          <small className="text-gray-500 text-sm">
-            8文字以上
-          </small>
+          <small className="text-gray-500 text-sm">8文字以上</small>
         </div>
 
         <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             連絡先メールアドレス *
           </label>
           <input
@@ -248,7 +272,10 @@ export default () => {
         </div>
 
         <div className="mb-8">
-          <label htmlFor="managedEmails" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="managedEmails"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             管理するメールアドレス *
           </label>
           <textarea
@@ -278,4 +305,4 @@ export default () => {
       </Form>
     </div>
   );
-}
+};

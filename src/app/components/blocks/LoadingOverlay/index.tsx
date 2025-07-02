@@ -8,10 +8,10 @@ interface LoadingOverlayProps {
   backdrop?: boolean;
 }
 
-const LoadingOverlay = ({ 
-  show, 
-  message = "読み込み中...", 
-  backdrop = true 
+const LoadingOverlay = ({
+  show,
+  message = "読み込み中...",
+  backdrop = true,
 }: LoadingOverlayProps) => {
   useEffect(() => {
     if (show) {
@@ -20,7 +20,7 @@ const LoadingOverlay = ({
     } else {
       document.body.style.overflow = "";
     }
-    
+
     return () => {
       document.body.style.overflow = "";
     };

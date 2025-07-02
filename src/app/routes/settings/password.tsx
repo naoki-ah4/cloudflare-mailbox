@@ -7,14 +7,18 @@ import { hashPassword, verifyPassword } from "~/utils/crypto";
 import SettingsNav from "../../components/SettingsNav";
 import LoadingButton from "../../components/elements/LoadingButton";
 
-const PasswordChangeSchema = z.object({
-  currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
-  newPassword: z.string().min(8, "新しいパスワードは8文字以上である必要があります"),
-  confirmPassword: z.string().min(1, "確認用パスワードを入力してください"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "新しいパスワードと確認用パスワードが一致しません",
-  path: ["confirmPassword"],
-});
+const PasswordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
+    newPassword: z
+      .string()
+      .min(8, "新しいパスワードは8文字以上である必要があります"),
+    confirmPassword: z.string().min(1, "確認用パスワードを入力してください"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "新しいパスワードと確認用パスワードが一致しません",
+    path: ["confirmPassword"],
+  });
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -51,18 +55,21 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     if (!validationResult.success) {
       return {
         error: validationResult.error.errors[0].message,
-        data: rawData
+        data: rawData,
       };
     }
 
     const { currentPassword, newPassword } = validationResult.data;
 
     // 現在のパスワードを検証
-    const isCurrentPasswordValid = await verifyPassword(currentPassword, currentUser.passwordHash);
+    const isCurrentPasswordValid = await verifyPassword(
+      currentPassword,
+      currentUser.passwordHash
+    );
     if (!isCurrentPasswordValid) {
       return {
         error: "現在のパスワードが正しくありません",
-        data: rawData
+        data: rawData,
       };
     }
 
@@ -70,7 +77,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     if (currentPassword === newPassword) {
       return {
         error: "新しいパスワードは現在のパスワードと異なる必要があります",
-        data: rawData
+        data: rawData,
       };
     }
 
@@ -86,7 +93,6 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     await UserKV.set(env.USERS_KV, currentUser.id, updatedUser);
 
     return { success: "パスワードを変更しました" };
-
   } catch (error) {
     console.error("Failed to change password:", error);
     return { error: "パスワードの変更に失敗しました" };
@@ -141,7 +147,9 @@ const PasswordChange = () => {
         <div className="lg:col-span-3">
           <div className="max-w-lg bg-white rounded-lg border border-gray-200 p-6">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">パスワードを変更</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                パスワードを変更
+              </h2>
               <p className="text-gray-600 text-sm">
                 セキュリティのため、現在のパスワードの入力が必要です。
               </p>
@@ -149,7 +157,10 @@ const PasswordChange = () => {
 
             <Form method="post" className="space-y-4">
               <div>
-                <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="currentPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   現在のパスワード
                 </label>
                 <input
@@ -162,7 +173,10 @@ const PasswordChange = () => {
               </div>
 
               <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="newPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   新しいパスワード
                 </label>
                 <input
@@ -179,7 +193,10 @@ const PasswordChange = () => {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   新しいパスワード（確認）
                 </label>
                 <input
@@ -207,7 +224,9 @@ const PasswordChange = () => {
           </div>
 
           <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <h3 className="text-sm font-medium text-yellow-800 mb-2">セキュリティに関する注意</h3>
+            <h3 className="text-sm font-medium text-yellow-800 mb-2">
+              セキュリティに関する注意
+            </h3>
             <ul className="text-sm text-yellow-700 space-y-1">
               <li>• 強力なパスワードを使用してください</li>
               <li>• 他のサービスと同じパスワードは使用しないでください</li>

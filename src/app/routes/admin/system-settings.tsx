@@ -1,4 +1,9 @@
-import { Form, useLoaderData, useActionData, useNavigation } from "react-router";
+import {
+  Form,
+  useLoaderData,
+  useActionData,
+  useNavigation,
+} from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { useState } from "react";
 import { SystemKV } from "~/utils/kv/system";
@@ -12,13 +17,13 @@ export const loader = async ({ context }: LoaderFunctionArgs) => {
     const settings = await SystemKV.getSettings(env.SYSTEM_KV);
 
     return {
-      settings: settings || await SystemKV.getDefaultSettings(),
+      settings: settings || (await SystemKV.getDefaultSettings()),
     };
   } catch (error) {
     console.error("Failed to get system settings:", error);
     throw new Error("システム設定の取得に失敗しました");
   }
-}
+};
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -30,9 +35,9 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
       // ドメインリストを解析
       const domains = domainsText
-        .split('\n')
-        .map(d => d.trim())
-        .filter(d => d.length > 0);
+        .split("\n")
+        .map((d) => d.trim())
+        .filter((d) => d.length > 0);
 
       // ドメイン形式の簡易バリデーション
       for (const domain of domains) {
@@ -42,7 +47,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       }
 
       // システム設定を更新（管理者IDは仮でsystemを使用）
-      await SystemKV.updateSettings(env.SYSTEM_KV, domains, 'system');
+      await SystemKV.updateSettings(env.SYSTEM_KV, domains, "system");
 
       return { success: "システム設定を更新しました" };
     } catch (error) {
@@ -52,7 +57,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
   }
 
   return { error: "許可されていないメソッドです" };
-}
+};
 
 export default () => {
   const { settings } = useLoaderData<typeof loader>();
@@ -121,7 +126,7 @@ export default () => {
 
         <Form method="post">
           {/* 隠しフィールドでドメインリストを送信 */}
-          <input type="hidden" name="domains" value={domains.join('\n')} />
+          <input type="hidden" name="domains" value={domains.join("\n")} />
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -162,7 +167,10 @@ export default () => {
                 </p>
                 <div className="space-y-2">
                   {domains.map((domain, index) => (
-                    <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-white p-2 rounded border"
+                    >
                       <span className="font-mono text-sm">{domain}</span>
                       <button
                         type="button"
@@ -214,15 +222,21 @@ export default () => {
 
         <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">許可ドメイン数:</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              許可ドメイン数:
+            </h3>
             <p className="text-lg font-semibold text-gray-900">
-              {settings.allowedDomains.length === 0 ? "制限なし" : `${settings.allowedDomains.length}個`}
+              {settings.allowedDomains.length === 0
+                ? "制限なし"
+                : `${settings.allowedDomains.length}個`}
             </p>
           </div>
 
           {settings.allowedDomains.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">許可ドメイン一覧:</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                許可ドメイン一覧:
+              </h3>
               <div className="bg-gray-50 p-3 rounded-md">
                 <ul className="list-disc list-inside space-y-1">
                   {settings.allowedDomains.map((domain, index) => (
@@ -237,9 +251,11 @@ export default () => {
 
           {settings.updatedAt > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">最終更新:</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                最終更新:
+              </h3>
               <p className="text-sm text-gray-600">
-                {new Date(settings.updatedAt).toLocaleString('ja-JP')}
+                {new Date(settings.updatedAt).toLocaleString("ja-JP")}
               </p>
             </div>
           )}
@@ -247,4 +263,4 @@ export default () => {
       </div>
     </div>
   );
-}
+};

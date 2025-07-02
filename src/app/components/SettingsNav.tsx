@@ -9,32 +9,32 @@ interface SettingsNavProps {
 const SettingsNav = ({ className = "" }: SettingsNavProps) => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const navItems = [
     {
       href: "/settings",
       label: "基本設定",
       icon: "⚙️",
-      paths: ["/settings"]
+      paths: ["/settings"],
     },
     {
-      href: "/profile", 
+      href: "/profile",
       label: "プロフィール",
       icon: "👤",
-      paths: ["/profile"]
+      paths: ["/profile"],
     },
     {
       href: "/settings/password",
-      label: "パスワード変更", 
+      label: "パスワード変更",
       icon: "🔒",
-      paths: ["/settings/password"]
-    }
+      paths: ["/settings/password"],
+    },
   ];
 
   const isActiveItem = (paths: string[]) => {
-    return paths.some(path => 
-      path === "/settings" 
-        ? location.pathname === "/settings" 
+    return paths.some((path) =>
+      path === "/settings"
+        ? location.pathname === "/settings"
         : location.pathname.startsWith(path)
     );
   };
@@ -50,25 +50,21 @@ const SettingsNav = ({ className = "" }: SettingsNavProps) => {
   return (
     <>
       {/* モバイル用ハンバーガーメニューボタン */}
-      <button 
-        className={styles.mobileMenuButton}
-        onClick={toggleMenu}
-      >
+      <button className={styles.mobileMenuButton} onClick={toggleMenu}>
         ☰
       </button>
 
       {/* モバイル用オーバーレイ */}
-      <div 
-        className={`${styles.overlay} ${isOpen ? styles.open : ''}`}
+      <div
+        className={`${styles.overlay} ${isOpen ? styles.open : ""}`}
         onClick={closeMenu}
       />
 
-      <nav className={`${styles.navigation} ${isOpen ? styles.open : ''} ${className}`}>
+      <nav
+        className={`${styles.navigation} ${isOpen ? styles.open : ""} ${className}`}
+      >
         {/* モバイル用閉じるボタン */}
-        <button 
-          className={styles.closeButton}
-          onClick={closeMenu}
-        >
+        <button className={styles.closeButton} onClick={closeMenu}>
           ✕
         </button>
 
@@ -76,10 +72,10 @@ const SettingsNav = ({ className = "" }: SettingsNavProps) => {
         <ul className={styles.navList}>
           {navItems.map((item) => (
             <li key={item.href}>
-              <a 
+              <a
                 href={item.href}
                 className={`${styles.navItem} ${
-                  isActiveItem(item.paths) ? styles.active : ''
+                  isActiveItem(item.paths) ? styles.active : ""
                 }`}
                 onClick={closeMenu}
               >
@@ -89,9 +85,9 @@ const SettingsNav = ({ className = "" }: SettingsNavProps) => {
             </li>
           ))}
         </ul>
-        
+
         <div className={styles.divider}>
-          <a 
+          <a
             href="/dashboard"
             className={styles.dashboardLink}
             onClick={closeMenu}

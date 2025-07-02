@@ -13,7 +13,7 @@ const SkeletonLoader = ({
   height = "1rem",
   className = "",
   variant = "rectangular",
-  animation = "pulse"
+  animation = "pulse",
 }: SkeletonLoaderProps) => {
   const style = {
     width: typeof width === "number" ? `${width}px` : width,
@@ -30,7 +30,13 @@ const SkeletonLoader = ({
 };
 
 // プリセットコンポーネント
-export const SkeletonText = ({ lines = 1, className = "" }: { lines?: number; className?: string }) => (
+export const SkeletonText = ({
+  lines = 1,
+  className = "",
+}: {
+  lines?: number;
+  className?: string;
+}) => (
   <div className={className}>
     {Array.from({ length: lines }, (_, index) => (
       <SkeletonLoader
@@ -51,12 +57,21 @@ export const SkeletonCard = ({ className = "" }: { className?: string }) => (
   </div>
 );
 
-export const SkeletonMessageItem = ({ className = "" }: { className?: string }) => (
+export const SkeletonMessageItem = ({
+  className = "",
+}: {
+  className?: string;
+}) => (
   <div className={`${styles.messageItem} ${className}`}>
     <div className={styles.messageHeader}>
       <SkeletonLoader variant="circular" width="40px" height="40px" />
       <div className={styles.messageInfo}>
-        <SkeletonLoader variant="text" height="1rem" width="150px" className="mb-1" />
+        <SkeletonLoader
+          variant="text"
+          height="1rem"
+          width="150px"
+          className="mb-1"
+        />
         <SkeletonLoader variant="text" height="0.875rem" width="80px" />
       </div>
       <SkeletonLoader variant="text" height="0.75rem" width="60px" />

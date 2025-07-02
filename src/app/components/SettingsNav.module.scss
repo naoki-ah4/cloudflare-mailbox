@@ -19,7 +19,7 @@
     width: 280px;
     z-index: 1000;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-    
+
     &.open {
       display: block;
     }
@@ -72,7 +72,7 @@
   // タッチデバイス対応
   @media (max-width: 768px) {
     padding: 0.875rem;
-    
+
     &:active {
       background-color: #e5e7eb;
     }
@@ -126,7 +126,7 @@
 // モバイル用のハンバーガーメニューとオーバーレイ
 .mobileMenuButton {
   display: none;
-  
+
   @media (max-width: 768px) {
     display: block;
     background: none;
@@ -140,7 +140,7 @@
 
 .overlay {
   display: none;
-  
+
   @media (max-width: 768px) {
     position: fixed;
     top: 0;
@@ -149,7 +149,7 @@
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 999;
-    
+
     &.open {
       display: block;
     }
@@ -158,7 +158,7 @@
 
 .closeButton {
   display: none;
-  
+
   @media (max-width: 768px) {
     display: block;
     position: absolute;

@@ -1,4 +1,9 @@
-import { AdminSchema, AdminSessionSchema, type Admin, type AdminSession } from './schema';
+import {
+  AdminSchema,
+  AdminSessionSchema,
+  type Admin,
+  type AdminSession,
+} from "./schema";
 
 export const AdminKV = {
   async get(kv: KVNamespace, adminId: string): Promise<Admin | null> {
@@ -18,7 +23,10 @@ export const AdminKV = {
     await kv.put(`admin-username:${admin.username}`, adminId);
   },
 
-  async getByUsername(kv: KVNamespace, username: string): Promise<Admin | null> {
+  async getByUsername(
+    kv: KVNamespace,
+    username: string
+  ): Promise<Admin | null> {
     try {
       // 管理者ユーザー名インデックスから管理者IDを取得
       const adminId = await kv.get(`admin-username:${username}`);
@@ -33,12 +41,12 @@ export const AdminKV = {
   },
 
   async list(kv: KVNamespace): Promise<Admin[]> {
-    const adminList = await kv.list({ prefix: 'admin:' });
+    const adminList = await kv.list({ prefix: "admin:" });
     const admins: Admin[] = [];
 
     for (const key of adminList.keys) {
       try {
-        const admin = await this.get(kv, key.name.replace('admin:', ''));
+        const admin = await this.get(kv, key.name.replace("admin:", ""));
         if (admin) admins.push(admin);
       } catch (error) {
         console.warn(`Skipping invalid admin data for key ${key.name}:`, error);
@@ -60,7 +68,7 @@ export const AdminKV = {
   },
 
   async count(kv: KVNamespace): Promise<number> {
-    const adminList = await kv.list({ prefix: 'admin:' });
+    const adminList = await kv.list({ prefix: "admin:" });
     return adminList.keys.length;
   },
 };
@@ -76,11 +84,19 @@ export const AdminSessionKV = {
     }
   },
 
-  async set(kv: KVNamespace, sessionId: string, session: AdminSession): Promise<void> {
+  async set(
+    kv: KVNamespace,
+    sessionId: string,
+    session: AdminSession
+  ): Promise<void> {
     const validatedSession = AdminSessionSchema.parse(session);
     // セッションは7日間で期限切れ
     const ttl = Math.floor((session.expiresAt - Date.now()) / 1000);
-    await kv.put(`admin-session:${sessionId}`, JSON.stringify(validatedSession), { expirationTtl: ttl });
+    await kv.put(
+      `admin-session:${sessionId}`,
+      JSON.stringify(validatedSession),
+      { expirationTtl: ttl }
+    );
   },
 
   async delete(kv: KVNamespace, sessionId: string): Promise<void> {
@@ -88,15 +104,18 @@ export const AdminSessionKV = {
   },
 
   async cleanup(kv: KVNamespace): Promise<number> {
-    const sessionList = await kv.list({ prefix: 'admin-session:' });
+    const sessionList = await kv.list({ prefix: "admin-session:" });
     let deletedCount = 0;
     const now = Date.now();
 
     for (const key of sessionList.keys) {
       try {
-        const session = await this.get(kv, key.name.replace('admin-session:', ''));
+        const session = await this.get(
+          kv,
+          key.name.replace("admin-session:", "")
+        );
         if (session && session.expiresAt < now) {
-          await this.delete(kv, key.name.replace('admin-session:', ''));
+          await this.delete(kv, key.name.replace("admin-session:", ""));
           deletedCount++;
         }
       } catch (error) {

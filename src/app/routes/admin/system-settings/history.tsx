@@ -4,11 +4,11 @@ import { SystemKV } from "~/utils/kv/system";
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   try {
     // 履歴を取得（認証チェックはworkers/app.tsで実施済み）
     const history = await SystemKV.getHistory(env.SYSTEM_KV);
-    
+
     return {
       history: history.reverse(), // 最新から順番に表示
     };
@@ -16,7 +16,7 @@ export const loader = async ({ context }: LoaderFunctionArgs) => {
     console.error("Failed to get system settings history:", error);
     throw new Error("システム設定履歴の取得に失敗しました");
   }
-}
+};
 
 export default () => {
   const { history } = useLoaderData<typeof loader>();
@@ -30,7 +30,7 @@ export default () => {
             システム設定の変更履歴を表示します（全{history.length}件）
           </p>
         </div>
-        <a 
+        <a
           href="/admin/system-settings"
           className="px-4 py-2 bg-gray-500 text-white no-underline rounded-md hover:bg-gray-600 transition-colors"
         >
@@ -55,20 +55,20 @@ export default () => {
                     {entry.changes}
                   </h3>
                   <span className="text-sm text-gray-500 font-mono">
-                    {new Date(entry.updatedAt).toLocaleString('ja-JP')}
+                    {new Date(entry.updatedAt).toLocaleString("ja-JP")}
                   </span>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center space-x-4">
                     <span className="text-sm text-gray-600">
-                      管理者ID: 
+                      管理者ID:
                       <code className="bg-gray-100 px-2 py-1 rounded font-mono ml-2">
                         {entry.updatedBy}
                       </code>
                     </span>
                   </div>
-                  
+
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">
                       設定内容:
@@ -80,7 +80,10 @@ export default () => {
                         </p>
                         <ul className="list-disc list-inside space-y-1">
                           {entry.allowedDomains.map((domain, domainIndex) => (
-                            <li key={domainIndex} className="text-sm text-gray-700 font-mono">
+                            <li
+                              key={domainIndex}
+                              className="text-sm text-gray-700 font-mono"
+                            >
                               {domain}
                             </li>
                           ))}
@@ -95,7 +98,7 @@ export default () => {
                     )}
                   </div>
                 </div>
-                
+
                 {index < history.length - 1 && (
                   <hr className="mt-6 border-gray-200" />
                 )}
@@ -106,4 +109,4 @@ export default () => {
       )}
     </div>
   );
-}
+};

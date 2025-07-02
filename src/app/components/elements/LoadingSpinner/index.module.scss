@@ -12,37 +12,37 @@
   display: inline-block;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  
+
   // サイズバリエーション
   &.small {
     width: 16px;
     height: 16px;
     border-width: 2px;
   }
-  
+
   &.medium {
     width: 24px;
     height: 24px;
     border-width: 2px;
   }
-  
+
   &.large {
     width: 32px;
     height: 32px;
     border-width: 3px;
   }
-  
+
   // カラーバリエーション
   &.primary {
     border: 2px solid var(--color-border, #e5e7eb);
     border-top-color: var(--color-primary, #2563eb);
   }
-  
+
   &.white {
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: #ffffff;
   }
-  
+
   &.gray {
     border: 2px solid var(--color-background-tertiary, #e9ecef);
     border-top-color: var(--color-text-secondary, #6b7280);

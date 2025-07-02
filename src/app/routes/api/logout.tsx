@@ -5,16 +5,16 @@ import { SessionKV } from "~/utils/kv";
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-  
+
   try {
     const session = await getUserSession(request.headers.get("Cookie"));
     const sessionId = session.get("sessionId");
-    
+
     // KVセッションも削除
     if (sessionId) {
       await SessionKV.delete(env.USERS_KV, sessionId);
     }
-    
+
     return redirect("/login", {
       headers: {
         "Set-Cookie": await destroyUserSession(session),
@@ -24,8 +24,8 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     console.error("User logout error:", error);
     return redirect("/login");
   }
-}
+};
 
 export const loader = async () => {
   return redirect("/login");
-}
+};

@@ -3,8 +3,14 @@ import { generateAttachementSignedUrl } from "~/utils/attachments";
 import { SessionKV, MessageKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 
-export const loader = async ({ request, params, context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env; ctx: ExecutionContext } }).cloudflare;
+export const loader = async ({
+  request,
+  params,
+  context,
+}: LoaderFunctionArgs) => {
+  const { env } = (
+    context as { cloudflare: { env: Env; ctx: ExecutionContext } }
+  ).cloudflare;
 
   try {
     const { messageId, filename } = params;
@@ -31,19 +37,29 @@ export const loader = async ({ request, params, context }: LoaderFunctionArgs) =
       return new Response("メッセージが見つかりません", { status: 404 });
     }
 
-    const canAccess = message.to.some(email => kvSession.managedEmails.includes(email));
+    const canAccess = message.to.some((email) =>
+      kvSession.managedEmails.includes(email)
+    );
     if (!canAccess) {
-      return new Response("このメッセージにアクセスする権限がありません", { status: 403 });
+      return new Response("このメッセージにアクセスする権限がありません", {
+        status: 403,
+      });
     }
 
     // 添付ファイル検索
-    const attachment = message.attachments.find(att => att.filename === filename);
+    const attachment = message.attachments.find(
+      (att) => att.filename === filename
+    );
     if (!attachment) {
       return new Response("添付ファイルが見つかりません", { status: 404 });
     }
 
     // R2からの署名付きURLを生成
-    const r2PreSignedUrl = await generateAttachementSignedUrl(env, attachment, 60); // 60分の有効期限
+    const r2PreSignedUrl = await generateAttachementSignedUrl(
+      env,
+      attachment,
+      60
+    ); // 60分の有効期限
     if (!r2PreSignedUrl) {
       return new Response("ファイルが見つかりません", { status: 404 });
     }
@@ -51,11 +67,13 @@ export const loader = async ({ request, params, context }: LoaderFunctionArgs) =
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': r2PreSignedUrl,
-      }
-    })
+        Location: r2PreSignedUrl,
+      },
+    });
   } catch (error) {
     console.error("Failed to download attachment:", error);
-    return new Response("添付ファイルのダウンロードに失敗しました", { status: 500 });
+    return new Response("添付ファイルのダウンロードに失敗しました", {
+      status: 500,
+    });
   }
-}
+};

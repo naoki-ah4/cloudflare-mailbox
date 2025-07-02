@@ -36,12 +36,12 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
     // パスワード検証
     const passwordHash = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(password + 'salt')
+      "SHA-256",
+      new TextEncoder().encode(password + "salt")
     );
     const hashHex = Array.from(new Uint8Array(passwordHash))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
     if (admin.passwordHash !== hashHex) {
       session.flash("error", "ユーザー名またはパスワードが正しくありません");
@@ -58,7 +58,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       id: sessionId,
       adminId: admin.id,
       createdAt: Date.now(),
-      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7日間
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7日間
     };
 
     await AdminSessionKV.set(env.USERS_KV, sessionId, kvSession);
@@ -86,9 +86,13 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       },
     });
   }
-}
+};
 
-export const loader = async ({ context }: { context: { cloudflare: { env: Env } } }) => {
+export const loader = async ({
+  context,
+}: {
+  context: { cloudflare: { env: Env } };
+}) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
 
   // 管理者が存在しない場合はセットアップページへ
@@ -98,7 +102,7 @@ export const loader = async ({ context }: { context: { cloudflare: { env: Env } 
   }
 
   return null;
-}
+};
 
 export default () => {
   const navigation = useNavigation();
@@ -110,7 +114,10 @@ export default () => {
 
       <Form method="post">
         <div className="mb-4">
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="username"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             ユーザー名:
           </label>
           <input
@@ -124,7 +131,10 @@ export default () => {
         </div>
 
         <div className="mb-8">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             パスワード:
           </label>
           <input
@@ -150,4 +160,4 @@ export default () => {
       </Form>
     </div>
   );
-}
+};

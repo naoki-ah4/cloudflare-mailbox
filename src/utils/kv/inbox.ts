@@ -2,7 +2,7 @@ import {
   InboxMessagesSchema,
   type InboxMessages,
   type EmailMetadata,
-} from './schema';
+} from "./schema";
 
 export const InboxKV = {
   async get(kv: KVNamespace, recipient: string): Promise<InboxMessages> {
@@ -64,7 +64,10 @@ export const InboxKV = {
   /**
    * 統計情報のみを取得（大量メール対応）
    */
-  async getStats(kv: KVNamespace, recipient: string): Promise<{
+  async getStats(
+    kv: KVNamespace,
+    recipient: string
+  ): Promise<{
     total: number;
     unread: number;
   }> {
@@ -72,7 +75,7 @@ export const InboxKV = {
       const messages = await this.get(kv, recipient);
       return {
         total: messages.length,
-        unread: messages.filter(msg => !msg.isRead).length,
+        unread: messages.filter((msg) => !msg.isRead).length,
       };
     } catch (error) {
       console.error(`Failed to get stats for ${recipient}:`, error);
@@ -83,7 +86,10 @@ export const InboxKV = {
   /**
    * 複数メールボックスの統計を並列取得
    */
-  async getMultipleStats(kv: KVNamespace, recipients: string[]): Promise<{
+  async getMultipleStats(
+    kv: KVNamespace,
+    recipients: string[]
+  ): Promise<{
     [email: string]: { total: number; unread: number };
   }> {
     try {
@@ -93,13 +99,16 @@ export const InboxKV = {
       });
 
       const results = await Promise.all(statsPromises);
-      
-      return results.reduce((acc, { recipient, stats }) => {
-        acc[recipient] = stats;
-        return acc;
-      }, {} as { [email: string]: { total: number; unread: number } });
+
+      return results.reduce(
+        (acc, { recipient, stats }) => {
+          acc[recipient] = stats;
+          return acc;
+        },
+        {} as { [email: string]: { total: number; unread: number } }
+      );
     } catch (error) {
-      console.error('Failed to get multiple stats:', error);
+      console.error("Failed to get multiple stats:", error);
       return {};
     }
   },

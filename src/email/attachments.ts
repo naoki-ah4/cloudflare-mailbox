@@ -1,20 +1,20 @@
-import type { Email } from 'postal-mime';
-import type { EmailMessage } from './types';
+import type { Email } from "postal-mime";
+import type { EmailMessage } from "./types";
 
 export const saveAttachments = async (
-  attachments: Email['attachments'],
+  attachments: Email["attachments"],
   messageId: string,
   r2Bucket: R2Bucket,
   attachmentsSizeLimit: number = 25 * 1024 * 1024
 ) => {
-  const savedAttachments: EmailMessage['attachments'] = [];
+  const savedAttachments: EmailMessage["attachments"] = [];
 
   let totalSize = 0;
   for (const attachment of attachments) {
     try {
       const r2Key = `${messageId}/${attachment.filename}`;
       const contentSize =
-        typeof attachment.content === 'string'
+        typeof attachment.content === "string"
           ? attachment.content.length
           : attachment.content.byteLength;
       totalSize += contentSize;
@@ -26,7 +26,7 @@ export const saveAttachments = async (
       }
       await r2Bucket.put(r2Key, attachment.content, {
         httpMetadata: {
-          contentType: attachment.mimeType || 'application/octet-stream',
+          contentType: attachment.mimeType || "application/octet-stream",
           contentDisposition: `attachment; filename="${attachment.filename}"`,
         },
       });

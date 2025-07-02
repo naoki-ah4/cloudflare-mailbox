@@ -6,13 +6,13 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-const LoadingSpinner = ({ 
-  size = "medium", 
-  color = "primary", 
-  className = "" 
+const LoadingSpinner = ({
+  size = "medium",
+  color = "primary",
+  className = "",
 }: LoadingSpinnerProps) => {
   return (
-    <div 
+    <div
       className={`${styles.spinner} ${styles[size]} ${styles[color]} ${className}`}
       role="status"
       aria-label="読み込み中"

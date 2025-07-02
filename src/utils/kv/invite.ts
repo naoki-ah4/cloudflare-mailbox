@@ -1,4 +1,4 @@
-import { InviteSchema, type Invite } from './schema';
+import { InviteSchema, type Invite } from "./schema";
 
 export const InviteKV = {
   async get(kv: KVNamespace, token: string): Promise<Invite | null> {
@@ -29,7 +29,7 @@ export const InviteKV = {
   },
 
   async count(kv: KVNamespace): Promise<number> {
-    const inviteList = await kv.list({ prefix: 'invite:' });
+    const inviteList = await kv.list({ prefix: "invite:" });
     return inviteList.keys.length;
   },
 };

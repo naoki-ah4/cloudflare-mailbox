@@ -1,6 +1,7 @@
 // スケルトンローダーのアニメーション
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -25,25 +26,25 @@
   border-radius: 4px;
   position: relative;
   overflow: hidden;
-  
+
   // バリアント
   &.text {
     border-radius: 4px;
   }
-  
+
   &.circular {
     border-radius: 50%;
   }
-  
+
   &.rectangular {
     border-radius: 4px;
   }
-  
+
   // アニメーション
   &.pulse {
     animation: pulse 1.5s ease-in-out infinite;
   }
-  
+
   &.wave {
     &::after {
       content: "";
@@ -62,7 +63,7 @@
       animation: wave 1.6s linear infinite;
     }
   }
-  
+
   &.none {
     // アニメーションなし
   }
@@ -79,7 +80,7 @@
 .messageItem {
   padding: 1rem;
   border-bottom: 1px solid var(--color-border, #e5e7eb);
-  
+
   &:last-child {
     border-bottom: none;
   }
