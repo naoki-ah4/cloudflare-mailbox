@@ -24,6 +24,18 @@ export const validateEmailDomains = async (
     const invalidEmails: string[] = [];
 
     for (const email of emails) {
+      // catch-allアドレスはCATCH_ALL設定の場合のみ許可
+      if (
+        settings.catchAllEmailAddress &&
+        email.toLowerCase() === settings.catchAllEmailAddress.toLowerCase()
+      ) {
+        if (settings.unauthorizedEmailHandling !== "CATCH_ALL") {
+          invalidEmails.push(email);
+          continue;
+        }
+        continue;
+      }
+
       const domain = email.split("@")[1];
       if (!settings.allowedDomains.includes(domain)) {
         invalidEmails.push(email);
