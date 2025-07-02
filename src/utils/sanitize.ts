@@ -94,11 +94,42 @@ const validateCSSStyles = (styleElement: HTMLElement): string => {
  * HTMLコンテンツをサニタイズ（メール表示用）
  * 安全なHTMLタグのみを許可し、スクリプトやイベントハンドラを除去
  */
+/**
+ * サーバーサイド用の基本的なHTMLサニタイゼーション
+ * 最も危険なタグとイベントハンドラを除去
+ */
+const basicSanitize = (html: string): string => {
+  return (
+    html
+      // 危険なタグを除去
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/<iframe\b[^>]*>/gi, "")
+      .replace(/<object\b[^>]*>/gi, "")
+      .replace(/<embed\b[^>]*>/gi, "")
+      .replace(/<form\b[^>]*>/gi, "")
+      .replace(/<input\b[^>]*>/gi, "")
+      .replace(/<textarea\b[^>]*>/gi, "")
+      .replace(/<frame\b[^>]*>/gi, "")
+      .replace(/<frameset\b[^>]*>/gi, "")
+      // 危険なイベントハンドラを除去
+      .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, "")
+      .replace(/\s+on\w+\s*=\s*[^"'\s>]+/gi, "")
+      // javascript: スキームを除去
+      .replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"')
+      .replace(/src\s*=\s*["']javascript:[^"']*["']/gi, 'src=""')
+  );
+};
+
 export const sanitizeHTML = (
   html: string,
   options: { allowExternalImages?: boolean } = {}
 ): string => {
   if (!html) return "";
+
+  // サーバーサイドでは基本的なサニタイゼーションのみ
+  if (typeof window === "undefined") {
+    return basicSanitize(html);
+  }
 
   // フックを追加
   DOMPurify.addHook("afterSanitizeAttributes", (node: Element) => {
