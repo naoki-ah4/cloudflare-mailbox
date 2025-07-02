@@ -111,13 +111,15 @@ export const UserSettingsSchema = z.object({
 
 // システム設定スキーマ
 export const SystemSettingsSchema = z.object({
-  allowedDomains: z.array(z.string().min(1)).default([]),
+  allowedDomains: z.array(z.string().min(1)).default([]), // ユーザー登録時のドメイン制限
+  allowedEmailAddresses: z.array(z.string().email()).default([]), // 受信可能メールアドレス
   updatedAt: z.number(),
 });
 
 // システム設定編集履歴エントリ
 export const SystemSettingsHistoryEntrySchema = z.object({
   allowedDomains: z.array(z.string()),
+  allowedEmailAddresses: z.array(z.string().email()),
   updatedAt: z.number(),
   updatedBy: z.string(), // 管理者ID
   changes: z.string(), // 変更内容の説明

@@ -31,25 +31,59 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
   if (request.method === "POST") {
     try {
       const formData = await request.formData();
-      const domainsText = formData.get("domains") as string;
+      const action = formData.get("action") as string;
 
-      // ドメインリストを解析
-      const domains = domainsText
-        .split("\n")
-        .map((d) => d.trim())
-        .filter((d) => d.length > 0);
+      if (action === "update-domains") {
+        const domainsText = formData.get("domains") as string;
 
-      // ドメイン形式の簡易バリデーション
-      for (const domain of domains) {
-        if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
-          return { error: `無効なドメイン形式です: ${domain}` };
+        // ドメインリストを解析
+        const domains = domainsText
+          .split("\n")
+          .map((d) => d.trim())
+          .filter((d) => d.length > 0);
+
+        // ドメイン形式の簡易バリデーション
+        for (const domain of domains) {
+          if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
+            return { error: `無効なドメイン形式です: ${domain}` };
+          }
         }
+
+        // システム設定を更新（管理者IDは仮でsystemを使用）
+        await SystemKV.updateSettings(
+          env.SYSTEM_KV,
+          { allowedDomains: domains },
+          "system"
+        );
+
+        return { success: "ドメイン設定を更新しました" };
+      } else if (action === "update-emails") {
+        const emailsText = formData.get("emails") as string;
+
+        // メールアドレスリストを解析
+        const emails = emailsText
+          .split("\n")
+          .map((e) => e.trim())
+          .filter((e) => e.length > 0);
+
+        // メールアドレス形式の簡易バリデーション
+        for (const email of emails) {
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return { error: `無効なメールアドレス形式です: ${email}` };
+          }
+        }
+
+        // システム設定を更新（管理者IDは仮でsystemを使用）
+        await SystemKV.updateSettings(
+          env.SYSTEM_KV,
+          { allowedEmailAddresses: emails },
+          "system"
+        );
+
+        return { success: "受信可能メールアドレス設定を更新しました" };
       }
 
-      // システム設定を更新（管理者IDは仮でsystemを使用）
-      await SystemKV.updateSettings(env.SYSTEM_KV, domains, "system");
-
-      return { success: "システム設定を更新しました" };
+      return { error: "無効なアクションです" };
     } catch (error) {
       console.error("Failed to update system settings:", error);
       return { error: "システム設定の更新に失敗しました" };
@@ -68,6 +102,12 @@ export default () => {
   // ドメインリストの状態管理
   const [domains, setDomains] = useState<string[]>(settings.allowedDomains);
   const [newDomain, setNewDomain] = useState("");
+
+  // 受信可能メールアドレスリストの状態管理
+  const [emails, setEmails] = useState<string[]>(
+    settings.allowedEmailAddresses ?? []
+  );
+  const [newEmail, setNewEmail] = useState("");
 
   // ドメイン追加
   const addDomain = () => {
@@ -88,13 +128,32 @@ export default () => {
     setDomains(domains.filter((_, i) => i !== index));
   };
 
+  // メールアドレス追加
+  const addEmail = () => {
+    const trimmedEmail = newEmail.trim();
+    if (trimmedEmail && !emails.includes(trimmedEmail)) {
+      // 簡易メールアドレス形式チェック
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        alert("無効なメールアドレス形式です");
+        return;
+      }
+      setEmails([...emails, trimmedEmail]);
+      setNewEmail("");
+    }
+  };
+
+  // メールアドレス削除
+  const removeEmail = (index: number) => {
+    setEmails(emails.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-8">
       <header className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
         <div>
           <h1 className="text-2xl font-bold">システム設定</h1>
           <p className="text-gray-600 mt-2">
-            ユーザーが設定可能なメールドメインを管理します
+            メール受信とユーザー登録の制限を管理します
           </p>
         </div>
         <a
@@ -117,8 +176,105 @@ export default () => {
         </div>
       )}
 
+      {/* 受信可能メールアドレス設定 */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">許可ドメイン設定</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          受信可能メールアドレス設定
+        </h2>
+        <p className="text-gray-600 mb-6">
+          システムで受信を許可するメールアドレスを制限します。
+          空にすると全てのアドレスにメールを受信します。
+        </p>
+
+        <Form method="post">
+          {/* 隠しフィールドでメールアドレスリストを送信 */}
+          <input type="hidden" name="action" value="update-emails" />
+          <input type="hidden" name="emails" value={emails.join("\n")} />
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              受信可能メールアドレス:
+            </label>
+
+            {/* メールアドレス追加UI */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="user@example.com"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isSubmitting}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addEmail();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={addEmail}
+                disabled={isSubmitting || !newEmail.trim()}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                追加
+              </button>
+            </div>
+
+            {/* メールアドレスリスト表示 */}
+            {emails.length > 0 ? (
+              <div className="bg-gray-50 p-4 rounded-md">
+                <p className="text-sm text-gray-600 mb-3">
+                  受信可能メールアドレス ({emails.length}個):
+                </p>
+                <div className="space-y-2">
+                  {emails.map((email, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-white p-2 rounded border"
+                    >
+                      <span className="font-mono text-sm">{email}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeEmail(index)}
+                        disabled={isSubmitting}
+                        className="text-red-600 hover:text-red-800 disabled:opacity-50 text-sm px-2 py-1"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 p-4 rounded-md">
+                <p className="text-sm text-gray-600">
+                  受信可能メールアドレスが設定されていません。全てのアドレスにメールを受信します。
+                </p>
+              </div>
+            )}
+
+            <small className="text-gray-500 text-sm block mt-2">
+              例: user@example.com, support@company.jp など
+            </small>
+          </div>
+
+          <LoadingButton
+            type="submit"
+            loading={isSubmitting}
+            loadingText="更新中..."
+            variant="primary"
+            size="medium"
+          >
+            受信アドレス設定を更新
+          </LoadingButton>
+        </Form>
+      </div>
+
+      {/* ユーザー登録ドメイン制限設定 */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">ユーザー登録ドメイン制限</h2>
         <p className="text-gray-600 mb-6">
           ユーザーが設定可能なメールアドレスのドメインを制限します。
           空にすると全てのドメインが許可されます。
@@ -126,6 +282,7 @@ export default () => {
 
         <Form method="post">
           {/* 隠しフィールドでドメインリストを送信 */}
+          <input type="hidden" name="action" value="update-domains" />
           <input type="hidden" name="domains" value={domains.join("\n")} />
 
           <div className="mb-6">
@@ -204,7 +361,7 @@ export default () => {
             variant="primary"
             size="medium"
           >
-            設定を更新
+            ドメイン設定を更新
           </LoadingButton>
         </Form>
       </div>
@@ -220,24 +377,51 @@ export default () => {
           </a>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* 受信可能メールアドレス設定 */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">
-              許可ドメイン数:
+              受信可能メールアドレス:
+            </h3>
+            <p className="text-lg font-semibold text-gray-900">
+              {settings.allowedEmailAddresses?.length === 0 ||
+              !settings.allowedEmailAddresses
+                ? "制限なし（全アドレス受信）"
+                : `${settings.allowedEmailAddresses.length}個のアドレス`}
+            </p>
+
+            {settings.allowedEmailAddresses &&
+              settings.allowedEmailAddresses.length > 0 && (
+                <div className="bg-gray-50 p-3 rounded-md mt-2">
+                  <ul className="list-disc list-inside space-y-1">
+                    {settings.allowedEmailAddresses.map(
+                      (email: string, index: number) => (
+                        <li
+                          key={index}
+                          className="text-sm text-gray-700 font-mono"
+                        >
+                          {email}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
+          </div>
+
+          {/* ユーザー登録ドメイン制限 */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              ユーザー登録ドメイン制限:
             </h3>
             <p className="text-lg font-semibold text-gray-900">
               {settings.allowedDomains.length === 0
                 ? "制限なし"
-                : `${settings.allowedDomains.length}個`}
+                : `${settings.allowedDomains.length}個のドメイン`}
             </p>
-          </div>
 
-          {settings.allowedDomains.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">
-                許可ドメイン一覧:
-              </h3>
-              <div className="bg-gray-50 p-3 rounded-md">
+            {settings.allowedDomains.length > 0 && (
+              <div className="bg-gray-50 p-3 rounded-md mt-2">
                 <ul className="list-disc list-inside space-y-1">
                   {settings.allowedDomains.map((domain, index) => (
                     <li key={index} className="text-sm text-gray-700 font-mono">
@@ -246,8 +430,8 @@ export default () => {
                   ))}
                 </ul>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {settings.updatedAt > 0 && (
             <div>

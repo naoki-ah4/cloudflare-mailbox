@@ -45,39 +45,71 @@ export const SystemKV = {
     const now = Date.now();
     return SystemSettingsSchema.parse({
       allowedDomains: [],
+      allowedEmailAddresses: [],
       updatedAt: now,
     });
   },
 
   async updateSettings(
     kv: KVNamespace,
-    allowedDomains: string[],
+    data: {
+      allowedDomains?: string[];
+      allowedEmailAddresses?: string[];
+    },
     adminId: string,
     changes?: string
   ): Promise<SystemSettings> {
-    const existingSettings = await this.getSettings(kv);
+    const existingSettings =
+      (await this.getSettings(kv)) || (await this.getDefaultSettings());
     const now = Date.now();
 
-    // 新しい設定を作成
+    // 新しい設定を作成（既存設定をベースに更新）
     const updatedSettings: SystemSettings = {
-      allowedDomains,
+      allowedDomains: data.allowedDomains ?? existingSettings.allowedDomains,
+      allowedEmailAddresses:
+        data.allowedEmailAddresses ?? existingSettings.allowedEmailAddresses,
       updatedAt: now,
     };
 
     // 履歴に保存（初回設定時も含む）
     const historyEntry: SystemSettingsHistoryEntry = {
-      allowedDomains,
+      allowedDomains: updatedSettings.allowedDomains,
+      allowedEmailAddresses: updatedSettings.allowedEmailAddresses,
       updatedAt: now,
       updatedBy: adminId,
       changes:
         changes ||
-        (existingSettings
-          ? `ドメイン設定を更新: ${allowedDomains.length}個`
-          : `初回ドメイン設定: ${allowedDomains.length}個`),
+        this.generateChangeSummary(existingSettings, updatedSettings),
     };
     await this.addHistoryEntry(kv, historyEntry);
 
     await this.setSettings(kv, updatedSettings);
     return updatedSettings;
+  },
+
+  // 変更内容のサマリーを生成
+  generateChangeSummary(
+    oldSettings: SystemSettings,
+    newSettings: SystemSettings
+  ): string {
+    const changes = [];
+
+    if (
+      JSON.stringify(oldSettings.allowedDomains) !==
+      JSON.stringify(newSettings.allowedDomains)
+    ) {
+      changes.push(`ドメイン設定: ${newSettings.allowedDomains.length}個`);
+    }
+
+    if (
+      JSON.stringify(oldSettings.allowedEmailAddresses) !==
+      JSON.stringify(newSettings.allowedEmailAddresses)
+    ) {
+      changes.push(
+        `受信可能アドレス: ${newSettings.allowedEmailAddresses.length}個`
+      );
+    }
+
+    return changes.length > 0 ? changes.join(", ") : "設定を更新";
   },
 };
