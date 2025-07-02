@@ -1,6 +1,7 @@
 import { createRequestHandler } from "react-router";
 import EmailApp from "~/email";
 import { authenticateAdmin, authenticateUser } from "~/utils/auth.server";
+import { getUserSession } from "~/utils/session.server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -20,12 +21,21 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // パス別認証チェック
     if (
       ["/", "/login", "/login.data", "/signup", "/signup.data"].includes(
         url.pathname
       )
     ) {
+      // ユーザーが既にログインしている場合、適切なリダイレクトを行う
+      const session = await getUserSession(request.headers.get("Cookie"));
+      const sessionId = session.get("sessionId");
+      if (sessionId) {
+        return Response.redirect(
+          new URL("/dashboard", request.url).toString(),
+          302
+        );
+      }
+
       // 公開ページは認証不要でそのまま通す
       return requestHandler(request, {
         cloudflare: { env, ctx },
