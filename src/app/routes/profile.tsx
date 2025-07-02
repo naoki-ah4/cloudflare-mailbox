@@ -57,6 +57,8 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
         lastLogin: user.lastLogin,
       },
       allowedDomains: systemSettings?.allowedDomains || [],
+      hasEmailRestriction:
+        (systemSettings?.allowedEmailAddresses?.length || 0) > 0,
     };
   } catch (error) {
     console.error("Failed to load profile:", error);
@@ -160,7 +162,31 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
     await SessionKV.set(env.USERS_KV, sessionId, updatedSession);
 
-    return { success: "プロフィールを更新しました" };
+    // 受信可能性をチェックして警告を追加
+    const emailSystemSettings = await SystemKV.getSettings(env.SYSTEM_KV);
+    let warningMessage = "";
+
+    if (
+      emailSystemSettings &&
+      emailSystemSettings.allowedEmailAddresses.length > 0
+    ) {
+      const unreceivableEmails = parsedManagedEmails.filter(
+        (email) =>
+          !emailSystemSettings.allowedEmailAddresses.includes(
+            email.toLowerCase()
+          )
+      );
+
+      if (unreceivableEmails.length > 0) {
+        warningMessage = `⚠️ 注意: 以下のメールアドレスは受信制限により実際にメールを受信できません: ${unreceivableEmails.join(", ")}`;
+      }
+    }
+
+    return {
+      success: warningMessage
+        ? `プロフィールを更新しました。${warningMessage}`
+        : "プロフィールを更新しました",
+    };
   } catch (error) {
     console.error("Failed to update profile:", error);
     return { error: "プロフィールの更新に失敗しました" };

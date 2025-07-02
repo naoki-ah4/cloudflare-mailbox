@@ -204,6 +204,28 @@ export default () => {
         </div>
       )}
 
+      {/* メール制御設定の説明 */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+        <h3 className="font-medium text-blue-900 mb-2">
+          メール制御の優先度について
+        </h3>
+        <div className="text-blue-700 text-sm space-y-2">
+          <p>
+            <strong>受信可能メールアドレス</strong>
+            が設定されている場合、そちらが優先されます。
+          </p>
+          <p>
+            <strong>ユーザー登録ドメイン制限</strong>
+            は受信可能アドレスが未設定の場合のみ有効です。
+          </p>
+          <p className="mt-2 p-2 bg-blue-100 rounded">
+            💡 <strong>推奨</strong>:
+            厳密な制御が必要な場合は「受信可能メールアドレス」を使用し、
+            柔軟な制御が必要な場合は「ユーザー登録ドメイン制限」のみを使用してください。
+          </p>
+        </div>
+      </div>
+
       {/* 受信可能メールアドレス設定 */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4">
