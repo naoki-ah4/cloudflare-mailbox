@@ -109,10 +109,15 @@ export const UserSettingsSchema = z.object({
   updatedAt: z.number(),
 });
 
+// 未許可メール処理方式
+export const UnauthorizedEmailHandlingSchema = z.enum(["REJECT", "CATCH_ALL"]);
+
 // システム設定スキーマ
 export const SystemSettingsSchema = z.object({
   allowedDomains: z.array(z.string().min(1)).default([]), // ユーザー登録時のドメイン制限
   allowedEmailAddresses: z.array(z.string().email()).default([]), // 受信可能メールアドレス
+  unauthorizedEmailHandling: UnauthorizedEmailHandlingSchema.default("REJECT"), // 未許可メール処理方式
+  catchAllEmailAddress: z.string().email().optional(), // catch-all転送先アドレス（CATCH_ALL時必須）
   updatedAt: z.number(),
 });
 
@@ -120,6 +125,8 @@ export const SystemSettingsSchema = z.object({
 export const SystemSettingsHistoryEntrySchema = z.object({
   allowedDomains: z.array(z.string()),
   allowedEmailAddresses: z.array(z.string().email()),
+  unauthorizedEmailHandling: UnauthorizedEmailHandlingSchema,
+  catchAllEmailAddress: z.string().email().optional(),
   updatedAt: z.number(),
   updatedBy: z.string(), // 管理者ID
   changes: z.string(), // 変更内容の説明
@@ -166,6 +173,9 @@ export type ThreadMessages = z.infer<typeof ThreadMessagesSchema>;
 export type InboxMessages = z.infer<typeof InboxMessagesSchema>;
 export type FolderMessages = z.infer<typeof FolderMessagesSchema>;
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
+export type UnauthorizedEmailHandling = z.infer<
+  typeof UnauthorizedEmailHandlingSchema
+>;
 export type SystemSettings = z.infer<typeof SystemSettingsSchema>;
 export type SystemSettingsHistoryEntry = z.infer<
   typeof SystemSettingsHistoryEntrySchema

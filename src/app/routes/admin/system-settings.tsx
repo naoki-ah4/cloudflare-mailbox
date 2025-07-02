@@ -59,6 +59,8 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
         return { success: "ドメイン設定を更新しました" };
       } else if (action === "update-emails") {
         const emailsText = formData.get("emails") as string;
+        const handlingMode = formData.get("handlingMode") as string;
+        const catchAllEmail = formData.get("catchAllEmail") as string;
 
         // メールアドレスリストを解析
         const emails = emailsText
@@ -73,10 +75,25 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
           }
         }
 
+        // CATCH_ALL設定時のバリデーション
+        if (handlingMode === "CATCH_ALL") {
+          if (!catchAllEmail) {
+            return { error: "catch-all転送設定時は転送先アドレスが必須です" };
+          }
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(catchAllEmail)) {
+            return { error: "無効なcatch-all転送先アドレス形式です" };
+          }
+        }
+
         // システム設定を更新（管理者IDは仮でsystemを使用）
         await SystemKV.updateSettings(
           env.SYSTEM_KV,
-          { allowedEmailAddresses: emails },
+          {
+            allowedEmailAddresses: emails,
+            unauthorizedEmailHandling: handlingMode as "REJECT" | "CATCH_ALL",
+            catchAllEmailAddress:
+              handlingMode === "CATCH_ALL" ? catchAllEmail : undefined,
+          },
           "system"
         );
 
@@ -108,6 +125,14 @@ export default () => {
     settings.allowedEmailAddresses ?? []
   );
   const [newEmail, setNewEmail] = useState("");
+
+  // 未許可メール処理方式の状態管理
+  const [handlingMode, setHandlingMode] = useState<"REJECT" | "CATCH_ALL">(
+    settings.unauthorizedEmailHandling ?? "REJECT"
+  );
+  const [catchAllEmail, setCatchAllEmail] = useState<string>(
+    settings.catchAllEmailAddress ?? ""
+  );
 
   // ドメイン追加
   const addDomain = () => {
@@ -190,6 +215,8 @@ export default () => {
           {/* 隠しフィールドでメールアドレスリストを送信 */}
           <input type="hidden" name="action" value="update-emails" />
           <input type="hidden" name="emails" value={emails.join("\n")} />
+          <input type="hidden" name="handlingMode" value={handlingMode} />
+          <input type="hidden" name="catchAllEmail" value={catchAllEmail} />
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -258,6 +285,69 @@ export default () => {
             <small className="text-gray-500 text-sm block mt-2">
               例: user@example.com, support@company.jp など
             </small>
+          </div>
+
+          {/* 未許可メール処理方式設定 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              未許可メール処理方式:
+            </label>
+            <div className="space-y-3">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="handlingModeRadio"
+                  value="REJECT"
+                  checked={handlingMode === "REJECT"}
+                  onChange={(e) =>
+                    setHandlingMode(e.target.value as "REJECT" | "CATCH_ALL")
+                  }
+                  disabled={isSubmitting}
+                  className="mr-2"
+                />
+                <span className="text-sm">
+                  <strong>拒否</strong> -
+                  許可されていないアドレス宛のメールを受信しない
+                </span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="handlingModeRadio"
+                  value="CATCH_ALL"
+                  checked={handlingMode === "CATCH_ALL"}
+                  onChange={(e) =>
+                    setHandlingMode(e.target.value as "REJECT" | "CATCH_ALL")
+                  }
+                  disabled={isSubmitting}
+                  className="mr-2"
+                />
+                <span className="text-sm">
+                  <strong>catch-all転送</strong> - 指定したメールボックスに転送
+                </span>
+              </label>
+            </div>
+
+            {/* catch-all転送先アドレス設定 */}
+            {handlingMode === "CATCH_ALL" && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-md">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  catch-all転送先アドレス:
+                </label>
+                <input
+                  type="email"
+                  value={catchAllEmail}
+                  onChange={(e) => setCatchAllEmail(e.target.value)}
+                  placeholder="catch-all@example.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isSubmitting}
+                  required={handlingMode === "CATCH_ALL"}
+                />
+                <small className="text-gray-500 text-sm block mt-1">
+                  許可されていないアドレス宛のメールがこのアドレスに転送されます
+                </small>
+              </div>
+            )}
           </div>
 
           <LoadingButton
@@ -405,6 +495,28 @@ export default () => {
                       )
                     )}
                   </ul>
+                </div>
+              )}
+          </div>
+
+          {/* 未許可メール処理方式 */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              未許可メール処理方式:
+            </h3>
+            <p className="text-lg font-semibold text-gray-900">
+              {settings.unauthorizedEmailHandling === "CATCH_ALL"
+                ? "catch-all転送"
+                : "拒否"}
+            </p>
+
+            {settings.unauthorizedEmailHandling === "CATCH_ALL" &&
+              settings.catchAllEmailAddress && (
+                <div className="bg-gray-50 p-3 rounded-md mt-2">
+                  <p className="text-sm text-gray-600 mb-1">転送先アドレス:</p>
+                  <p className="text-sm text-gray-700 font-mono">
+                    {settings.catchAllEmailAddress}
+                  </p>
                 </div>
               )}
           </div>

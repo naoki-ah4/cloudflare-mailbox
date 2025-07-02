@@ -46,6 +46,8 @@ export const SystemKV = {
     return SystemSettingsSchema.parse({
       allowedDomains: [],
       allowedEmailAddresses: [],
+      unauthorizedEmailHandling: "REJECT",
+      catchAllEmailAddress: undefined,
       updatedAt: now,
     });
   },
@@ -55,6 +57,8 @@ export const SystemKV = {
     data: {
       allowedDomains?: string[];
       allowedEmailAddresses?: string[];
+      unauthorizedEmailHandling?: "REJECT" | "CATCH_ALL";
+      catchAllEmailAddress?: string;
     },
     adminId: string,
     changes?: string
@@ -68,13 +72,28 @@ export const SystemKV = {
       allowedDomains: data.allowedDomains ?? existingSettings.allowedDomains,
       allowedEmailAddresses:
         data.allowedEmailAddresses ?? existingSettings.allowedEmailAddresses,
+      unauthorizedEmailHandling:
+        data.unauthorizedEmailHandling ??
+        existingSettings.unauthorizedEmailHandling,
+      catchAllEmailAddress:
+        data.catchAllEmailAddress ?? existingSettings.catchAllEmailAddress,
       updatedAt: now,
     };
+
+    // CATCH_ALL設定時にcatchAllEmailAddressが必須かチェック
+    if (
+      updatedSettings.unauthorizedEmailHandling === "CATCH_ALL" &&
+      !updatedSettings.catchAllEmailAddress
+    ) {
+      throw new Error("CATCH_ALL設定時はcatchAllEmailAddressが必須です");
+    }
 
     // 履歴に保存（初回設定時も含む）
     const historyEntry: SystemSettingsHistoryEntry = {
       allowedDomains: updatedSettings.allowedDomains,
       allowedEmailAddresses: updatedSettings.allowedEmailAddresses,
+      unauthorizedEmailHandling: updatedSettings.unauthorizedEmailHandling,
+      catchAllEmailAddress: updatedSettings.catchAllEmailAddress,
       updatedAt: now,
       updatedBy: adminId,
       changes:
@@ -107,6 +126,23 @@ export const SystemKV = {
     ) {
       changes.push(
         `受信可能アドレス: ${newSettings.allowedEmailAddresses.length}個`
+      );
+    }
+
+    if (
+      oldSettings.unauthorizedEmailHandling !==
+      newSettings.unauthorizedEmailHandling
+    ) {
+      const handlingText =
+        newSettings.unauthorizedEmailHandling === "REJECT"
+          ? "拒否"
+          : "catch-all転送";
+      changes.push(`未許可メール処理: ${handlingText}`);
+    }
+
+    if (oldSettings.catchAllEmailAddress !== newSettings.catchAllEmailAddress) {
+      changes.push(
+        `catch-all転送先: ${newSettings.catchAllEmailAddress || "未設定"}`
       );
     }
 

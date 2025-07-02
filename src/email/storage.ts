@@ -24,13 +24,21 @@ export const saveEmailToKV = async (
  */
 export const updateInboxIndex = async (
   emailMessage: EmailMessage,
-  mailboxesKV: KVNamespace
+  mailboxesKV: KVNamespace,
+  options?: {
+    catchAllAddress?: string;
+  }
 ) => {
-  for (const recipient of emailMessage.to) {
+  // catch-all転送の場合は、catch-allアドレスのメールボックスに振り分け
+  const recipients = options?.catchAllAddress
+    ? [options.catchAllAddress]
+    : emailMessage.to;
+
+  for (const recipient of recipients) {
     const metadata: EmailMetadata = {
       messageId: emailMessage.id,
       from: emailMessage.from,
-      to: emailMessage.to,
+      to: emailMessage.to, // 元のtoアドレスを保持
       subject: emailMessage.subject,
       date: new Date(emailMessage.date),
       hasAttachments: emailMessage.attachments.length > 0,
