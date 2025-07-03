@@ -6,6 +6,7 @@
 
 import { logger } from "~/utils/logger";
 import type { EmailAttachment } from "~/email/types";
+import { Resend, type CreateEmailOptions } from "resend";
 
 export type SendEmailRequest = {
   from: string;
@@ -72,13 +73,13 @@ export const sendEmailViaResend = async (
     );
 
     // Resend APIリクエスト
-    const resendPayload = {
+    const resendPayload: CreateEmailOptions = {
       from: emailData.from,
       to: emailData.to,
       cc: emailData.cc,
       bcc: emailData.bcc,
       subject: emailData.subject,
-      text: emailData.text,
+      text: emailData.text || "",
       html: emailData.html,
       attachments: attachments.length > 0 ? attachments : undefined,
       headers: {
@@ -98,32 +99,28 @@ export const sendEmailViaResend = async (
       },
     });
 
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(resendPayload),
-    });
+    const resend = new Resend(resendApiKey);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Resend API error: ${response.status} ${errorText}`);
+    const { data, error } = await resend.emails.send(resendPayload);
+
+    if (error) {
+      throw new Error(`Resend API error: ${error.name} ${error.message}`);
     }
 
-    const result = await response.json<{ id: string }>();
+    if (!data || !data.id) {
+      throw new Error("Resend APIからの応答にIDが含まれていません");
+    }
 
     logger.info("Resend API送信成功", {
       context: {
-        resendId: result.id,
+        resendId: data.id,
         from: emailData.from,
         to: emailData.to,
       },
     });
 
     return {
-      id: result.id,
+      id: data.id,
       success: true,
     };
   } catch (error) {
