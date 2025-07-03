@@ -15,6 +15,7 @@ export type EmailMessage = {
   threadId?: string;
   inReplyTo?: string;
   references?: string[];
+  originalFrom?: string;
 };
 
 export type EmailMetadata = {
@@ -26,4 +27,5 @@ export type EmailMetadata = {
   hasAttachments: boolean;
   size: number;
   threadId?: string;
+  originalFrom?: string;
 };

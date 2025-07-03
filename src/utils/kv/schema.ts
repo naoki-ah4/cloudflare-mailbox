@@ -77,6 +77,7 @@ export const EmailMessageSchema = z.object({
   threadId: z.string().optional(),
   inReplyTo: z.string().optional(),
   references: z.array(z.string()).optional(),
+  originalFrom: z.string().optional(),
 });
 
 export const EmailMetadataSchema = z.object({
@@ -90,6 +91,7 @@ export const EmailMetadataSchema = z.object({
   threadId: z.string().optional(),
   isRead: z.boolean().optional(),
   readAt: z.number().optional(),
+  originalFrom: z.string().optional(),
 });
 
 export const ThreadMessagesSchema = z.array(z.string().uuid());

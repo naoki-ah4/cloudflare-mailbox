@@ -170,6 +170,13 @@ const MessageDetail = () => {
             <strong>送信者:</strong>
             <span>{sanitizeEmailText(message.from)}</span>
 
+            {message.originalFrom && (
+              <>
+                <strong>転送元アドレス:</strong>
+                <span>{sanitizeEmailText(message.originalFrom)}</span>
+              </>
+            )}
+
             <strong>受信者:</strong>
             <span>{message.to.join(", ")}</span>
 

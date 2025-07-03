@@ -4,11 +4,12 @@ import type { EmailMessage } from "./types";
 export const createEmailMessage = (
   parsedEmail: Email,
   messageId: string,
-  attachments: EmailMessage["attachments"]
+  attachments: EmailMessage["attachments"],
+  originalEmail: ForwardableEmailMessage
 ): EmailMessage => {
   return {
     id: messageId,
-    from: parsedEmail.from?.address || "",
+    from: parsedEmail.from.address || originalEmail.from,
     to:
       parsedEmail.to
         ?.map((addr) => addr.address)
@@ -27,6 +28,7 @@ export const createEmailMessage = (
         (header) => String(header.name).toLowerCase() === "references"
       )?.value
     ),
+    originalFrom: originalEmail.from || parsedEmail.from.address,
   };
 };
 

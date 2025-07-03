@@ -451,6 +451,22 @@
   color: #666;
 }
 
+.srsInfo {
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #6c757d;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #adb5bd;
+  }
+}
+
 .attachmentIcon {
   margin-left: 0.5rem;
   font-size: 0.75rem;

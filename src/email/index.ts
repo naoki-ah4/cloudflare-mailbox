@@ -102,7 +102,8 @@ const emailHandler = async (
     const emailMessage = createEmailMessage(
       parsedEmail,
       messageId,
-      attachments
+      attachments,
+      message
     );
 
     await saveEmailToKV(emailMessage, env.MESSAGES_KV);
