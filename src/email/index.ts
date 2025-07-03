@@ -4,6 +4,7 @@ import { saveAttachments } from "./attachments";
 import { saveEmailToKV, updateInboxIndex } from "./storage";
 import { createEmailMessage } from "./utils";
 import { SystemKV } from "../utils/kv/system";
+import { logger } from "../utils/logger";
 
 /**
  * メール受信処理の判定結果
@@ -50,7 +51,7 @@ const checkEmailProcessing = async (
       return { allowed: false }; // REJECT
     }
   } catch (error) {
-    console.error("Error checking email processing:", error);
+    logger.error("メール処理チェックエラー", { error: error as Error });
     // エラー時は安全側に倒して拒否
     return { allowed: false };
   }
@@ -77,17 +78,18 @@ const emailHandler = async (
     if (!processingResult.allowed) {
       if (processingResult.catchAllAddress) {
         // catch-all転送の場合、転送先アドレスに変更して処理続行
-        console.log(
-          `Email redirected to catch-all. Original To: ${toEmails.join(", ")}, Catch-all: ${processingResult.catchAllAddress}`
-        );
+        logger.emailLog("メールをcatch-allアドレスに転送", {
+          originalTo: toEmails.join(", "),
+          catchAllAddress: processingResult.catchAllAddress
+        });
         // toEmailsをcatch-allアドレスに置き換え
         toEmails.length = 0;
         toEmails.push(processingResult.catchAllAddress);
       } else {
         // 拒否の場合
-        console.log(
-          `Email rejected - not in allowlist. To: ${toEmails.join(", ")}`
-        );
+        logger.emailLog("メール受信拒否: 許可リストに含まれていない", {
+          toEmails: toEmails.join(", ")
+        });
         return; // 受信を拒否
       }
     }
@@ -111,11 +113,15 @@ const emailHandler = async (
       catchAllAddress: processingResult.catchAllAddress,
     });
 
-    console.log(
-      `Email processed successfully. To: ${toEmails.join(", ")}, MessageId: ${messageId}`
-    );
+    logger.emailLog("メール処理完了", {
+      toEmails: toEmails.join(", "),
+      messageId,
+      subject: emailMessage.subject,
+      from: emailMessage.from,
+      attachmentCount: attachments.length
+    });
   } catch (error) {
-    console.error("Error processing email:", error);
+    logger.error("メール処理エラー", { error: error as Error });
   }
 };
 

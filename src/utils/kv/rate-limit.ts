@@ -4,6 +4,7 @@ import {
   type RateLimitRecord,
   type RateLimitResult,
 } from "./schema";
+import { logger } from "../logger";
 
 export const RateLimitKV = {
   /**
@@ -40,6 +41,15 @@ export const RateLimitKV = {
         const resetTime = firstAttempt + windowMs;
         const remainingMs = resetTime - now;
 
+        logger.securityLog("レート制限に達しました", {
+          key,
+          attempts,
+          limit,
+          windowMs,
+          resetTime,
+          remainingMs
+        });
+
         return RateLimitResultSchema.parse({
           allowed: false,
           remaining: 0,
@@ -62,7 +72,7 @@ export const RateLimitKV = {
         remaining: limit - attempts - 1,
       });
     } catch (error) {
-      console.error("Rate limit check failed:", error);
+      logger.error("レート制限チェック失敗", { error: error as Error, key });
       // エラー時は制限を適用しない（可用性優先）
       return RateLimitResultSchema.parse({
         allowed: true,
@@ -81,7 +91,7 @@ export const RateLimitKV = {
 
       return RateLimitRecordSchema.parse(JSON.parse(data));
     } catch (error) {
-      console.error(`Failed to get rate limit record ${key}:`, error);
+      logger.error("レート制限記録の取得に失敗", { error: error as Error, key });
       return null;
     }
   },

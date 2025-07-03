@@ -1,6 +1,7 @@
 import { AdminKV, AdminSessionKV, SessionKV } from "~/utils/kv";
 import { isIPInCIDRList } from "~/utils/cidr";
 import { getAdminSession, getUserSession } from "~/utils/session.server";
+import { logger } from "~/utils/logger";
 
 export type AuthResult = {
   isAuthenticated: boolean;
@@ -20,6 +21,7 @@ export const authenticateAdmin = async (
   if (env.NODE_ENV !== "development") {
     const clientIP = request.headers.get("CF-Connecting-IP");
     if (!clientIP || !isIPInCIDRList(clientIP, env.ADMIN_IPS)) {
+      logger.securityLog("管理者認証失敗: IP制限", { clientIP, adminIPs: env.ADMIN_IPS });
       return { isAuthenticated: false };
     }
   }
@@ -47,18 +49,21 @@ export const authenticateAdmin = async (
     // KVからセッションデータを取得
     const kvSession = await AdminSessionKV.get(env.USERS_KV, sessionId);
     if (!kvSession || kvSession.expiresAt < Date.now()) {
+      logger.authLog("管理者セッション認証失敗: 無効なセッション", kvSession?.adminId ?? undefined, { sessionId });
       return { isAuthenticated: false, redirect: "/admin/login" };
     }
 
     // 管理者存在確認
     const admin = await AdminKV.get(env.USERS_KV, kvSession.adminId);
     if (!admin) {
+      logger.authLog("管理者セッション認証失敗: 管理者が存在しない", kvSession.adminId, { sessionId });
       return { isAuthenticated: false, redirect: "/admin/login" };
     }
 
+    logger.authLog("管理者認証成功", kvSession.adminId, { sessionId });
     return { isAuthenticated: true };
   } catch (error) {
-    console.error("Admin session check error:", error);
+    logger.error("管理者セッションチェックエラー", { error: error as Error });
     return { isAuthenticated: false, redirect: "/admin/login" };
   }
 };
@@ -82,12 +87,14 @@ export const authenticateUser = async (
     // KVからセッションデータを取得
     const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
     if (!kvSession || kvSession.expiresAt < Date.now()) {
+      logger.authLog("ユーザーセッション認証失敗: 無効なセッション", kvSession?.userId ?? undefined, { sessionId });
       return { isAuthenticated: false, redirect: "/login" };
     }
 
+    logger.authLog("ユーザー認証成功", kvSession.userId, { sessionId });
     return { isAuthenticated: true };
   } catch (error) {
-    console.error("User session check error:", error);
+    logger.error("ユーザーセッションチェックエラー", { error: error as Error });
     return { isAuthenticated: false, redirect: "/login" };
   }
 };
