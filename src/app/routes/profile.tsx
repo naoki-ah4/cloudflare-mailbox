@@ -21,6 +21,19 @@ const ProfileUpdateSchema = z.object({
   managedEmails: z.string().min(1, "管理メールアドレスを入力してください"),
 });
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "プロフィール - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "ユーザープロフィールと管理メールアドレスの設定",
+    },
+  ];
+};
+
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
 

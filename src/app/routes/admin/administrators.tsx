@@ -127,6 +127,19 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   return { error: "許可されていないメソッドです" };
 };
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "管理者管理 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "システム管理者の一覧表示、追加、削除",
+    },
+  ];
+};
+
 export default () => {
   const { administrators, total } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();

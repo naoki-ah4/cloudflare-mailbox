@@ -6,6 +6,19 @@ import LoadingButton from "~/app/components/elements/LoadingButton";
 import type { Route } from "./+types/setup";
 import { SafeFormData } from "~/app/utils/formdata";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "管理者セットアップ - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "システムの初期設定と管理者アカウントの作成",
+    },
+  ];
+};
+
 export const action = async ({ request, context }: Route.ActionArgs) => {
   const { env } = context.cloudflare;
   const session = await getAdminSession(request.headers.get("Cookie"));

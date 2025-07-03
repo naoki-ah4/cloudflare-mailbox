@@ -14,6 +14,19 @@ import {
 import type { Route } from "./+types/backup";
 import { SafeFormData } from "~/app/utils/formdata";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "バックアップ管理 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "データのバックアップ作成、復旧、世代管理",
+    },
+  ];
+};
+
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
 

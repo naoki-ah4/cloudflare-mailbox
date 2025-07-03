@@ -3,6 +3,20 @@ import { AdminKV, UserKV } from "~/utils/kv";
 import styles from "./dashboard.module.scss";
 import type { Route } from "./+types/dashboard";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "管理者ダッシュボード - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content:
+        "システム管理のダッシュボード - ユーザー管理、設定、バックアップ",
+    },
+  ];
+};
+
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
 

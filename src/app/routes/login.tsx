@@ -7,6 +7,20 @@ import { RateLimitKV } from "~/utils/kv";
 import LoadingButton from "~/app/components/elements/LoadingButton";
 import { SafeFormData } from "~/app/utils/formdata";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "ログイン - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content:
+        "メール管理システムにログインして、メールの閲覧・管理を行いましょう",
+    },
+  ];
+};
+
 export const action = async ({ request, context }: Route.ActionArgs) => {
   const { env } = context.cloudflare;
   const session = await getUserSession(request.headers.get("Cookie"));

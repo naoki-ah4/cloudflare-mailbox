@@ -9,6 +9,19 @@ import Pagination from "../components/Pagination";
 import { useState } from "react";
 import { SkeletonMessageItem } from "../components/elements/SkeletonLoader";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "メール一覧 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "受信メールの一覧表示と管理",
+    },
+  ];
+};
+
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
 

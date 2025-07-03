@@ -22,6 +22,19 @@ const SettingsUpdateSchema = z.object({
   timezone: z.string(),
 });
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "設定 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "アカウント設定と表示設定を管理",
+    },
+  ];
+};
+
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
 

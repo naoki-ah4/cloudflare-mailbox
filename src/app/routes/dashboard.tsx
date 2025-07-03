@@ -70,6 +70,20 @@ export const loader = async ({
   }
 };
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "ダッシュボード - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content:
+        "メール管理システムのダッシュボード - 統計情報とメールボックスの概要",
+    },
+  ];
+};
+
 const Dashboard = () => {
   const { user, stats, mailboxStats } = useLoaderData<typeof loader>();
 

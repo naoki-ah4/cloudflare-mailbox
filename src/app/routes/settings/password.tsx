@@ -100,6 +100,19 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 };
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "パスワード変更 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "アカウントのパスワードを変更",
+    },
+  ];
+};
+
 const PasswordChange = () => {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();

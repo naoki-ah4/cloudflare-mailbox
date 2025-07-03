@@ -20,6 +20,19 @@ import { logger } from "~/utils/logger";
 import { v4 as uuidv4 } from "uuid";
 import { SafeFormData } from "~/app/utils/formdata";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "メール作成 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "新しいメールを作成して送信",
+    },
+  ];
+};
+
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
 

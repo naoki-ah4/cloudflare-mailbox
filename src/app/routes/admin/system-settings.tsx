@@ -124,6 +124,19 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   return { error: "許可されていないメソッドです" };
 };
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "システム設定 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "システム全体の設定管理 - ドメイン制限、メール制御など",
+    },
+  ];
+};
+
 export default () => {
   const { settings } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();

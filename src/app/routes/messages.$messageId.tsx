@@ -11,6 +11,19 @@ import {
 import styles from "./messages.$messageId.module.scss";
 import { SafeFormData } from "~/app/utils/formdata";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "メール詳細 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "メールの詳細表示と添付ファイルの管理",
+    },
+  ];
+};
+
 export const loader = async ({
   request,
   params,

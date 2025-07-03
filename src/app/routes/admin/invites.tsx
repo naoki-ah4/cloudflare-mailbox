@@ -88,6 +88,19 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   return { error: "許可されていないメソッドです" };
 };
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "招待管理 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "ユーザー招待URLの生成と管理",
+    },
+  ];
+};
+
 export default () => {
   const { total } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();

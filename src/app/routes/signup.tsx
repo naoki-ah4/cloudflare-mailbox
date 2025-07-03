@@ -12,6 +12,19 @@ import { getUserSession, commitUserSession } from "~/utils/session.server";
 import LoadingButton from "~/app/components/elements/LoadingButton";
 import { SafeFormData } from "~/app/utils/formdata";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "ユーザー登録 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "新しいユーザーアカウントを作成してメール管理を始めましょう",
+    },
+  ];
+};
+
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
 

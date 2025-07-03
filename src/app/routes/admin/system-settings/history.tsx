@@ -2,6 +2,19 @@ import { useLoaderData } from "react-router";
 import { SystemKV } from "~/utils/kv/system";
 import type { Route } from "./+types/history";
 
+export const meta = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  params,
+}: Route.MetaArgs) => {
+  return [
+    { title: "システム設定履歴 - Cloudflare Mailbox" },
+    {
+      name: "description",
+      content: "システム設定の変更履歴と詳細",
+    },
+  ];
+};
+
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
 
