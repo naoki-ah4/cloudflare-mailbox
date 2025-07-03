@@ -85,17 +85,28 @@ export const decodeSRSAddress = (srsAddress: string): SRSInfo => {
     };
   }
 
-  // SRS1形式（2段転送）
+  // SRS1形式（2段転送）- 無限ループ防止のため深度制限付き
   const srs1Match = trimmedAddress.match(/^srs1=([^=]+)=([^@]+)@(.+)$/);
   if (srs1Match) {
     const [, , originalSrs, domain] = srs1Match;
-    // SRS1の場合、さらにSRS0を解析
-    const nestedSrs = decodeSRSAddress(`${originalSrs}@${domain}`);
-    return {
-      originalSender: nestedSrs.originalSender,
-      forwardingSystem: `SRS1 via ${nestedSrs.forwardingSystem}`,
-      isForwarded: true,
-    };
+    // 深度制限（最大10段転送まで）
+    const maxDepth = 10;
+    const currentDepth = (trimmedAddress.match(/srs1/g) || []).length;
+
+    if (currentDepth < maxDepth) {
+      const nestedSrs = decodeSRSAddress(`${originalSrs}@${domain}`);
+      return {
+        originalSender: nestedSrs.originalSender,
+        forwardingSystem: `SRS1 via ${nestedSrs.forwardingSystem}`,
+        isForwarded: true,
+      };
+    } else {
+      // 深度制限に達した場合
+      return {
+        forwardingSystem: `SRS1 (深度制限: ${currentDepth}段転送)`,
+        isForwarded: true,
+      };
+    }
   }
 
   // その他の転送システムパターン

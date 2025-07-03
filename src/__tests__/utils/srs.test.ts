@@ -40,6 +40,17 @@ describe("SRS Address Decoding", () => {
       expect(result.forwardingSystem).toContain("SRS1");
     });
 
+    it("深度制限を超えた場合の処理", () => {
+      // 11段のSRS1転送をシミュレート
+      const deepSrsAddress =
+        "srs1=hash1=srs1=hash2=srs1=hash3=srs1=hash4=srs1=hash5=srs1=hash6=srs1=hash7=srs1=hash8=srs1=hash9=srs1=hash10=srs1=hash11=user@example.com@forwarder.com";
+      const result = decodeSRSAddress(deepSrsAddress);
+
+      expect(result.isForwarded).toBe(true);
+      expect(result.forwardingSystem).toContain("深度制限");
+      expect(result.forwardingSystem).toContain("11段転送");
+    });
+
     it("Amazon SESアドレスを識別", () => {
       const result = decodeSRSAddress("bounce@amazonses.com");
       expect(result.isForwarded).toBe(true);
