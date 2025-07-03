@@ -121,12 +121,21 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     // 宛先、CC、BCCを配列に変換
-    const emailTo = JSON.parse(emailToString) as string[];
+    const emailTo = emailToString
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s): s is string => typeof s === "string" && s.length > 0);
     const emailCc = emailCcString
-      ? (JSON.parse(emailCcString) as string[])
+      ? emailCcString
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s): s is string => typeof s === "string" && s.length > 0)
       : undefined;
     const emailBcc = emailBccString
-      ? (JSON.parse(emailBccString) as string[])
+      ? emailBccString
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s): s is string => typeof s === "string" && s.length > 0)
       : undefined;
 
     const referencesString = formData.get("references");
