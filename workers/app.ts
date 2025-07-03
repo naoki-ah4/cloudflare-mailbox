@@ -28,9 +28,9 @@ export default {
       )
     ) {
       // ユーザーが既にログインしている場合、適切なリダイレクトを行う
-      const session = await getUserSession(request.headers.get("Cookie"));
-      const sessionId = session.get("sessionId");
-      if (sessionId) {
+      const authResult = await authenticateUser(request, env);
+
+      if (authResult.isAuthenticated) {
         return Response.redirect(
           new URL("/dashboard", request.url).toString(),
           302
