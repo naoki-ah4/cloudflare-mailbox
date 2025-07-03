@@ -1,5 +1,6 @@
 import { useLoaderData, useActionData, Form } from "react-router";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
+import { useState, useRef } from "react";
 import {
   listBackups,
   createFullBackup,
@@ -7,6 +8,10 @@ import {
 } from "~/utils/backup";
 import { getGenerationStatistics } from "~/utils/backup-generation";
 import { logger } from "~/utils/logger";
+import {
+  decompressFileDeflate,
+  parseDecompressedJSON,
+} from "~/utils/client-compression";
 import styles from "./backup.module.scss";
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
@@ -121,6 +126,10 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 export default () => {
   const { backups, statistics, error } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const [decompressResult, setDecompressResult] = useState<string | null>(null);
+  const [decompressError, setDecompressError] = useState<string | null>(null);
+  const [isDecompressing, setIsDecompressing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
@@ -161,6 +170,58 @@ export default () => {
         return styles.typeManual;
       default:
         return "";
+    }
+  };
+
+  const handleFileDecompress = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsDecompressing(true);
+    setDecompressError(null);
+    setDecompressResult(null);
+
+    try {
+      const decompressedText = await decompressFileDeflate(file);
+
+      // JSONとして解析を試行
+      try {
+        const jsonData =
+          parseDecompressedJSON<Record<string, unknown>>(decompressedText);
+        const formattedJson = JSON.stringify(jsonData, null, 2);
+        setDecompressResult(formattedJson);
+      } catch {
+        // JSON解析に失敗した場合はプレーンテキストとして表示
+        setDecompressResult(decompressedText);
+      }
+    } catch (error) {
+      setDecompressError((error as Error).message);
+    } finally {
+      setIsDecompressing(false);
+    }
+  };
+
+  const handleDownloadResult = () => {
+    if (!decompressResult) return;
+
+    const blob = new Blob([decompressResult], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "decompressed-backup.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const clearDecompressResult = () => {
+    setDecompressResult(null);
+    setDecompressError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -260,6 +321,71 @@ export default () => {
                 )}
                 日間）
               </p>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.decompressSection}>
+          <h2>deflateファイル解凍</h2>
+          <p className={styles.decompressDescription}>
+            R2ダッシュボードからダウンロードしたdeflate圧縮バックアップファイルを解凍できます
+          </p>
+
+          <div className={styles.decompressControls}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".deflate,.dat,.backup"
+              onChange={(e) => {
+                void handleFileDecompress(e);
+              }}
+              className={styles.fileInput}
+              disabled={isDecompressing}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className={styles.selectFileButton}
+              disabled={isDecompressing}
+            >
+              {isDecompressing ? "解凍中..." : "ファイルを選択"}
+            </button>
+
+            {decompressResult && (
+              <div className={styles.resultActions}>
+                <button
+                  type="button"
+                  onClick={handleDownloadResult}
+                  className={styles.downloadButton}
+                >
+                  JSONファイルとしてダウンロード
+                </button>
+                <button
+                  type="button"
+                  onClick={clearDecompressResult}
+                  className={styles.clearButton}
+                >
+                  クリア
+                </button>
+              </div>
+            )}
+          </div>
+
+          {decompressError && (
+            <div className={`${styles.message} ${styles.error}`}>
+              {decompressError}
+            </div>
+          )}
+
+          {decompressResult && (
+            <div className={styles.decompressResult}>
+              <h3>解凍結果</h3>
+              <textarea
+                readOnly
+                value={decompressResult}
+                className={styles.resultTextarea}
+                rows={20}
+              />
             </div>
           )}
         </div>

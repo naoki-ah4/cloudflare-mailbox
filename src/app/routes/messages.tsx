@@ -325,11 +325,6 @@ const Messages = () => {
                         >
                           {sanitizeEmailText(message.from)}
                         </span>
-                        {message.srsDecoded && message.forwardingSystem && (
-                          <span className={styles.srsInfo}>
-                            via {message.forwardingSystem}
-                          </span>
-                        )}
                         {!selectedMailbox && (
                           <span className={styles.messageMailboxTag}>
                             {message.mailbox}

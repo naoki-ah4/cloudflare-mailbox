@@ -198,6 +198,56 @@
   @apply bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors;
 }
 
+// deflate解凍セクション
+.decompressSection {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700;
+
+  h2 {
+    @apply text-xl font-bold p-6 border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white;
+  }
+}
+
+.decompressDescription {
+  @apply p-6 pb-4 text-sm text-gray-600 dark:text-gray-400;
+}
+
+.decompressControls {
+  @apply p-6 pt-0 space-y-4;
+}
+
+.fileInput {
+  @apply hidden;
+}
+
+.selectFileButton {
+  @apply bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.resultActions {
+  @apply flex items-center space-x-3;
+}
+
+.downloadButton {
+  @apply bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.clearButton {
+  @apply bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.decompressResult {
+  @apply p-6 border-t border-gray-200 dark:border-gray-700;
+
+  h3 {
+    @apply text-lg font-semibold mb-4 text-gray-900 dark:text-white;
+  }
+}
+
+.resultTextarea {
+  @apply w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm font-mono text-gray-900 dark:text-white resize-y;
+  min-height: 300px;
+}
+
 // レスポンシブ対応
 @media (max-width: 768px) {
   .summary {
@@ -239,5 +289,13 @@
 
   .actionsCell {
     @apply justify-start pt-2 border-t border-gray-200 dark:border-gray-600;
+  }
+
+  .resultActions {
+    @apply flex-col space-x-0 space-y-2;
+  }
+
+  .resultTextarea {
+    min-height: 200px;
   }
 }
