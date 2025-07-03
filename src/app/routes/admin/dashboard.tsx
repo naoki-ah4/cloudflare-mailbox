@@ -1,10 +1,10 @@
 import { useLoaderData } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
 import { AdminKV, UserKV } from "~/utils/kv";
 import styles from "./dashboard.module.scss";
+import type { Route } from "./+types/dashboard";
 
-export const loader = async ({ context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  const { env } = context.cloudflare;
 
   // 統計情報を取得（認証チェックはworkers/app.tsで実施済み）
   const [adminCount, userCount] = await Promise.all([

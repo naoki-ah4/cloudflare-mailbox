@@ -1,5 +1,5 @@
 import { useLoaderData, useActionData, Form } from "react-router";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
+import type { Route } from "./+types/messages.$messageId";
 import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import { useState } from "react";
@@ -14,8 +14,8 @@ export const loader = async ({
   request,
   params,
   context,
-}: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+}: Route.LoaderArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     const messageId = params.messageId;
@@ -73,8 +73,8 @@ export const action = async ({
   request,
   params,
   context,
-}: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+}: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     const messageId = params.messageId;

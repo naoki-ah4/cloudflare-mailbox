@@ -1,5 +1,4 @@
 import { useLoaderData, useActionData, Form } from "react-router";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { useState, useRef } from "react";
 import {
   listBackups,
@@ -13,9 +12,10 @@ import {
   parseDecompressedJSON,
 } from "~/utils/client-compression";
 import styles from "./backup.module.scss";
+import type { Route } from "./+types/backup";
 
-export const loader = async ({ context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // バックアップ一覧を取得
@@ -53,8 +53,8 @@ export const loader = async ({ context }: LoaderFunctionArgs) => {
   }
 };
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
   const formData = await request.formData();
   const actionType = formData.get("action");
 

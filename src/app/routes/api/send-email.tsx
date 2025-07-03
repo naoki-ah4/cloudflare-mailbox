@@ -3,7 +3,7 @@
  * POST /api/send-email
  */
 
-import type { ActionFunctionArgs } from "react-router";
+import type { Route } from "./+types/send-email";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV, RateLimitKV } from "~/utils/kv";
 import { OutboxKV } from "~/utils/kv/outbox";
@@ -21,8 +21,8 @@ import { logger } from "~/utils/logger";
 import { v4 as uuidv4 } from "uuid";
 import { EmailAttachmentSchema } from "~/utils/kv/schema";
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // セッション認証

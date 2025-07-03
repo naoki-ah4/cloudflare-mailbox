@@ -1,5 +1,5 @@
 import { useActionData, Form, useNavigation } from "react-router";
-import type { ActionFunctionArgs } from "react-router";
+import type { Route } from "./+types/password";
 import { z } from "zod";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV } from "~/utils/kv";
@@ -20,8 +20,8 @@ const PasswordChangeSchema = z
     path: ["confirmPassword"],
   });
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // セッションからユーザー情報を取得

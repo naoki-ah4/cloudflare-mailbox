@@ -1,11 +1,14 @@
 import { useLoaderData } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV, InboxKV } from "~/utils/kv";
+import type { Route } from "./+types/dashboard";
 
-export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
-
+export const loader = async ({
+  request,
+  context: {
+    cloudflare: { env },
+  },
+}: Route.LoaderArgs) => {
   try {
     // セッションからユーザー情報を取得
     const session = await getUserSession(request.headers.get("Cookie"));

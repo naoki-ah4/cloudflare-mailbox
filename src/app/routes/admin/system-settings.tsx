@@ -4,16 +4,16 @@ import {
   useActionData,
   useNavigation,
 } from "react-router";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { useState } from "react";
 import { SystemKV } from "~/utils/kv/system";
 import LoadingButton from "~/app/components/elements/LoadingButton";
 import type { SystemSettings } from "~/utils/kv/schema";
+import type { Route } from "./+types/system-settings";
 
 export const loader = async ({
   context,
-}: LoaderFunctionArgs): Promise<{ settings: SystemSettings }> => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+}: Route.LoaderArgs): Promise<{ settings: SystemSettings }> => {
+  const { env } = context.cloudflare;
 
   try {
     // システム設定を取得（認証チェックはworkers/app.tsで実施済み）
@@ -28,8 +28,8 @@ export const loader = async ({
   }
 };
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
 
   if (request.method === "POST") {
     try {

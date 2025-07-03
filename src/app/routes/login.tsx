@@ -1,13 +1,13 @@
 import { Form, useNavigation } from "react-router";
-import type { ActionFunctionArgs } from "react-router";
+import type { Route } from "./+types/login";
 import { UserKV, SessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 import { RateLimitKV } from "~/utils/kv";
 import LoadingButton from "~/app/components/elements/LoadingButton";
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
   const session = await getUserSession(request.headers.get("Cookie"));
 
   try {

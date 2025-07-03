@@ -1,9 +1,9 @@
 import { useLoaderData } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
 import { SystemKV } from "~/utils/kv/system";
+import type { Route } from "./+types/history";
 
-export const loader = async ({ context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // 履歴を取得（認証チェックはworkers/app.tsで実施済み）

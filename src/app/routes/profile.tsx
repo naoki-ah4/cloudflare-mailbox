@@ -5,7 +5,7 @@ import {
   redirect,
   useNavigation,
 } from "react-router";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
+import type { Route } from "./+types/profile";
 import { z } from "zod";
 import { useState } from "react";
 import { getUserSession } from "~/utils/session.server";
@@ -20,8 +20,8 @@ const ProfileUpdateSchema = z.object({
   managedEmails: z.string().min(1, "管理メールアドレスを入力してください"),
 });
 
-export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const loader = async ({ request, context }: Route.LoaderArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // セッションからユーザー情報を取得
@@ -66,8 +66,8 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   }
 };
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // セッションからユーザー情報を取得

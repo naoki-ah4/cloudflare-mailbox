@@ -1,13 +1,13 @@
-import type { LoaderFunctionArgs } from "react-router";
 import { generateAttachementSignedUrl } from "~/utils/attachments";
 import { SessionKV, MessageKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
+import type { Route } from "./+types/attachments.$messageId.$filename";
 
 export const loader = async ({
   request,
   params,
   context,
-}: LoaderFunctionArgs) => {
+}: Route.LoaderArgs) => {
   const { env } = (
     context as { cloudflare: { env: Env; ctx: ExecutionContext } }
   ).cloudflare;

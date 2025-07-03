@@ -1,5 +1,5 @@
 import { useLoaderData, useSearchParams, useNavigation } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
+import type { Route } from "./+types/messages";
 import { SessionKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/kv/schema";
@@ -9,8 +9,8 @@ import Pagination from "../components/Pagination";
 import { useState } from "react";
 import { SkeletonMessageItem } from "../components/elements/SkeletonLoader";
 
-export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const loader = async ({ request, context }: Route.LoaderArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // セッションからユーザー情報を取得
@@ -294,8 +294,8 @@ const Messages = () => {
             }}
             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
-          <a 
-            href="/compose" 
+          <a
+            href="/compose"
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap no-underline"
           >
             ✉️ 新規作成

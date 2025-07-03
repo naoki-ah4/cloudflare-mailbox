@@ -4,12 +4,12 @@ import {
   useActionData,
   useNavigation,
 } from "react-router";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { UserKV } from "~/utils/kv";
 import { redirect } from "react-router";
+import type { Route } from "./+types/users";
 
-export const loader = async ({ context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // ユーザー一覧を取得
@@ -35,8 +35,8 @@ export const loader = async ({ context }: LoaderFunctionArgs) => {
   }
 };
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
 
   if (request.method === "DELETE") {
     try {

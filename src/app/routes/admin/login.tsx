@@ -1,12 +1,12 @@
 import { Form, useNavigation } from "react-router";
-import type { ActionFunctionArgs } from "react-router";
 import { AdminKV, AdminSessionKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import { getAdminSession, commitAdminSession } from "~/utils/session.server";
 import LoadingButton from "~/app/components/elements/LoadingButton";
+import type { Route } from "./+types/login";
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
   const session = await getAdminSession(request.headers.get("Cookie"));
 
   const formData = await request.formData();
@@ -93,7 +93,7 @@ export const loader = async ({
 }: {
   context: { cloudflare: { env: Env } };
 }) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+  const { env } = context.cloudflare;
 
   // 管理者が存在しない場合はセットアップページへ
   const adminCount = await AdminKV.count(env.USERS_KV);

@@ -9,7 +9,7 @@ import {
   useNavigation,
   useLoaderData,
 } from "react-router";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
+import type { Route } from "./+types/compose";
 import { useState, useRef, useEffect } from "react";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV } from "~/utils/kv";
@@ -20,8 +20,8 @@ import { logger } from "~/utils/logger";
 import { v4 as uuidv4 } from "uuid";
 import { SafeFormData } from "../utils/formdata";
 
-export const loader = async ({ request, context }: LoaderFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const loader = async ({ request, context }: Route.LoaderArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     // セッション認証
@@ -81,8 +81,8 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   }
 };
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
+export const action = async ({ request, context }: Route.ActionArgs) => {
+  const { env } = context.cloudflare;
 
   try {
     const session = await getUserSession(request.headers.get("Cookie"));
@@ -123,19 +123,18 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     if (actionType === "save_draft") {
       // 下書き保存
       const draftData: DraftEmail = {
-        id: (formData.get("draftId") as string) || uuidv4(),
-        from: formData.get("from") as string,
+        id: formData.get("draftId") || uuidv4(),
+        from: formData.get("from") ?? "",
         to: emailTo,
         cc: emailCc,
         bcc: emailBcc,
-        subject: formData.get("subject") as string,
-        text: formData.get("text") as string,
-        html: formData.get("html") as string,
+        subject: formData.get("subject") ?? "",
+        text: formData.get("text") ?? "",
+        html: formData.get("html") ?? "",
         attachments: [], // TODO: 添付ファイル処理
-        createdAt:
-          (formData.get("createdAt") as string) || new Date().toISOString(),
+        createdAt: formData.get("createdAt") || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        inReplyTo: (formData.get("inReplyTo") as string) || undefined,
+        inReplyTo: formData.get("inReplyTo") || undefined,
         references: references,
       };
 
@@ -151,7 +150,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     return { error: "不明なアクションです" };
   } catch (error) {
     logger.error("メール作成アクションエラー", {
-      error: error as Error,
+      error,
     });
     return { error: "処理に失敗しました" };
   }
