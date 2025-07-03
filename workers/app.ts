@@ -2,6 +2,7 @@ import { createRequestHandler } from "react-router";
 import EmailApp from "~/email";
 import { authenticateAdmin, authenticateUser } from "~/utils/auth.server";
 import { getUserSession } from "~/utils/session.server";
+import { handleScheduled } from "~/scheduled";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -73,4 +74,5 @@ export default {
     });
   },
   email: EmailApp.email,
+  scheduled: handleScheduled,
 } satisfies ExportedHandler<Env>;

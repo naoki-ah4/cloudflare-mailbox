@@ -9,7 +9,8 @@
     "worker-configuration.d.ts",
     "src/utils/**/*.ts",
     "src/email/**/*.ts",
-    "src/__tests__/**/*.ts"
+    "src/__tests__/**/*.ts",
+    "src/scheduled.ts"
   ],
   "compilerOptions": {
     "composite": true,
