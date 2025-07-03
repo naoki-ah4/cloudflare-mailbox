@@ -6,6 +6,7 @@ import { SessionKV, UserKV } from "~/utils/kv";
 import { hashPassword, verifyPassword } from "~/utils/crypto";
 import SettingsNav from "../../components/SettingsNav";
 import LoadingButton from "../../components/elements/LoadingButton";
+import { SafeFormData } from "~/app/utils/formdata";
 
 const PasswordChangeSchema = z
   .object({
@@ -44,11 +45,11 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     // フォームデータの検証
-    const formData = await request.formData();
+    const formData = SafeFormData.fromObject(await request.formData());
     const rawData = {
-      currentPassword: formData.get("currentPassword") as string,
-      newPassword: formData.get("newPassword") as string,
-      confirmPassword: formData.get("confirmPassword") as string,
+      currentPassword: formData.get("currentPassword"),
+      newPassword: formData.get("newPassword"),
+      confirmPassword: formData.get("confirmPassword"),
     };
 
     const validationResult = PasswordChangeSchema.safeParse(rawData);

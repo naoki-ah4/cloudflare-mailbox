@@ -7,6 +7,7 @@ import {
 import { InviteKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import type { Route } from "./+types/invites";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
@@ -30,9 +31,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   if (request.method === "POST") {
     try {
-      const formData = await request.formData();
-      const expiresInHours =
-        parseInt(formData.get("expiresInHours") as string) || 24;
+      const formData = SafeFormData.fromObject(await request.formData());
+      const expiresInHours = parseInt(formData.get("expiresInHours") ?? "24");
 
       // 招待トークン生成
       const token = crypto.randomUUID();
@@ -68,8 +68,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   if (request.method === "DELETE") {
     try {
-      const formData = await request.formData();
-      const token = formData.get("token") as string;
+      const formData = SafeFormData.fromObject(await request.formData());
+      const token = formData.get("token");
 
       if (!token) {
         return { error: "トークンが必要です" };

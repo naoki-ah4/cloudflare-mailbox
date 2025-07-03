@@ -18,7 +18,7 @@ import type { DraftEmail } from "~/utils/kv/draft";
 import { logger } from "~/utils/logger";
 // Tailwindでスタイリング
 import { v4 as uuidv4 } from "uuid";
-import { SafeFormData } from "../utils/formdata";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
@@ -116,8 +116,9 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       ? (JSON.parse(emailBccString) as string[])
       : undefined;
 
-    const references = formData.get("references")
-      ? (JSON.parse(formData.get("references") as string) as string[])
+    const referencesString = formData.get("references");
+    const references = referencesString
+      ? (JSON.parse(referencesString) as string[])
       : undefined;
 
     if (actionType === "save_draft") {

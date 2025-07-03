@@ -10,6 +10,7 @@ import { validateEmailDomains } from "~/utils/domain-validation";
 import { redirect } from "react-router";
 import { getUserSession, commitUserSession } from "~/utils/session.server";
 import LoadingButton from "~/app/components/elements/LoadingButton";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
@@ -52,12 +53,12 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   const session = await getUserSession(request.headers.get("Cookie"));
 
   try {
-    const formData = await request.formData();
-    const inviteToken = formData.get("inviteToken") as string;
-    const username = formData.get("username") as string;
-    const password = formData.get("password") as string;
-    const email = formData.get("email") as string;
-    const managedEmailsStr = formData.get("managedEmails") as string;
+    const formData = SafeFormData.fromObject(await request.formData());
+    const inviteToken = formData.get("inviteToken");
+    const username = formData.get("username");
+    const password = formData.get("password");
+    const email = formData.get("email");
+    const managedEmailsStr = formData.get("managedEmails");
 
     // バリデーション
     if (!inviteToken || !username || !password || !email || !managedEmailsStr) {

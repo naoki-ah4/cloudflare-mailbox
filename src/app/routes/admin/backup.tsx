@@ -13,6 +13,7 @@ import {
 } from "~/utils/client-compression";
 import styles from "./backup.module.scss";
 import type { Route } from "./+types/backup";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
@@ -55,7 +56,7 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
   const { env } = context.cloudflare;
-  const formData = await request.formData();
+  const formData = SafeFormData.fromObject(await request.formData());
   const actionType = formData.get("action");
 
   try {
@@ -71,7 +72,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     if (actionType === "restore_backup") {
-      const backupKey = formData.get("backupKey") as string;
+      const backupKey = formData.get("backupKey");
       if (!backupKey) {
         return {
           success: false,
@@ -89,7 +90,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     if (actionType === "delete_backup") {
-      const backupKey = formData.get("backupKey") as string;
+      const backupKey = formData.get("backupKey");
       if (!backupKey) {
         return {
           success: false,

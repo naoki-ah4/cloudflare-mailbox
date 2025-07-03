@@ -16,10 +16,14 @@ import {
   validateAttachmentTypes,
   sanitizeHtmlContent,
 } from "~/email/sender";
-import type { SendEmailRequest } from "~/email/sender";
 import { logger } from "~/utils/logger";
 import { v4 as uuidv4 } from "uuid";
-import { EmailAttachmentSchema } from "~/utils/kv/schema";
+import {
+  EmailAttachmentSchema,
+  SendEmailRequestSchema,
+  type SendEmailRequest,
+} from "~/utils/kv/schema";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
   const { env } = context.cloudflare;
@@ -39,7 +43,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     // リクエストデータの解析
-    const formData = await request.formData();
+    const formData = SafeFormData.fromObject(await request.formData());
     const fromValue = formData.get("from");
     const toValue = formData.get("to");
     const ccValue = formData.get("cc");
@@ -47,7 +51,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const subjectValue = formData.get("subject");
     const textValue = formData.get("text");
     const htmlValue = formData.get("html");
-    const attachmentsValueString = formData.get("attachments") as string | null;
+    const attachmentsValueString = formData.get("attachments") || null;
     const attachmentsValue = attachmentsValueString
       ? (JSON.parse(attachmentsValueString) as Array<object>)
           .map((a) => EmailAttachmentSchema.safeParse(a))
@@ -57,20 +61,36 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const inReplyToValue = formData.get("inReplyTo");
     const referencesValue = formData.get("references");
 
-    const requestData: SendEmailRequest = {
-      from: fromValue as string,
-      to: toValue ? (JSON.parse(toValue as string) as string[]) : [],
-      cc: ccValue ? (JSON.parse(ccValue as string) as string[]) : undefined,
-      bcc: bccValue ? (JSON.parse(bccValue as string) as string[]) : undefined,
+    const validRequestData = SendEmailRequestSchema.safeParse({
+      from: fromValue,
+      to: toValue ? (JSON.parse(toValue) as string[]) : [],
+      cc: ccValue ? (JSON.parse(ccValue) as string[]) : undefined,
+      bcc: bccValue ? (JSON.parse(bccValue) as string[]) : undefined,
       subject: subjectValue as string,
-      text: textValue as string,
-      html: htmlValue as string,
+      text: textValue,
+      html: htmlValue,
       attachments: attachmentsValue,
-      inReplyTo: (inReplyToValue as string) || undefined,
+      inReplyTo: inReplyToValue || undefined,
       references: referencesValue
-        ? (JSON.parse(referencesValue as string) as string[])
+        ? (JSON.parse(referencesValue) as string[])
         : undefined,
-    };
+    });
+    if (!validRequestData.success) {
+      logger.error("メール送信リクエストのバリデーションエラー", {
+        error: validRequestData.error,
+        context: { userEmail: kvSession.email },
+      });
+      return Response.json(
+        {
+          error:
+            "リクエストデータの形式が正しくありません: " +
+            validRequestData.error.message,
+        },
+        { status: 400 }
+      );
+    }
+
+    const requestData = validRequestData.data;
 
     // バリデーション
     if (!requestData.from || !requestData.to || !requestData.subject) {
@@ -203,7 +223,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     await OutboxKV.saveSentEmail(env.USERS_KV, kvSession.email, sentEmail);
 
     // 下書きがある場合は削除
-    const draftId = formData.get("draftId") as string;
+    const draftId = formData.get("draftId");
     if (draftId) {
       await DraftKV.deleteDraft(env.USERS_KV, kvSession.email, draftId);
     }

@@ -9,6 +9,7 @@ import {
   sanitizeEmailText,
 } from "~/utils/sanitize";
 import styles from "./messages.$messageId.module.scss";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const loader = async ({
   request,
@@ -95,8 +96,8 @@ export const action = async ({
       return { error: "セッションが無効です" };
     }
 
-    const formData = await request.formData();
-    const action = formData.get("action") as string;
+    const formData = SafeFormData.fromObject(await request.formData());
+    const action = formData.get("action");
 
     if (action === "markRead") {
       // メッセージ取得してアクセス権限確認

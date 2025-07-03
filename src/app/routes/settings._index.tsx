@@ -13,6 +13,7 @@ import type { UserSettings } from "~/utils/kv/schema";
 import SettingsNav from "../components/SettingsNav";
 import { useTheme } from "~/app/utils/theme";
 import LoadingButton from "../components/elements/LoadingButton";
+import { SafeFormData } from "~/app/utils/formdata";
 
 const SettingsUpdateSchema = z.object({
   emailNotifications: z.string().transform((val) => val === "true"),
@@ -95,12 +96,12 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     // フォームデータの検証
-    const formData = await request.formData();
+    const formData = SafeFormData.fromObject(await request.formData());
     const rawData = {
-      emailNotifications: formData.get("emailNotifications") as string,
-      theme: formData.get("theme") as string,
-      language: formData.get("language") as string,
-      timezone: formData.get("timezone") as string,
+      emailNotifications: formData.get("emailNotifications"),
+      theme: formData.get("theme"),
+      language: formData.get("language"),
+      timezone: formData.get("timezone"),
     };
 
     const validationResult = SettingsUpdateSchema.safeParse(rawData);

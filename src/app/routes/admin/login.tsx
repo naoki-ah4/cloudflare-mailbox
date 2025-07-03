@@ -4,14 +4,15 @@ import { redirect } from "react-router";
 import { getAdminSession, commitAdminSession } from "~/utils/session.server";
 import LoadingButton from "~/app/components/elements/LoadingButton";
 import type { Route } from "./+types/login";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
   const { env } = context.cloudflare;
   const session = await getAdminSession(request.headers.get("Cookie"));
 
-  const formData = await request.formData();
-  const username = formData.get("username") as string;
-  const password = formData.get("password") as string;
+  const formData = SafeFormData.fromObject(await request.formData());
+  const username = formData.get("username");
+  const password = formData.get("password");
 
   if (!username || !password) {
     session.flash("error", "ユーザー名とパスワードを入力してください");

@@ -97,6 +97,23 @@ export const EmailMetadataSchema = z.object({
 export const ThreadMessagesSchema = z.array(z.string().uuid());
 
 // 送信メール関連スキーマ
+export const SendEmailRequestSchema = z
+  .object({
+    from: z.string().email(),
+    to: z.array(z.string().email()).min(1),
+    cc: z.array(z.string().email()).optional(),
+    bcc: z.array(z.string().email()).optional(),
+    subject: z.string(),
+    text: z.string().optional(),
+    html: z.string().optional(),
+    attachments: z.array(EmailAttachmentSchema).optional(),
+    inReplyTo: z.string().optional(),
+    references: z.array(z.string()).optional(),
+  })
+  .refine((data) => data.text || data.html, {
+    message: "textかhtmlのいずれかを指定する必要があります",
+  });
+
 export const SentEmailSchema = z.object({
   id: z.string().uuid(),
   from: z.string().email(),
@@ -209,6 +226,7 @@ export type AdminSession = z.infer<typeof AdminSessionSchema>;
 export type EmailMessage = z.infer<typeof EmailMessageSchema>;
 export type EmailMetadata = z.infer<typeof EmailMetadataSchema>;
 export type EmailAttachment = z.infer<typeof EmailAttachmentSchema>;
+export type SendEmailRequest = z.infer<typeof SendEmailRequestSchema>;
 export type ThreadMessages = z.infer<typeof ThreadMessagesSchema>;
 export type InboxMessages = z.infer<typeof InboxMessagesSchema>;
 export type FolderMessages = z.infer<typeof FolderMessagesSchema>;

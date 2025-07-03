@@ -14,6 +14,7 @@ import { SystemKV } from "~/utils/kv/system";
 import { validateEmailDomains } from "~/utils/domain-validation";
 import SettingsNav from "../components/SettingsNav";
 import LoadingButton from "../components/elements/LoadingButton";
+import { SafeFormData } from "~/app/utils/formdata";
 
 const ProfileUpdateSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください"),
@@ -90,10 +91,10 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     // フォームデータの検証
-    const formData = await request.formData();
+    const formData = SafeFormData.fromObject(await request.formData());
     const rawData = {
-      email: formData.get("email") as string,
-      managedEmails: formData.get("managedEmails") as string,
+      email: formData.get("email"),
+      managedEmails: formData.get("managedEmails"),
     };
 
     const validationResult = ProfileUpdateSchema.safeParse(rawData);

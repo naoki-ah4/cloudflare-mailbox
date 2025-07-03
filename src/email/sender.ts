@@ -7,19 +7,7 @@
 import { logger } from "~/utils/logger";
 import type { EmailAttachment } from "~/email/types";
 import { Resend, type CreateEmailOptions } from "resend";
-
-export type SendEmailRequest = {
-  from: string;
-  to: string[];
-  cc?: string[];
-  bcc?: string[];
-  subject: string;
-  text?: string;
-  html?: string;
-  attachments?: EmailAttachment[];
-  inReplyTo?: string;
-  references?: string[];
-};
+import type { SendEmailRequest } from "~/utils/kv/schema";
 
 export type SendEmailResult = {
   id: string;

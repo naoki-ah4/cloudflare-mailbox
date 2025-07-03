@@ -7,6 +7,7 @@ import {
 import { UserKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import type { Route } from "./+types/users";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
@@ -40,8 +41,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   if (request.method === "DELETE") {
     try {
-      const formData = await request.formData();
-      const userId = formData.get("userId") as string;
+      const formData = SafeFormData.fromObject(await request.formData());
+      const userId = formData.get("userId");
 
       if (!userId) {
         return { error: "ユーザーIDが必要です" };

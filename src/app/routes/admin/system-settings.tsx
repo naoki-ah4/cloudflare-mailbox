@@ -9,6 +9,7 @@ import { SystemKV } from "~/utils/kv/system";
 import LoadingButton from "~/app/components/elements/LoadingButton";
 import type { SystemSettings } from "~/utils/kv/schema";
 import type { Route } from "./+types/system-settings";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const loader = async ({
   context,
@@ -33,11 +34,15 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   if (request.method === "POST") {
     try {
-      const formData = await request.formData();
-      const action = formData.get("action") as string;
+      const formData = SafeFormData.fromObject(await request.formData());
+      const action = formData.get("action");
 
       if (action === "update-domains") {
-        const domainsText = formData.get("domains") as string;
+        const domainsText = formData.get("domains");
+
+        if (!domainsText) {
+          return { error: "ドメインリストが空です" };
+        }
 
         // ドメインリストを解析
         const domains = domainsText
@@ -61,9 +66,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
         return { success: "ドメイン設定を更新しました" };
       } else if (action === "update-emails") {
-        const emailsText = formData.get("emails") as string;
-        const handlingMode = formData.get("handlingMode") as string;
-        const catchAllEmail = formData.get("catchAllEmail") as string;
+        const emailsText = formData.get("emails");
+        const handlingMode = formData.get("handlingMode");
+        const catchAllEmail = formData.get("catchAllEmail");
+
+        if (!emailsText) {
+          return { error: "メールアドレスリストが空です" };
+        }
 
         // メールアドレスリストを解析
         const emails = emailsText
@@ -95,7 +104,9 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
             allowedEmailAddresses: emails,
             unauthorizedEmailHandling: handlingMode as "REJECT" | "CATCH_ALL",
             catchAllEmailAddress:
-              handlingMode === "CATCH_ALL" ? catchAllEmail : undefined,
+              handlingMode === "CATCH_ALL"
+                ? (catchAllEmail ?? undefined)
+                : undefined,
           },
           "system"
         );

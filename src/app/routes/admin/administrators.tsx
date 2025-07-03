@@ -7,6 +7,7 @@ import {
 import { AdminKV } from "~/utils/kv";
 import { redirect } from "react-router";
 import type { Route } from "./+types/administrators";
+import { SafeFormData } from "~/app/utils/formdata";
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   const { env } = context.cloudflare;
@@ -38,9 +39,9 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   if (request.method === "POST") {
     try {
-      const formData = await request.formData();
-      const username = formData.get("username") as string;
-      const password = formData.get("password") as string;
+      const formData = SafeFormData.fromObject(await request.formData());
+      const username = formData.get("username");
+      const password = formData.get("password");
 
       // バリデーション
       if (!username || !password) {
@@ -94,8 +95,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
   if (request.method === "DELETE") {
     try {
-      const formData = await request.formData();
-      const adminId = formData.get("adminId") as string;
+      const formData = SafeFormData.fromObject(await request.formData());
+      const adminId = formData.get("adminId");
 
       if (!adminId) {
         return { error: "管理者IDが必要です" };
