@@ -5,6 +5,8 @@
   "scripts": {
     "build": "react-router build",
     "cf-typegen": "wrangler types --strict-vars false",
+    "rr-typegen": "react-router typegen",
+    "typegen": "bun run cf-typegen && bun run rr-typegen",
     "deploy": "bun run build && wrangler deploy",
     "dev": "react-router dev",
     "postinstall": "bun run cf-typegen",
