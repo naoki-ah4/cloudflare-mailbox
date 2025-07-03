@@ -106,6 +106,35 @@ A mailbox management system using Cloudflare Workers and KV. Provides centralize
 
 **Always use utility functions when accessing KV storage. Avoid direct access**
 
+### 4. Backup System
+
+#### Technical Specifications
+
+- **Compression**: deflate (high efficiency, lightweight)
+- **Storage**: R2 Storage
+- **Automated Execution**: Cron Triggers
+  - Daily 2 AM: Daily backup + old file cleanup
+  - Weekly Sunday 3 AM: Weekly backup
+  - Monthly 1st 4 AM: Monthly backup
+- **Target Data**: USERS_KV, MESSAGES_KV, MAILBOXES_KV, SYSTEM_KV
+- **Excluded Data**: Sessions (`session:`), Rate limits (`rate_limit:`)
+
+#### Generation Management
+
+- **Daily Backups**: 7 days retention
+- **Weekly Backups**: 4 weeks retention (promoted from daily)
+- **Monthly Backups**: 1 year retention (promoted from weekly)
+- **Manual Backups**: 30 days retention
+- **Auto Cleanup**: Daily cleanup removes old files
+
+#### Management Features
+
+- **Backup List**: Creation time, type, size, compression ratio display
+- **Manual Backup**: One-click creation
+- **Restore Function**: Complete restoration from backup
+- **Delete Function**: Individual file deletion
+- **Statistics Display**: Type-wise aggregation, retention period, total size
+
 ### 🏗️ Architecture Features
 
 - **React Router v7**: Utilizing the latest routing capabilities
@@ -135,4 +164,4 @@ Styling is performed in the following priority order:
 
 ---
 
-Last updated: June 30, 2025 (Responsive design specifications added)
+Last updated: July 3, 2025 (Backup system specifications added)

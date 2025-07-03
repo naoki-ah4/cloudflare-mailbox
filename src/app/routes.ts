@@ -15,6 +15,7 @@ export default [
     "/admin/system-settings/history",
     "routes/admin/system-settings/history.tsx"
   ),
+  route("/admin/backup", "routes/admin/backup.tsx"),
 
   // ユーザー認証・ダッシュボード
   route("/signup", "routes/signup.tsx"),
