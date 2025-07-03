@@ -11,7 +11,6 @@ import {
   decompressFileDeflate,
   parseDecompressedJSON,
 } from "~/utils/client-compression";
-import styles from "./backup.module.scss";
 import type { Route } from "./+types/backup";
 import { SafeFormData } from "~/app/utils/formdata";
 
@@ -162,13 +161,13 @@ export default () => {
   const getBackupTypeClass = (type: string): string => {
     switch (type) {
       case "daily":
-        return styles.typeDaily;
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400";
       case "weekly":
-        return styles.typeWeekly;
+        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
       case "monthly":
-        return styles.typeMonthly;
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400";
       case "manual":
-        return styles.typeManual;
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400";
       default:
         return "";
     }
@@ -227,12 +226,15 @@ export default () => {
   };
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
+    <div className="p-6 max-w-7xl mx-auto">
+      <header className="flex justify-between items-center mb-6 pb-4 border-b">
         <h1 className="text-2xl font-bold">バックアップ管理</h1>
         <Form method="post">
           <input type="hidden" name="action" value="create_backup" />
-          <button type="submit" className={styles.createButton}>
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
             手動バックアップ作成
           </button>
         </Form>
@@ -240,31 +242,41 @@ export default () => {
 
       {actionData && (
         <div
-          className={`${styles.message} ${actionData.success ? styles.success : styles.error}`}
+          className={`p-4 mb-6 rounded-lg font-medium ${actionData.success ? "bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" : "bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"}`}
         >
           {actionData.message}
         </div>
       )}
 
       {error && (
-        <div className={`${styles.message} ${styles.error}`}>{error}</div>
+        <div className="p-4 mb-6 rounded-lg font-medium bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
+          {error}
+        </div>
       )}
 
-      <div className={styles.content}>
-        <div className={styles.summary}>
-          <div className={styles.summaryCard}>
-            <h3>総バックアップ数</h3>
-            <p className={styles.count}>{backups.length}</p>
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+              総バックアップ数
+            </h3>
+            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              {backups.length}
+            </p>
           </div>
-          <div className={styles.summaryCard}>
-            <h3>総サイズ</h3>
-            <p className={styles.size}>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+              総サイズ
+            </h3>
+            <p className="text-3xl font-bold text-green-600 dark:text-green-400">
               {formatFileSize(statistics.totalSize)}
             </p>
           </div>
-          <div className={styles.summaryCard}>
-            <h3>最新バックアップ</h3>
-            <p className={styles.date}>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+              最新バックアップ
+            </h3>
+            <p className="text-lg font-semibold text-gray-900 dark:text-white">
               {statistics.newestTimestamp > 0
                 ? formatDate(statistics.newestTimestamp)
                 : "未実行"}
@@ -272,47 +284,79 @@ export default () => {
           </div>
         </div>
 
-        <div className={styles.statistics}>
-          <h2>世代管理統計</h2>
-          <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
-              <h4>日次バックアップ</h4>
-              <div className={styles.statValue}>
-                <span className={styles.count}>{statistics.counts.daily}</span>
-                <span className={styles.label}>個</span>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold p-6 border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
+            世代管理統計
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-6">
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                日次バックアップ
+              </h4>
+              <div className="flex items-baseline space-x-1 mb-2">
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {statistics.counts.daily}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  個
+                </span>
               </div>
-              <p className={styles.retention}>7日間保持</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                7日間保持
+              </p>
             </div>
-            <div className={styles.statCard}>
-              <h4>週次バックアップ</h4>
-              <div className={styles.statValue}>
-                <span className={styles.count}>{statistics.counts.weekly}</span>
-                <span className={styles.label}>個</span>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                週次バックアップ
+              </h4>
+              <div className="flex items-baseline space-x-1 mb-2">
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {statistics.counts.weekly}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  個
+                </span>
               </div>
-              <p className={styles.retention}>4週間保持</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                4週間保持
+              </p>
             </div>
-            <div className={styles.statCard}>
-              <h4>月次バックアップ</h4>
-              <div className={styles.statValue}>
-                <span className={styles.count}>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                月次バックアップ
+              </h4>
+              <div className="flex items-baseline space-x-1 mb-2">
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">
                   {statistics.counts.monthly}
                 </span>
-                <span className={styles.label}>個</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  個
+                </span>
               </div>
-              <p className={styles.retention}>1年間保持</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                1年間保持
+              </p>
             </div>
-            <div className={styles.statCard}>
-              <h4>手動バックアップ</h4>
-              <div className={styles.statValue}>
-                <span className={styles.count}>{statistics.counts.manual}</span>
-                <span className={styles.label}>個</span>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                手動バックアップ
+              </h4>
+              <div className="flex items-baseline space-x-1 mb-2">
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {statistics.counts.manual}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  個
+                </span>
               </div>
-              <p className={styles.retention}>30日間保持</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                30日間保持
+              </p>
             </div>
           </div>
           {statistics.oldestTimestamp > 0 && (
-            <div className={styles.retentionInfo}>
-              <p>
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
                 <strong>保持期間:</strong>
                 {formatDate(statistics.oldestTimestamp)} ～{" "}
                 {formatDate(statistics.newestTimestamp)}（
@@ -326,13 +370,15 @@ export default () => {
           )}
         </div>
 
-        <div className={styles.decompressSection}>
-          <h2>deflateファイル解凍</h2>
-          <p className={styles.decompressDescription}>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold p-6 border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
+            deflateファイル解凍
+          </h2>
+          <p className="p-6 pb-4 text-sm text-gray-600 dark:text-gray-400">
             R2ダッシュボードからダウンロードしたdeflate圧縮バックアップファイルを解凍できます
           </p>
 
-          <div className={styles.decompressControls}>
+          <div className="p-6 pt-0 space-y-4">
             <input
               ref={fileInputRef}
               type="file"
@@ -340,31 +386,31 @@ export default () => {
               onChange={(e) => {
                 void handleFileDecompress(e);
               }}
-              className={styles.fileInput}
+              className="hidden"
               disabled={isDecompressing}
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className={styles.selectFileButton}
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
               disabled={isDecompressing}
             >
               {isDecompressing ? "解凍中..." : "ファイルを選択"}
             </button>
 
             {decompressResult && (
-              <div className={styles.resultActions}>
+              <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-3">
                 <button
                   type="button"
                   onClick={handleDownloadResult}
-                  className={styles.downloadButton}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   JSONファイルとしてダウンロード
                 </button>
                 <button
                   type="button"
                   onClick={clearDecompressResult}
-                  className={styles.clearButton}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   クリア
                 </button>
@@ -373,35 +419,41 @@ export default () => {
           </div>
 
           {decompressError && (
-            <div className={`${styles.message} ${styles.error}`}>
+            <div className="p-4 mb-6 rounded-lg font-medium bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
               {decompressError}
             </div>
           )}
 
           {decompressResult && (
-            <div className={styles.decompressResult}>
-              <h3>解凍結果</h3>
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                解凍結果
+              </h3>
               <textarea
                 readOnly
                 value={decompressResult}
-                className={styles.resultTextarea}
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm font-mono text-gray-900 dark:text-white resize-y min-h-[200px] md:min-h-[300px]"
                 rows={20}
               />
             </div>
           )}
         </div>
 
-        <div className={styles.backupList}>
-          <h2>バックアップ一覧</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold p-6 border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
+            バックアップ一覧
+          </h2>
 
           {backups.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p>バックアップがありません</p>
+            <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+              <p className="text-lg font-medium mb-2">
+                バックアップがありません
+              </p>
               <p>手動バックアップボタンから作成してください</p>
             </div>
           ) : (
-            <div className={styles.table}>
-              <div className={styles.tableHeader}>
+            <div className="overflow-hidden">
+              <div className="hidden md:grid grid-cols-5 gap-4 p-4 bg-gray-50 dark:bg-gray-700 font-medium text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
                 <div>作成日時</div>
                 <div>種別</div>
                 <div>サイズ</div>
@@ -423,29 +475,46 @@ export default () => {
                     : "0";
 
                 return (
-                  <div key={backup.key} className={styles.tableRow}>
-                    <div className={styles.dateCell}>
+                  <div
+                    key={backup.key}
+                    className="md:grid md:grid-cols-5 md:gap-4 p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors last:border-b-0 space-y-3 md:space-y-0"
+                  >
+                    <div className="text-sm text-gray-900 dark:text-white font-medium">
+                      <span className="md:hidden font-medium text-gray-500 dark:text-gray-400">
+                        作成日時:{" "}
+                      </span>
                       {formatDate(backup.metadata.timestamp)}
                     </div>
-                    <div className={styles.typeCell}>
+                    <div className="flex items-center">
+                      <span className="md:hidden font-medium text-gray-500 dark:text-gray-400">
+                        種別:{" "}
+                      </span>
                       <span
-                        className={`${styles.typeBadge} ${getBackupTypeClass(backup.metadata.backupType)}`}
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getBackupTypeClass(backup.metadata.backupType)}`}
                       >
                         {getBackupTypeLabel(backup.metadata.backupType)}
                       </span>
                     </div>
-                    <div className={styles.sizeCell}>
-                      <div className={styles.sizeInfo}>
-                        <span className={styles.compressedSize}>
+                    <div className="text-sm">
+                      <span className="md:hidden font-medium text-gray-500 dark:text-gray-400">
+                        サイズ:{" "}
+                      </span>
+                      <div className="space-y-1">
+                        <span className="block font-medium text-gray-900 dark:text-white">
                           {formatFileSize(backup.metadata.compressedSize)}
                         </span>
-                        <span className={styles.originalSize}>
+                        <span className="block text-xs text-gray-500 dark:text-gray-400">
                           (元: {formatFileSize(backup.metadata.totalSize)})
                         </span>
                       </div>
                     </div>
-                    <div className={styles.ratioCell}>{compressionRatio}%</div>
-                    <div className={styles.actionsCell}>
+                    <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                      <span className="md:hidden font-medium text-gray-500 dark:text-gray-400">
+                        圧縮率:{" "}
+                      </span>
+                      {compressionRatio}%
+                    </div>
+                    <div className="flex items-center space-x-2 pt-2 md:pt-0 border-t border-gray-200 dark:border-gray-600 md:border-t-0 justify-start">
                       <Form method="post" style={{ display: "inline" }}>
                         <input
                           type="hidden"
@@ -459,7 +528,7 @@ export default () => {
                         />
                         <button
                           type="submit"
-                          className={styles.restoreButton}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
                           onClick={(e) => {
                             if (
                               !confirm(
@@ -486,7 +555,7 @@ export default () => {
                         />
                         <button
                           type="submit"
-                          className={styles.deleteButton}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
                           onClick={(e) => {
                             if (!confirm("このバックアップを削除しますか？")) {
                               e.preventDefault();
