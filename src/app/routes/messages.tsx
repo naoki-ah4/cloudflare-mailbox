@@ -281,8 +281,8 @@ const Messages = () => {
           </form>
         </header>
 
-        {/* 検索バー */}
-        <div className={styles.searchBar}>
+        {/* 検索バー と 新規作成ボタン */}
+        <div className="mb-6 flex gap-4 items-center">
           <input
             type="text"
             placeholder="件名または送信者で検索..."
@@ -292,7 +292,14 @@ const Messages = () => {
               const timeoutId = setTimeout(() => handleSearch(value), 300);
               return () => clearTimeout(timeoutId);
             }}
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
+          <a 
+            href="/compose" 
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap no-underline"
+          >
+            ✉️ 新規作成
+          </a>
         </div>
 
         {/* メール一覧 */}

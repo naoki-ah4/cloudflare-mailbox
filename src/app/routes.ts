@@ -25,13 +25,15 @@ export default [
   route("/settings/password", "routes/settings/password.tsx"),
   route("/profile", "routes/profile.tsx"),
 
-  // メール閲覧機能
+  // メール閲覧・作成機能
   route("/messages", "routes/messages.tsx"),
   route("/messages/:messageId", "routes/messages.$messageId.tsx"),
+  route("/compose", "routes/compose.tsx"),
 
   // 専用APIエンドポイント（UIなし）
   route("/api/admin/logout", "routes/api/admin/logout.tsx"),
   route("/api/logout", "routes/api/logout.tsx"),
+  route("/api/send-email", "routes/api/send-email.tsx"),
   route(
     "/api/attachments/:messageId/:filename",
     "routes/api/attachments.$messageId.$filename.tsx"

@@ -1,3 +1,10 @@
+export type EmailAttachment = {
+  filename: string;
+  contentType: string;
+  r2Key: string;
+  size: number;
+};
+
 export type EmailMessage = {
   id: string;
   from: string;
@@ -6,12 +13,7 @@ export type EmailMessage = {
   date: string;
   text?: string;
   html?: string;
-  attachments: Array<{
-    filename: string;
-    contentType: string;
-    r2Key: string;
-    size: number;
-  }>;
+  attachments: EmailAttachment[];
   threadId?: string;
   inReplyTo?: string;
   references?: string[];
