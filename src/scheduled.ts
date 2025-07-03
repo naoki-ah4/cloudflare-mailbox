@@ -41,7 +41,7 @@ export const handleScheduled = async (
     logger.info("スケジュールタスク完了", { context: { cron } });
   } catch (error) {
     logger.error("スケジュールタスクエラー", {
-      error: error as Error,
+      error: error,
       context: {
         cron,
         scheduledTime: new Date(scheduledTime).toISOString(),
@@ -66,7 +66,7 @@ const performDailyBackup = async (env: Env): Promise<void> => {
 
     logger.info("日次バックアップ完了", { context: { backupKey } });
   } catch (error) {
-    logger.error("日次バックアップエラー", { error: error as Error });
+    logger.error("日次バックアップエラー", { error });
     throw error;
   }
 };
@@ -82,7 +82,7 @@ const performWeeklyBackup = async (env: Env): Promise<void> => {
 
     logger.info("週次バックアップ完了", { context: { backupKey } });
   } catch (error) {
-    logger.error("週次バックアップエラー", { error: error as Error });
+    logger.error("週次バックアップエラー", { error });
     throw error;
   }
 };
@@ -98,7 +98,7 @@ const performMonthlyBackup = async (env: Env): Promise<void> => {
 
     logger.info("月次バックアップ完了", { context: { backupKey } });
   } catch (error) {
-    logger.error("月次バックアップエラー", { error: error as Error });
+    logger.error("月次バックアップエラー", { error });
     throw error;
   }
 };

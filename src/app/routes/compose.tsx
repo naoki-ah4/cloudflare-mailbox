@@ -18,6 +18,7 @@ import type { DraftEmail } from "~/utils/kv/draft";
 import { logger } from "~/utils/logger";
 // Tailwindでスタイリング
 import { v4 as uuidv4 } from "uuid";
+import { SafeFormData } from "../utils/formdata";
 
 export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -74,7 +75,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     };
   } catch (error) {
     logger.error("メール作成画面ローダーエラー", {
-      error: error as Error,
+      error,
     });
     return new Response("内部サーバーエラー", { status: 500 });
   }
@@ -96,11 +97,11 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       return { error: "セッションが無効です" };
     }
 
-    const formData = await request.formData();
-    const actionType = formData.get("action") as string;
-    const emailToString = formData.get("to") as string | undefined;
-    const emailCcString = formData.get("cc") as string | undefined;
-    const emailBccString = formData.get("bcc") as string | undefined;
+    const formData = SafeFormData.fromObject(await request.formData());
+    const actionType = formData.get("action");
+    const emailToString = formData.get("to");
+    const emailCcString = formData.get("cc");
+    const emailBccString = formData.get("bcc");
 
     if (!emailToString) {
       return { error: "宛先は必須です" };

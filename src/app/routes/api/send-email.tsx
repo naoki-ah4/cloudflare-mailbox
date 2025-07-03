@@ -19,7 +19,6 @@ import {
 import type { SendEmailRequest } from "~/email/sender";
 import { logger } from "~/utils/logger";
 import { v4 as uuidv4 } from "uuid";
-import type { EmailAttachment } from "~/email/types";
 import { EmailAttachmentSchema } from "~/utils/kv/schema";
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
