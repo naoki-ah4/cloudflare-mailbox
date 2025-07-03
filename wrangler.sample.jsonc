@@ -39,6 +39,7 @@
     "MAX_ATTACHMENTS_SIZE": "26214400", // 25MB in bytes
     "CLOUDFLARE_ACCOUNT_ID": "<YOUR_CLOUDFLARE_ACCOUNT_ID>",
     "R2_BUCKET_NAME": "<YOUR_R2_BUCKET_NAME>",
+    "FORWARD_EMAIL_ADDRESS": "",
   },
   "triggers": {
     "crons": ["0 2 * * *", "0 3 * * 7", "0 4 1 * *"],

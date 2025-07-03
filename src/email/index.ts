@@ -5,6 +5,7 @@ import { saveEmailToKV, updateInboxIndex } from "./storage";
 import { createEmailMessage } from "./utils";
 import { SystemKV } from "../utils/kv/system";
 import { logger } from "../utils/logger";
+import { z } from "zod";
 
 /**
  * メール受信処理の判定結果
@@ -80,7 +81,7 @@ const emailHandler = async (
         // catch-all転送の場合、転送先アドレスに変更して処理続行
         logger.emailLog("メールをcatch-allアドレスに転送", {
           originalTo: toEmails.join(", "),
-          catchAllAddress: processingResult.catchAllAddress
+          catchAllAddress: processingResult.catchAllAddress,
         });
         // toEmailsをcatch-allアドレスに置き換え
         toEmails.length = 0;
@@ -88,7 +89,7 @@ const emailHandler = async (
       } else {
         // 拒否の場合
         logger.emailLog("メール受信拒否: 許可リストに含まれていない", {
-          toEmails: toEmails.join(", ")
+          toEmails: toEmails.join(", "),
         });
         return; // 受信を拒否
       }
@@ -118,10 +119,20 @@ const emailHandler = async (
       messageId,
       subject: emailMessage.subject,
       from: emailMessage.from,
-      attachmentCount: attachments.length
+      attachmentCount: attachments.length,
     });
   } catch (error) {
-    logger.error("メール処理エラー", { error: error as Error });
+    logger.error("メール処理エラー", { error });
+  } finally {
+    if (env.FORWARD_EMAIL_ADDRESS) {
+      const forwardTo = await z
+        .string()
+        .email()
+        .safeParseAsync(env.FORWARD_EMAIL_ADDRESS);
+      if (forwardTo.success) {
+        await message.forward(forwardTo.data);
+      }
+    }
   }
 };
 
