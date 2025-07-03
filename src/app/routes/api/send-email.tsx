@@ -19,6 +19,8 @@ import {
 import type { SendEmailRequest } from "~/email/sender";
 import { logger } from "~/utils/logger";
 import { v4 as uuidv4 } from "uuid";
+import type { EmailAttachment } from "~/email/types";
+import { EmailAttachmentSchema } from "~/utils/kv/schema";
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { env } = (context as { cloudflare: { env: Env } }).cloudflare;
@@ -46,24 +48,28 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     const subjectValue = formData.get("subject");
     const textValue = formData.get("text");
     const htmlValue = formData.get("html");
-    const attachmentsValue = formData.get("attachments");
+    const attachmentsValueString = formData.get("attachments") as string | null;
+    const attachmentsValue = attachmentsValueString
+      ? (JSON.parse(attachmentsValueString) as Array<object>)
+          .map((a) => EmailAttachmentSchema.safeParse(a))
+          .map((result) => (result.success ? result.data : null))
+          .filter((d) => d !== null)
+      : undefined;
     const inReplyToValue = formData.get("inReplyTo");
     const referencesValue = formData.get("references");
 
     const requestData: SendEmailRequest = {
       from: fromValue as string,
-      to: toValue ? JSON.parse(toValue as string) as string[] : [],
-      cc: ccValue ? JSON.parse(ccValue as string) as string[] : undefined,
-      bcc: bccValue ? JSON.parse(bccValue as string) as string[] : undefined,
+      to: toValue ? (JSON.parse(toValue as string) as string[]) : [],
+      cc: ccValue ? (JSON.parse(ccValue as string) as string[]) : undefined,
+      bcc: bccValue ? (JSON.parse(bccValue as string) as string[]) : undefined,
       subject: subjectValue as string,
       text: textValue as string,
       html: htmlValue as string,
-      attachments: attachmentsValue 
-        ? JSON.parse(attachmentsValue as string) 
-        : undefined,
-      inReplyTo: inReplyToValue as string || undefined,
-      references: referencesValue 
-        ? JSON.parse(referencesValue as string) as string[]
+      attachments: attachmentsValue,
+      inReplyTo: (inReplyToValue as string) || undefined,
+      references: referencesValue
+        ? (JSON.parse(referencesValue as string) as string[])
         : undefined,
     };
 
@@ -89,7 +95,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       ...(requestData.cc || []),
       ...(requestData.bcc || []),
     ];
-    
+
     if (!validateRecipients(allRecipients)) {
       return Response.json(
         { error: "無効な受信者アドレスが含まれています" },
@@ -101,19 +107,13 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     if (requestData.attachments) {
       const sizeValidation = validateAttachmentSize(requestData.attachments);
       if (!sizeValidation.valid) {
-        return Response.json(
-          { error: sizeValidation.error },
-          { status: 400 }
-        );
+        return Response.json({ error: sizeValidation.error }, { status: 400 });
       }
 
       // 添付ファイル拡張子検証
       const typeValidation = validateAttachmentTypes(requestData.attachments);
       if (!typeValidation.valid) {
-        return Response.json(
-          { error: typeValidation.error },
-          { status: 400 }
-        );
+        return Response.json({ error: typeValidation.error }, { status: 400 });
       }
     }
 
@@ -140,16 +140,16 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
     if (!rateLimit.allowed) {
       return Response.json(
-        { 
-          error: "送信制限に達しました", 
-          retryAfter: rateLimit.retryAfter 
+        {
+          error: "送信制限に達しました",
+          retryAfter: rateLimit.resetTime,
         },
         { status: 429 }
       );
     }
 
     // HTMLコンテンツのサニタイゼーション
-    const sanitizedHtml = requestData.html 
+    const sanitizedHtml = requestData.html
       ? sanitizeHtmlContent(requestData.html)
       : undefined;
 
@@ -210,11 +210,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     }
 
     // レート制限を更新
-    await RateLimitKV.updateRateLimit(
-      env.USERS_KV,
-      rateLimitKey,
-      currentHour
-    );
+    await RateLimitKV.clearRateLimit(env.USERS_KV, rateLimitKey);
 
     logger.info("メール送信成功", {
       context: {
@@ -233,7 +229,6 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       resendId: sendResult.id,
       message: "メールを送信しました",
     });
-
   } catch (error) {
     logger.error("メール送信APIエラー", {
       error: error as Error,

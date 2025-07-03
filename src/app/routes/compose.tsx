@@ -3,7 +3,12 @@
  * /compose
  */
 
-import { useActionData, Form, useNavigation, useLoaderData } from "react-router";
+import {
+  useActionData,
+  Form,
+  useNavigation,
+  useLoaderData,
+} from "react-router";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { useState, useRef, useEffect } from "react";
 import { getUserSession } from "~/utils/session.server";
@@ -23,12 +28,12 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     const sessionId = session.get("sessionId");
 
     if (!sessionId) {
-      throw new Response("認証が必要です", { status: 401 });
+      return new Response("認証が必要です", { status: 401 });
     }
 
     const kvSession = await SessionKV.get(env.USERS_KV, sessionId);
     if (!kvSession || kvSession.expiresAt < Date.now()) {
-      throw new Response("セッションが無効です", { status: 401 });
+      return new Response("セッションが無効です", { status: 401 });
     }
 
     // URLパラメーターから下書きIDや返信情報を取得
@@ -37,11 +42,19 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     const replyTo = url.searchParams.get("reply");
 
     let draftData: DraftEmail | null = null;
-    let replyData: { subject: string; inReplyTo?: string; references?: string[] } | null = null;
+    let replyData: {
+      subject: string;
+      inReplyTo?: string;
+      references?: string[];
+    } | null = null;
 
     // 下書き読み込み
     if (draftId) {
-      draftData = await DraftKV.getDraftById(env.USERS_KV, kvSession.email, draftId);
+      draftData = await DraftKV.getDraftById(
+        env.USERS_KV,
+        kvSession.email,
+        draftId
+      );
     }
 
     // 返信データの準備（簡略版、実際は受信メールから情報取得）
@@ -63,7 +76,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     logger.error("メール作成画面ローダーエラー", {
       error: error as Error,
     });
-    throw new Response("内部サーバーエラー", { status: 500 });
+    return new Response("内部サーバーエラー", { status: 500 });
   }
 };
 
@@ -85,25 +98,44 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
     const formData = await request.formData();
     const actionType = formData.get("action") as string;
+    const emailToString = formData.get("to") as string | undefined;
+    const emailCcString = formData.get("cc") as string | undefined;
+    const emailBccString = formData.get("bcc") as string | undefined;
+
+    if (!emailToString) {
+      return { error: "宛先は必須です" };
+    }
+
+    // 宛先、CC、BCCを配列に変換
+    const emailTo = JSON.parse(emailToString) as string[];
+    const emailCc = emailCcString
+      ? (JSON.parse(emailCcString) as string[])
+      : undefined;
+    const emailBcc = emailBccString
+      ? (JSON.parse(emailBccString) as string[])
+      : undefined;
+
+    const references = formData.get("references")
+      ? (JSON.parse(formData.get("references") as string) as string[])
+      : undefined;
 
     if (actionType === "save_draft") {
       // 下書き保存
       const draftData: DraftEmail = {
         id: (formData.get("draftId") as string) || uuidv4(),
         from: formData.get("from") as string,
-        to: JSON.parse(formData.get("to") as string || "[]"),
-        cc: formData.get("cc") ? JSON.parse(formData.get("cc") as string) : undefined,
-        bcc: formData.get("bcc") ? JSON.parse(formData.get("bcc") as string) : undefined,
+        to: emailTo,
+        cc: emailCc,
+        bcc: emailBcc,
         subject: formData.get("subject") as string,
         text: formData.get("text") as string,
         html: formData.get("html") as string,
         attachments: [], // TODO: 添付ファイル処理
-        createdAt: formData.get("createdAt") as string || new Date().toISOString(),
+        createdAt:
+          (formData.get("createdAt") as string) || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        inReplyTo: formData.get("inReplyTo") as string || undefined,
-        references: formData.get("references") 
-          ? JSON.parse(formData.get("references") as string) 
-          : undefined,
+        inReplyTo: (formData.get("inReplyTo") as string) || undefined,
+        references: references,
       };
 
       await DraftKV.saveDraft(env.USERS_KV, kvSession.email, draftData);
@@ -125,7 +157,8 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 };
 
 export default () => {
-  const { managedEmails, userEmail, draftData, replyData } = useLoaderData<typeof loader>();
+  const { managedEmails, draftData, replyData } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
@@ -144,7 +177,7 @@ export default () => {
     Boolean(draftData?.cc?.length || draftData?.bcc?.length)
   );
   const [isHtmlMode, setIsHtmlMode] = useState(Boolean(draftData?.html));
-  const [draftId, setDraftId] = useState(draftData?.id);
+  const draftId = draftData?.id;
 
   // 自動下書き保存（5秒間隔）
   useEffect(() => {
@@ -153,9 +186,9 @@ export default () => {
         const formData = new FormData(formRef.current);
         formData.set("action", "save_draft");
         formData.set("draftId", draftId || "");
-        
+
         // 自動保存の実行
-        fetch("/compose", {
+        void fetch("/compose", {
           method: "POST",
           body: formData,
         });
@@ -168,14 +201,36 @@ export default () => {
   const handleSendEmail = async () => {
     if (!formRef.current) return;
 
-    const formData = new FormData(formRef.current);
-    
     // 送信API用のデータ準備
     const sendData = new FormData();
     sendData.set("from", from);
-    sendData.set("to", JSON.stringify(to.split(",").map(s => s.trim()).filter(Boolean)));
-    sendData.set("cc", JSON.stringify(cc.split(",").map(s => s.trim()).filter(Boolean)));
-    sendData.set("bcc", JSON.stringify(bcc.split(",").map(s => s.trim()).filter(Boolean)));
+    sendData.set(
+      "to",
+      JSON.stringify(
+        to
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
+    );
+    sendData.set(
+      "cc",
+      JSON.stringify(
+        cc
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
+    );
+    sendData.set(
+      "bcc",
+      JSON.stringify(
+        bcc
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
+    );
     sendData.set("subject", subject);
     sendData.set("text", text);
     sendData.set("html", isHtmlMode ? html : "");
@@ -196,7 +251,11 @@ export default () => {
         body: sendData,
       });
 
-      const result = await response.json();
+      const result = await response.json<{
+        success: boolean;
+        message?: string;
+        error?: string;
+      }>();
 
       if (result.success) {
         // 送信成功時は受信トレイにリダイレクト
@@ -205,24 +264,25 @@ export default () => {
         // エラーの種類に応じて適切なメッセージを表示
         const errorMessage = result.error || "送信に失敗しました";
         if (errorMessage.includes("メール送信サービスが設定されていません")) {
-          alert("メール送信機能が利用できません。管理者にお問い合わせください。");
+          alert(
+            "メール送信機能が利用できません。管理者にお問い合わせください。"
+          );
         } else {
           alert(`送信エラー: ${errorMessage}`);
         }
       }
     } catch (error) {
       alert("ネットワークエラーが発生しました。もう一度お試しください。");
+      throw error; // エラーを再スローしてログに記録
     }
-  };
-
-  const parseEmailList = (emailString: string): string[] => {
-    return emailString.split(",").map(s => s.trim()).filter(Boolean);
   };
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
       <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700 space-y-4 md:space-y-0">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">メール作成</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          メール作成
+        </h1>
         <div className="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-end">
           <button
             type="button"
@@ -233,7 +293,7 @@ export default () => {
           </button>
           <button
             type="button"
-            onClick={handleSendEmail}
+            onClick={() => void handleSendEmail()}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
             disabled={navigation.state !== "idle" || !to || !subject}
           >
@@ -254,23 +314,36 @@ export default () => {
         </div>
       )}
 
-      <Form ref={formRef} method="post" className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 md:p-6 space-y-6">
+      <Form
+        ref={formRef}
+        method="post"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 md:p-6 space-y-6"
+      >
         <input type="hidden" name="action" value="save_draft" />
         <input type="hidden" name="draftId" value={draftId || ""} />
-        <input type="hidden" name="createdAt" value={draftData?.createdAt || ""} />
+        <input
+          type="hidden"
+          name="createdAt"
+          value={draftData?.createdAt || ""}
+        />
         {replyData?.inReplyTo && (
           <input type="hidden" name="inReplyTo" value={replyData.inReplyTo} />
         )}
         {replyData?.references && (
-          <input 
-            type="hidden" 
-            name="references" 
-            value={JSON.stringify(replyData.references)} 
+          <input
+            type="hidden"
+            name="references"
+            value={JSON.stringify(replyData.references)}
           />
         )}
 
         <div className="space-y-2">
-          <label htmlFor="from" className="block text-sm font-medium text-gray-700 dark:text-gray-300">送信者</label>
+          <label
+            htmlFor="from"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            送信者
+          </label>
           <select
             id="from"
             name="from"
@@ -288,7 +361,12 @@ export default () => {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="to" className="block text-sm font-medium text-gray-700 dark:text-gray-300">宛先</label>
+          <label
+            htmlFor="to"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            宛先
+          </label>
           <input
             type="email"
             id="to"
@@ -315,7 +393,12 @@ export default () => {
         {showCcBcc && (
           <>
             <div className="space-y-2">
-              <label htmlFor="cc" className="block text-sm font-medium text-gray-700 dark:text-gray-300">CC</label>
+              <label
+                htmlFor="cc"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                CC
+              </label>
               <input
                 type="email"
                 id="cc"
@@ -329,7 +412,12 @@ export default () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="bcc" className="block text-sm font-medium text-gray-700 dark:text-gray-300">BCC</label>
+              <label
+                htmlFor="bcc"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                BCC
+              </label>
               <input
                 type="email"
                 id="bcc"
@@ -345,7 +433,12 @@ export default () => {
         )}
 
         <div className="space-y-2">
-          <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300">件名</label>
+          <label
+            htmlFor="subject"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            件名
+          </label>
           <input
             type="text"
             id="subject"
@@ -362,8 +455,8 @@ export default () => {
             type="button"
             onClick={() => setIsHtmlMode(false)}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-              !isHtmlMode 
-                ? "bg-blue-600 text-white hover:bg-blue-700" 
+              !isHtmlMode
+                ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
           >
@@ -373,8 +466,8 @@ export default () => {
             type="button"
             onClick={() => setIsHtmlMode(true)}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-              isHtmlMode 
-                ? "bg-blue-600 text-white hover:bg-blue-700" 
+              isHtmlMode
+                ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
           >
@@ -383,7 +476,10 @@ export default () => {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor={isHtmlMode ? "html" : "text"} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor={isHtmlMode ? "html" : "text"}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             本文
           </label>
           {isHtmlMode ? (
@@ -411,9 +507,13 @@ export default () => {
 
         {/* TODO: 添付ファイルアップロード機能 */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">添付ファイル</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            添付ファイル
+          </label>
           <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center">
-            <p className="text-gray-500 dark:text-gray-400">添付ファイル機能は準備中です</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              添付ファイル機能は準備中です
+            </p>
           </div>
         </div>
 

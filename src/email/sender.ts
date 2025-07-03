@@ -46,7 +46,9 @@ export const sendEmailViaResend = async (
           // R2から添付ファイルを取得
           const r2Object = await env.ATTACHMENTS_R2.get(attachment.r2Key);
           if (!r2Object) {
-            throw new Error(`添付ファイルが見つかりません: ${attachment.filename}`);
+            throw new Error(
+              `添付ファイルが見つかりません: ${attachment.filename}`
+            );
           }
 
           const arrayBuffer = await r2Object.arrayBuffer();
@@ -110,7 +112,7 @@ export const sendEmailViaResend = async (
       throw new Error(`Resend API error: ${response.status} ${errorText}`);
     }
 
-    const result = (await response.json());
+    const result = await response.json<{ id: string }>();
 
     logger.info("Resend API送信成功", {
       context: {
@@ -182,7 +184,7 @@ export const validateAttachmentSize = (
     if (attachment.size > maxSizePerFile) {
       return {
         valid: false,
-        error: `ファイル "${attachment.filename}" のサイズが制限を超えています (${Math.round(attachment.size / 1024 / 1024)}MB > ${Math.round(maxSizePerFile / 1024 / 1024)}MB)`
+        error: `ファイル "${attachment.filename}" のサイズが制限を超えています (${Math.round(attachment.size / 1024 / 1024)}MB > ${Math.round(maxSizePerFile / 1024 / 1024)}MB)`,
       };
     }
   }
@@ -192,7 +194,7 @@ export const validateAttachmentSize = (
   if (totalSize > maxTotalSize) {
     return {
       valid: false,
-      error: `添付ファイルの合計サイズが制限を超えています (${Math.round(totalSize / 1024 / 1024)}MB > ${Math.round(maxTotalSize / 1024 / 1024)}MB)`
+      error: `添付ファイルの合計サイズが制限を超えています (${Math.round(totalSize / 1024 / 1024)}MB > ${Math.round(maxTotalSize / 1024 / 1024)}MB)`,
     };
   }
 
@@ -200,7 +202,7 @@ export const validateAttachmentSize = (
   if (attachments.length > 10) {
     return {
       valid: false,
-      error: `添付ファイル数が制限を超えています (${attachments.length}個 > 10個)`
+      error: `添付ファイル数が制限を超えています (${attachments.length}個 > 10個)`,
     };
   }
 
@@ -219,20 +221,36 @@ export const validateAttachmentTypes = (
 
   // 危険な拡張子のブラックリスト
   const dangerousExtensions = [
-    '.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js', '.jar',
-    '.msi', '.dll', '.sys', '.bin', '.app', '.deb', '.rpm', '.sh', '.ps1'
+    ".exe",
+    ".bat",
+    ".cmd",
+    ".com",
+    ".pif",
+    ".scr",
+    ".vbs",
+    ".js",
+    ".jar",
+    ".msi",
+    ".dll",
+    ".sys",
+    ".bin",
+    ".app",
+    ".deb",
+    ".rpm",
+    ".sh",
+    ".ps1",
   ];
 
   for (const attachment of attachments) {
     const filename = attachment.filename.toLowerCase();
-    const hasDangerousExtension = dangerousExtensions.some(ext =>
+    const hasDangerousExtension = dangerousExtensions.some((ext) =>
       filename.endsWith(ext)
     );
 
     if (hasDangerousExtension) {
       return {
         valid: false,
-        error: `ファイル "${attachment.filename}" は安全性の理由により送信できません`
+        error: `ファイル "${attachment.filename}" は安全性の理由により送信できません`,
       };
     }
   }
@@ -243,13 +261,11 @@ export const validateAttachmentTypes = (
 /**
  * スレッド関連ヘッダーの生成
  */
-export const generateThreadHeaders = (
-  originalMessage?: {
-    messageId: string;
-    threadId?: string;
-    references?: string[];
-  }
-): { inReplyTo?: string; references?: string[] } => {
+export const generateThreadHeaders = (originalMessage?: {
+  messageId: string;
+  threadId?: string;
+  references?: string[];
+}): { inReplyTo?: string; references?: string[] } => {
   if (!originalMessage) {
     return {};
   }
