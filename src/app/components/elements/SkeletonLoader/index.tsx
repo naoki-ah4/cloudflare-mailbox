@@ -1,5 +1,3 @@
-import styles from "./index.module.scss";
-
 interface SkeletonLoaderProps {
   width?: string | number;
   height?: string | number;
@@ -20,9 +18,22 @@ const SkeletonLoader = ({
     height: typeof height === "number" ? `${height}px` : height,
   };
 
+  const baseClasses = "bg-gray-300 relative overflow-hidden";
+  const variantClasses = {
+    text: "rounded",
+    circular: "rounded-full",
+    rectangular: "rounded",
+  };
+
+  const animationClasses = {
+    pulse: "animate-pulse",
+    wave: "animate-pulse", // Tailwindのデフォルトpulseを使用、独自waveアニメーションは後で追加
+    none: "",
+  };
+
   return (
     <div
-      className={`${styles.skeleton} ${styles[variant]} ${styles[animation]} ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${animationClasses[animation]} ${className}`}
       style={style}
       aria-label="読み込み中"
     />
@@ -50,7 +61,9 @@ export const SkeletonText = ({
 );
 
 export const SkeletonCard = ({ className = "" }: { className?: string }) => (
-  <div className={`${styles.card} ${className}`}>
+  <div
+    className={`p-4 bg-white border border-gray-200 rounded-lg ${className}`}
+  >
     <SkeletonLoader variant="rectangular" height="200px" className="mb-4" />
     <SkeletonLoader variant="text" height="1.5rem" className="mb-2" />
     <SkeletonLoader variant="text" height="1rem" width="60%" />
@@ -62,10 +75,10 @@ export const SkeletonMessageItem = ({
 }: {
   className?: string;
 }) => (
-  <div className={`${styles.messageItem} ${className}`}>
-    <div className={styles.messageHeader}>
+  <div className={`p-4 border-b border-gray-200 last:border-b-0 ${className}`}>
+    <div className="flex items-center gap-3">
       <SkeletonLoader variant="circular" width="40px" height="40px" />
-      <div className={styles.messageInfo}>
+      <div className="flex-1">
         <SkeletonLoader
           variant="text"
           height="1rem"

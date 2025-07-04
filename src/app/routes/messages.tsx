@@ -4,7 +4,6 @@ import { SessionKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/schema";
 import { sanitizeEmailText, sanitizeSearchQuery } from "~/utils/sanitize";
-import styles from "./messages.module.scss";
 import Pagination from "../components/Pagination";
 import { useState } from "react";
 import { SkeletonMessageItem } from "../components/elements/SkeletonLoader";
@@ -179,45 +178,54 @@ const Messages = () => {
   };
 
   return (
-    <div className={styles.container}>
+    <div className="flex min-h-screen lg:flex-row max-lg:flex-col">
       {/* モバイル用サイドバーオーバーレイ */}
       <div
-        className={`${styles.sidebarOverlay} ${sidebarOpen ? styles.open : ""}`}
+        className={`hidden max-md:fixed max-md:top-0 max-md:left-0 max-md:right-0 max-md:bottom-0 max-md:bg-black/50 max-md:z-[999] ${sidebarOpen ? "max-md:block" : ""}`}
         onClick={closeSidebar}
       />
 
       {/* サイドバー */}
-      <div className={`${styles.sidebar} ${sidebarOpen ? styles.open : ""}`}>
+      <div
+        className={`w-72 bg-gray-50 border-r border-gray-300 p-4 max-lg:w-full max-lg:border-r-0 max-lg:border-b max-lg:border-gray-300 max-md:hidden max-md:fixed max-md:top-0 max-md:left-0 max-md:h-screen max-md:w-72 max-md:z-[1000] max-md:shadow-lg ${sidebarOpen ? "max-md:block" : ""}`}
+      >
         {/* モバイル用閉じるボタン */}
-        <button className={styles.sidebarCloseButton} onClick={closeSidebar}>
+        <button
+          className="hidden max-md:block max-md:absolute max-md:top-4 max-md:right-4 max-md:bg-transparent max-md:border-none max-md:text-xl max-md:cursor-pointer max-md:text-gray-500 max-md:z-[1001]"
+          onClick={closeSidebar}
+        >
           ✕
         </button>
 
-        <div className={styles.sidebarHeader}>
-          <h2>メールボックス</h2>
-          <p>{user.email}</p>
+        <div className="mb-8">
+          <h2 className="m-0 mb-2 text-xl">メールボックス</h2>
+          <p className="m-0 text-sm text-gray-600">{user.email}</p>
         </div>
 
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <p className="text-blue-600">{stats.totalMessages}</p>
-            <h3>総数</h3>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="p-3 bg-white border border-gray-300 rounded text-center">
+            <p className="text-blue-600 m-0 mb-1 text-xl font-bold">
+              {stats.totalMessages}
+            </p>
+            <h3 className="m-0 text-xs text-gray-600">総数</h3>
           </div>
-          <div className={styles.statCard}>
-            <p className="text-red-600">{stats.unreadMessages}</p>
-            <h3>未読</h3>
+          <div className="p-3 bg-white border border-gray-300 rounded text-center">
+            <p className="text-red-600 m-0 mb-1 text-xl font-bold">
+              {stats.unreadMessages}
+            </p>
+            <h3 className="m-0 text-xs text-gray-600">未読</h3>
           </div>
         </div>
 
-        <div className={styles.mailboxSection}>
-          <h3>フィルタ</h3>
+        <div className="mb-8">
+          <h3 className="m-0 mb-3 text-base">フィルタ</h3>
 
-          <div className={styles.mailboxList}>
+          <div className="flex flex-col gap-1">
             <button
               onClick={() => handleMailboxChange("all")}
-              className={`${styles.mailboxItem} ${!selectedMailbox ? styles.active : ""}`}
+              className={`p-3 rounded cursor-pointer transition-colors border text-left ${!selectedMailbox ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-800 border-gray-300 hover:bg-gray-100"}`}
             >
-              <div className={styles.mailboxName}>
+              <div className="font-bold text-sm">
                 📥 すべて ({stats.totalMessages})
               </div>
             </button>
@@ -269,18 +277,21 @@ const Messages = () => {
       </div>
 
       {/* メインコンテンツ */}
-      <div className={styles.mainContentArea}>
-        <header className={styles.contentHeader}>
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+      <div className="flex-1 p-4 max-md:p-3">
+        <header className="flex justify-between items-center mb-4 border-b border-gray-200 pb-4 max-md:flex-col max-md:items-start max-md:gap-4">
+          <div className="flex items-center gap-4">
             {/* モバイル用ハンバーガーメニューボタン */}
-            <button className={styles.mobileMenuButton} onClick={toggleSidebar}>
+            <button
+              className="hidden max-md:block bg-transparent border-none text-xl cursor-pointer p-2 text-gray-700"
+              onClick={toggleSidebar}
+            >
               ☰
             </button>
             <div>
-              <h1>
+              <h1 className="m-0 max-md:text-xl">
                 {selectedMailbox ? `${selectedMailbox}` : "すべてのメール"}
               </h1>
-              <p>
+              <p className="m-1 mt-1 text-gray-600 max-md:text-sm">
                 {pagination.totalItems}件のメール（{pagination.currentPage}/
                 {pagination.totalPages}ページ）
               </p>
@@ -288,7 +299,10 @@ const Messages = () => {
           </div>
 
           <form method="post" action="/api/logout">
-            <button type="submit" className={styles.logoutBtn}>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-red-600 text-white border-none rounded cursor-pointer"
+            >
               ログアウト
             </button>
           </form>
@@ -317,50 +331,50 @@ const Messages = () => {
 
         {/* メール一覧 */}
         {isLoading ? (
-          <div className={styles.messagesContainer}>
+          <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
             {Array.from({ length: 5 }, (_, index) => (
               <SkeletonMessageItem key={index} />
             ))}
           </div>
         ) : messages.length === 0 ? (
-          <div className={styles.noMessagesContainer}>
+          <div className="text-center p-12 bg-gray-50 rounded-lg text-gray-600">
             {searchQuery
               ? `「${sanitizeSearchQuery(searchQuery)}」に該当するメールが見つかりません`
               : "メールがありません"}
           </div>
         ) : (
           <>
-            <div className={styles.messagesContainer}>
+            <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
               {messages.map((message) => (
                 <a
                   key={message.messageId}
                   href={`/messages/${message.messageId}`}
-                  className={`${styles.messageItem} ${!message.isRead ? styles.unread : ""}`}
+                  className={`block p-4 border-b border-gray-100 last:border-b-0 no-underline text-inherit transition-colors hover:bg-gray-50 ${!message.isRead ? "bg-blue-50" : ""}`}
                 >
-                  <div className={styles.messageItemContent}>
-                    <div className={styles.messageItemLeft}>
-                      <div className={styles.messageItemHeader}>
+                  <div className="flex justify-between items-start max-sm:flex-col max-sm:gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center mb-1">
                         <span
-                          className={`${styles.messageFrom} ${!message.isRead ? styles.unread : ""}`}
+                          className={`text-sm ${!message.isRead ? "font-bold" : ""}`}
                         >
                           {sanitizeEmailText(message.from)}
                         </span>
                         {!selectedMailbox && (
-                          <span className={styles.messageMailboxTag}>
+                          <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-xl text-xs text-gray-600">
                             {message.mailbox}
                           </span>
                         )}
                         {message.hasAttachments && (
-                          <span className={styles.attachmentIcon}>📎</span>
+                          <span className="ml-2 text-xs">📎</span>
                         )}
                       </div>
                       <div
-                        className={`${styles.messageSubject} ${!message.isRead ? styles.unread : ""}`}
+                        className={`mb-1 ${!message.isRead ? "font-bold" : ""}`}
                       >
                         {sanitizeEmailText(message.subject) || "(件名なし)"}
                       </div>
                     </div>
-                    <div className={styles.messageDate}>
+                    <div className="text-xs text-gray-600 text-right min-w-[100px] max-sm:text-left max-sm:min-w-auto">
                       {new Date(message.date).toLocaleString("ja-JP", {
                         month: "numeric",
                         day: "numeric",

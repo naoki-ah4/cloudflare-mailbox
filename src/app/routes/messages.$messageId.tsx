@@ -8,7 +8,6 @@ import {
   sanitizeFileName,
   sanitizeEmailText,
 } from "~/utils/sanitize";
-import styles from "./messages.$messageId.module.scss";
 import { SafeFormData } from "~/app/utils/formdata";
 
 export const meta = ({
@@ -203,69 +202,83 @@ const MessageDetail = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
+    <div className="max-w-4xl mx-auto p-4">
+      <header className="flex justify-between items-center mb-4 border-b border-gray-200 pb-4">
         <div>
-          <a href="/messages" className={styles.backLink}>
+          <a
+            href="/messages"
+            className="text-blue-600 no-underline text-sm hover:text-blue-800"
+          >
             ← メール一覧に戻る
           </a>
         </div>
 
         <form method="post" action="/api/logout">
-          <button type="submit" className={styles.logoutButton}>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-red-600 text-white border-none rounded cursor-pointer hover:bg-red-700"
+          >
             ログアウト
           </button>
         </form>
       </header>
 
       {actionData?.error && (
-        <div className={styles.errorMessage}>{actionData.error}</div>
+        <div className="text-red-600 bg-red-50 p-4 rounded mb-4">
+          {actionData.error}
+        </div>
       )}
 
       {actionData?.success && (
-        <div className={styles.successMessage}>{actionData.message}</div>
+        <div className="text-green-800 bg-green-100 border border-green-300 p-4 rounded mb-4">
+          {actionData.message}
+        </div>
       )}
 
-      <div className={styles.messageCard}>
+      <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
         {/* メッセージヘッダー */}
-        <div className={styles.messageHeader}>
-          <h1>{sanitizeEmailText(message.subject) || "(件名なし)"}</h1>
+        <div className="p-6 border-b border-gray-100 bg-gray-50">
+          <h1 className="m-0 mb-4 text-2xl">
+            {sanitizeEmailText(message.subject) || "(件名なし)"}
+          </h1>
 
-          <div className={styles.messageMetaGrid}>
-            <strong>送信者:</strong>
+          <div className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4 text-sm text-gray-600">
+            <strong className="font-bold">送信者:</strong>
             <span>{sanitizeEmailText(message.from)}</span>
 
             {message.originalFrom && (
               <>
-                <strong>転送元アドレス:</strong>
+                <strong className="font-bold">転送元アドレス:</strong>
                 <span>{sanitizeEmailText(message.originalFrom)}</span>
               </>
             )}
 
-            <strong>受信者:</strong>
+            <strong className="font-bold">受信者:</strong>
             <span>{message.to.join(", ")}</span>
 
-            <strong>受信先:</strong>
+            <strong className="font-bold">受信先:</strong>
             <span>{recipientEmail}</span>
 
-            <strong>日時:</strong>
+            <strong className="font-bold">日時:</strong>
             <span>{new Date(message.date).toLocaleString("ja-JP")}</span>
 
             {message.attachments.length > 0 && (
               <>
-                <strong>添付ファイル:</strong>
+                <strong className="font-bold">添付ファイル:</strong>
                 <span>{message.attachments.length}個</span>
               </>
             )}
           </div>
 
-          <div className={styles.readStatusContainer}>
+          <div className="mt-4">
             {isMarkedAsRead ? (
-              <div className={styles.readStatusGroup}>
-                <span className={styles.readStatus}>既読済み</span>
+              <div className="flex items-center gap-3">
+                <span className="inline-block px-4 py-2 bg-cyan-600 text-white rounded text-sm">
+                  既読済み
+                </span>
                 <button
                   onClick={() => void handleMarkUnread()}
-                  className={styles.markUnreadButton}
+                  className="px-4 py-2 bg-gray-600 text-white border-none rounded cursor-pointer text-sm hover:bg-gray-700"
                 >
                   未読にする
                 </button>
@@ -273,7 +286,10 @@ const MessageDetail = () => {
             ) : (
               <Form method="post" className="inline">
                 <input type="hidden" name="action" value="markRead" />
-                <button type="submit" className={styles.markReadButton}>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white border-none rounded cursor-pointer text-sm mt-4 hover:bg-green-700"
+                >
                   既読にする
                 </button>
               </Form>
@@ -360,13 +376,13 @@ const MessageDetail = () => {
               {/* HTML/テキスト表示 */}
               {displayMode === "html" ? (
                 <div
-                  className={styles.htmlContent}
+                  className="border border-gray-300 rounded p-4 bg-gray-50 max-h-96 overflow-auto"
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHTML(message.html, { allowExternalImages }),
                   }}
                 />
               ) : (
-                <pre className={styles.textContent}>
+                <pre className="whitespace-pre-wrap font-inherit m-0 p-4 bg-gray-50 border border-gray-300 rounded max-h-96 overflow-auto">
                   {message.text || "テキスト版がありません"}
                 </pre>
               )}
@@ -374,12 +390,14 @@ const MessageDetail = () => {
           ) : message.text ? (
             <div>
               <h4 className="m-0 mb-2">テキスト</h4>
-              <pre className={styles.textContent}>{message.text}</pre>
+              <pre className="whitespace-pre-wrap font-inherit m-0 p-4 bg-gray-50 border border-gray-300 rounded max-h-96 overflow-auto">
+                {message.text}
+              </pre>
             </div>
           ) : null}
 
           {!message.html && !message.text && (
-            <div className={styles.noContentMessage}>
+            <div className="text-center p-8 text-gray-600 italic">
               メッセージ本文がありません
             </div>
           )}
