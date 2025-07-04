@@ -5,7 +5,8 @@ export const createEmailMessage = (
   parsedEmail: Email,
   messageId: string,
   attachments: EmailMessage["attachments"],
-  originalEmail: ForwardableEmailMessage
+  originalEmail: ForwardableEmailMessage,
+  isCatchAll: boolean = false
 ): EmailMessage => {
   return {
     id: messageId,
@@ -29,6 +30,7 @@ export const createEmailMessage = (
       )?.value
     ),
     originalFrom: originalEmail.from || parsedEmail.from.address,
+    isCatchAll,
   };
 };
 

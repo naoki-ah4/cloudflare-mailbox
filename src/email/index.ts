@@ -83,9 +83,6 @@ const emailHandler = async (
           originalTo: toEmails.join(", "),
           catchAllAddress: processingResult.catchAllAddress,
         });
-        // toEmailsをcatch-allアドレスに置き換え
-        toEmails.length = 0;
-        toEmails.push(processingResult.catchAllAddress);
       } else {
         // 拒否の場合
         logger.emailLog("メール受信拒否: 許可リストに含まれていない", {
@@ -106,7 +103,8 @@ const emailHandler = async (
       parsedEmail,
       messageId,
       attachments,
-      message
+      message,
+      !processingResult.allowed && !!processingResult.catchAllAddress
     );
 
     await saveEmailToKV(emailMessage, env.MESSAGES_KV);

@@ -78,6 +78,7 @@ export const EmailMessageSchema = z.object({
   inReplyTo: z.string().optional(),
   references: z.array(z.string()).optional(),
   originalFrom: z.string().optional(),
+  isCatchAll: z.boolean().default(false),
 });
 
 export const EmailMetadataSchema = z.object({
