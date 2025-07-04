@@ -49,4 +49,9 @@
   "triggers": {
     "crons": ["0 2 * * *", "0 3 * * 7", "0 4 1 * *"],
   },
+  "send_email": [
+    {
+      "name": "SEND_EMAIL",
+    },
+  ],
 }
