@@ -1,5 +1,9 @@
-import type { EmailMessage, EmailMetadata } from "~/utils/schema";
+import type { EmailMetadata, EmailMessage } from "~/utils/schema";
 import { MessageKV, InboxKV, ThreadKV } from "../utils/kv";
+import type { Email } from "postal-mime";
+import PostalMime from "postal-mime";
+import { createMimeMessage } from "mimetext";
+import { EmailMessage as CFEmailMessage } from "cloudflare:email";
 /**
  * メールメッセージをKVに保存します。
  * @returns {Promise<void>}
@@ -81,4 +85,36 @@ export const getThreadMessages = async (
   messagesKV: KVNamespace
 ): Promise<string[]> => {
   return await ThreadKV.get(messagesKV, threadId);
+};
+
+/**
+ * メールを転送します。
+ */
+export const forwardEmailWithSendEmail = async (
+  parsedEmail: Email | null,
+  message: ForwardableEmailMessage,
+  forwardTo: string,
+  env: Cloudflare.Env
+): Promise<void> => {
+  // 既にパースしたメールデータを再利用、なければ新規解析
+  if (!parsedEmail) {
+    parsedEmail = await PostalMime.parse(message.raw);
+  }
+
+  const msg = createMimeMessage();
+  msg.setSender(message.from);
+  msg.setTo(forwardTo);
+  msg.setSubject(parsedEmail.subject || "");
+  msg.addMessage({
+    contentType: "text/plain",
+    data: parsedEmail.text || "",
+  });
+  msg.addMessage({
+    contentType: "text/html",
+    data: parsedEmail.html || parsedEmail.text || "",
+  });
+
+  const emailMessage = new CFEmailMessage(message.from, forwardTo, msg.asRaw());
+
+  await env.SEND_EMAIL.send(emailMessage);
 };

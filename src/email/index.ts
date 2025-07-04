@@ -1,7 +1,11 @@
-import PostalMime from "postal-mime";
+import PostalMime, { type Email } from "postal-mime";
 import { maxAttachmentsSize } from "../utils/size";
 import { saveAttachments } from "./attachments";
-import { saveEmailToKV, updateInboxIndex } from "./storage";
+import {
+  forwardEmailWithSendEmail,
+  saveEmailToKV,
+  updateInboxIndex,
+} from "./storage";
 import { createEmailMessage } from "./utils";
 import { SystemKV } from "../utils/kv/system";
 import { logger } from "../utils/logger";
@@ -62,9 +66,11 @@ const emailHandler = async (
   message: ForwardableEmailMessage,
   env: Cloudflare.Env
 ) => {
+  let parsedEmail: Email | null = null;
+
   try {
     const messageId = crypto.randomUUID();
-    const parsedEmail = await PostalMime.parse(message.raw);
+    parsedEmail = await PostalMime.parse(message.raw);
 
     // 受信可能メールアドレスかチェック（createEmailMessageと同じロジック）
     const toEmails: string[] =
@@ -121,14 +127,32 @@ const emailHandler = async (
     });
   } catch (error) {
     logger.error("メール処理エラー", { error });
-  } finally {
-    if (env.FORWARD_EMAIL_ADDRESS) {
-      const forwardTo = await z
-        .string()
-        .email()
-        .safeParseAsync(env.FORWARD_EMAIL_ADDRESS);
-      if (forwardTo.success) {
-        await message.forward(forwardTo.data);
+  }
+  if (env.FORWARD_EMAIL_ADDRESS && env.SEND_EMAIL) {
+    const forwardTo = await z
+      .string()
+      .email()
+      .safeParseAsync(env.FORWARD_EMAIL_ADDRESS);
+    if (forwardTo.success) {
+      try {
+        await forwardEmailWithSendEmail(
+          parsedEmail,
+          message,
+          forwardTo.data,
+          env
+        );
+        logger.emailLog("メール送信完了", {
+          to: forwardTo.data,
+          from: message.from,
+          subject: parsedEmail?.subject || "",
+        });
+      } catch (error) {
+        logger.error("メール送信エラー", {
+          error,
+          to: forwardTo.data,
+          from: message.from,
+          subject: parsedEmail?.subject || message.headers.get("subject") || "",
+        });
       }
     }
   }
