@@ -1,5 +1,5 @@
 import type { Email } from "postal-mime";
-import type { EmailMessage } from "./types";
+import type { EmailMessage } from "~/utils/kv/schema";
 
 export const createEmailMessage = (
   parsedEmail: Email,
