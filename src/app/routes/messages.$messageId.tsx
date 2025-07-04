@@ -2,7 +2,7 @@ import { useLoaderData, useActionData, Form } from "react-router";
 import type { Route } from "./+types/messages.$messageId";
 import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   sanitizeHTML,
   sanitizeFileName,
@@ -112,7 +112,7 @@ export const action = async ({
     const formData = SafeFormData.fromObject(await request.formData());
     const action = formData.get("action");
 
-    if (action === "markRead") {
+    if (action === "markRead" || action === "markUnread") {
       // メッセージ取得してアクセス権限確認
       const message = await MessageKV.get(env.MESSAGES_KV, messageId);
       if (!message) {
@@ -126,16 +126,22 @@ export const action = async ({
         return { error: "権限がありません" };
       }
 
-      // 各受信者のInboxで既読状態を更新
+      const isRead = action === "markRead";
+
+      // 各受信者のInboxで既読/未読状態を更新
       const updatePromises = message.to
         .filter((email) => kvSession.managedEmails.includes(email))
         .map((email) =>
-          InboxKV.updateReadStatus(env.MAILBOXES_KV, email, messageId, true)
+          InboxKV.updateReadStatus(env.MAILBOXES_KV, email, messageId, isRead)
         );
 
       await Promise.all(updatePromises);
 
-      return { success: true, message: "既読にしました" };
+      return {
+        success: true,
+        message: isRead ? "既読にしました" : "未読にしました",
+        isRead,
+      };
     }
 
     return { error: "無効なアクションです" };
@@ -150,6 +156,51 @@ const MessageDetail = () => {
   const actionData = useActionData<typeof action>();
   const [displayMode, setDisplayMode] = useState<"html" | "text">("html");
   const [allowExternalImages, setAllowExternalImages] = useState(false);
+  const [isMarkedAsRead, setIsMarkedAsRead] = useState(false);
+
+  useEffect(() => {
+    const markAsRead = async () => {
+      if (isMarkedAsRead) return;
+
+      try {
+        const formData = new FormData();
+        formData.append("action", "markRead");
+
+        const response = await fetch(`/messages/${message.id}`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          setIsMarkedAsRead(true);
+        }
+      } catch (error) {
+        console.error("Failed to mark message as read:", error);
+      }
+    };
+
+    markAsRead().catch((error) => {
+      console.error("Failed to mark message as read:", error);
+    });
+  }, [message.id, isMarkedAsRead]);
+
+  const handleMarkUnread = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("action", "markUnread");
+
+      const response = await fetch(`/messages/${message.id}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        setIsMarkedAsRead(false);
+      }
+    } catch (error) {
+      console.error("Failed to mark message as unread:", error);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -208,13 +259,25 @@ const MessageDetail = () => {
             )}
           </div>
 
-          <div>
-            <Form method="post" className="inline">
-              <input type="hidden" name="action" value="markRead" />
-              <button type="submit" className={styles.markReadButton}>
-                既読にする
-              </button>
-            </Form>
+          <div className={styles.readStatusContainer}>
+            {isMarkedAsRead ? (
+              <div className={styles.readStatusGroup}>
+                <span className={styles.readStatus}>既読済み</span>
+                <button
+                  onClick={() => void handleMarkUnread()}
+                  className={styles.markUnreadButton}
+                >
+                  未読にする
+                </button>
+              </div>
+            ) : (
+              <Form method="post" className="inline">
+                <input type="hidden" name="action" value="markRead" />
+                <button type="submit" className={styles.markReadButton}>
+                  既読にする
+                </button>
+              </Form>
+            )}
           </div>
         </div>
 

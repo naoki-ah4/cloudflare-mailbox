@@ -98,6 +98,39 @@
   }
 }
 
+.readStatusContainer {
+  margin-top: 1rem;
+}
+
+.readStatusGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.readStatus {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #17a2b8;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.markUnreadButton {
+  padding: 0.5rem 1rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+
+  &:hover {
+    background-color: #5a6268;
+  }
+}
+
 .attachmentsSection {
   padding: 1rem;
   border-bottom: 1px solid #f8f9fa;
