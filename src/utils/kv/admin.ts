@@ -3,7 +3,7 @@ import {
   AdminSessionSchema,
   type Admin,
   type AdminSession,
-} from "./schema";
+} from "../schema";
 
 export const AdminKV = {
   async get(kv: KVNamespace, adminId: string): Promise<Admin | null> {

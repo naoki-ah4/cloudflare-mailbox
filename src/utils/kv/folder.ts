@@ -2,7 +2,7 @@ import {
   FolderMessagesSchema,
   type FolderMessages,
   type EmailMetadata,
-} from "./schema";
+} from "../schema";
 
 export const FolderKV = {
   async get(

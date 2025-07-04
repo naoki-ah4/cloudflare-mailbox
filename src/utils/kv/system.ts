@@ -4,7 +4,7 @@ import {
   type SystemSettings,
   type SystemSettingsHistory,
   type SystemSettingsHistoryEntry,
-} from "./schema";
+} from "../schema";
 
 export const SystemKV = {
   async getSettings(kv: KVNamespace): Promise<SystemSettings | null> {

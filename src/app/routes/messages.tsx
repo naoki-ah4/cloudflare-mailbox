@@ -2,7 +2,7 @@ import { useLoaderData, useSearchParams, useNavigation } from "react-router";
 import type { Route } from "./+types/messages";
 import { SessionKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
-import type { EmailMetadata } from "~/utils/kv/schema";
+import type { EmailMetadata } from "~/utils/schema";
 import { sanitizeEmailText, sanitizeSearchQuery } from "~/utils/sanitize";
 import styles from "./messages.module.scss";
 import Pagination from "../components/Pagination";

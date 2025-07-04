@@ -1,4 +1,4 @@
-import { ThreadMessagesSchema, type ThreadMessages } from "./schema";
+import { ThreadMessagesSchema, type ThreadMessages } from "../schema";
 
 export const ThreadKV = {
   async get(kv: KVNamespace, threadId: string): Promise<ThreadMessages> {

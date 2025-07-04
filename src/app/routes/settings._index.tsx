@@ -9,7 +9,7 @@ import type { Route } from "./+types/settings._index";
 import { z } from "zod";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV, UserKV, SettingsKV } from "~/utils/kv";
-import type { UserSettings } from "~/utils/kv/schema";
+import type { UserSettings } from "~/utils/schema";
 import SettingsNav from "../components/SettingsNav";
 import { useTheme } from "~/app/utils/theme";
 import LoadingButton from "../components/elements/LoadingButton";

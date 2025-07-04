@@ -3,7 +3,7 @@ import {
   RateLimitResultSchema,
   type RateLimitRecord,
   type RateLimitResult,
-} from "./schema";
+} from "../schema";
 import { logger } from "../logger";
 
 export const RateLimitKV = {
@@ -47,7 +47,7 @@ export const RateLimitKV = {
           limit,
           windowMs,
           resetTime,
-          remainingMs
+          remainingMs,
         });
 
         return RateLimitResultSchema.parse({
@@ -91,7 +91,10 @@ export const RateLimitKV = {
 
       return RateLimitRecordSchema.parse(JSON.parse(data));
     } catch (error) {
-      logger.error("レート制限記録の取得に失敗", { error: error as Error, key });
+      logger.error("レート制限記録の取得に失敗", {
+        error: error as Error,
+        key,
+      });
       return null;
     }
   },

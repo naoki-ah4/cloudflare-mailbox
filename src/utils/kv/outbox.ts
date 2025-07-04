@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { SentEmailSchema, SentMessagesSchema } from "./schema";
+import { SentEmailSchema, SentMessagesSchema } from "../schema";
 import { logger } from "../logger";
 
 export type SentEmail = z.infer<typeof SentEmailSchema>;
@@ -20,7 +20,7 @@ export class OutboxKV {
   ): Promise<void> {
     try {
       const key = `outbox:${userEmail}`;
-      
+
       // 既存の送信済みメール一覧を取得
       const existingData = await kv.get(key);
       const existingSentEmails = existingData
@@ -34,7 +34,7 @@ export class OutboxKV {
       const limitedSentEmails = updatedSentEmails.slice(0, 1000);
 
       await kv.put(key, JSON.stringify(limitedSentEmails));
-      
+
       logger.info("送信済みメール保存", {
         context: {
           userEmail,
@@ -63,16 +63,16 @@ export class OutboxKV {
     try {
       const key = `outbox:${userEmail}`;
       const data = await kv.get(key);
-      
+
       if (!data) {
         return [];
       }
 
       const sentEmails = SentMessagesSchema.parse(JSON.parse(data));
-      
+
       // ページネーション
       const paginatedEmails = sentEmails.slice(offset, offset + limit);
-      
+
       logger.info("送信済みメール取得", {
         context: {
           userEmail,
@@ -104,7 +104,7 @@ export class OutboxKV {
     try {
       const sentEmails = await this.getSentEmails(kv, userEmail, 1000);
       const foundEmail = sentEmails.find((email) => email.id === emailId);
-      
+
       if (foundEmail) {
         logger.info("送信済みメール詳細取得", {
           context: { userEmail, emailId },
@@ -133,23 +133,23 @@ export class OutboxKV {
     try {
       const key = `outbox:${userEmail}`;
       const data = await kv.get(key);
-      
+
       if (!data) {
         throw new Error("送信済みメールが見つかりません");
       }
 
       const sentEmails = SentMessagesSchema.parse(JSON.parse(data));
       const emailIndex = sentEmails.findIndex((email) => email.id === emailId);
-      
+
       if (emailIndex === -1) {
         throw new Error("指定されたメールが見つかりません");
       }
 
       // ステータスを更新
       sentEmails[emailIndex].status = status;
-      
+
       await kv.put(key, JSON.stringify(sentEmails));
-      
+
       logger.info("送信ステータス更新", {
         context: { userEmail, emailId, status },
       });
@@ -177,7 +177,7 @@ export class OutboxKV {
   }> {
     try {
       const sentEmails = await this.getSentEmails(kv, userEmail, 1000);
-      
+
       const stats = {
         totalCount: sentEmails.length,
         sentCount: sentEmails.filter((e) => e.status === "sent").length,
@@ -185,7 +185,7 @@ export class OutboxKV {
         bouncedCount: sentEmails.filter((e) => e.status === "bounced").length,
         lastSentAt: sentEmails.length > 0 ? sentEmails[0].sentAt : undefined,
       };
-      
+
       logger.info("送信統計取得", {
         context: { userEmail, ...stats },
       });
@@ -211,25 +211,29 @@ export class OutboxKV {
     try {
       const key = `outbox:${userEmail}`;
       const data = await kv.get(key);
-      
+
       if (!data) {
         return 0;
       }
 
       const sentEmails = SentMessagesSchema.parse(JSON.parse(data));
       const cutoffTime = new Date(Date.now() - maxAge).toISOString();
-      
+
       const recentEmails = sentEmails.filter(
         (email) => email.sentAt > cutoffTime
       );
-      
+
       const deletedCount = sentEmails.length - recentEmails.length;
-      
+
       if (deletedCount > 0) {
         await kv.put(key, JSON.stringify(recentEmails));
-        
+
         logger.info("古い送信済みメール削除", {
-          context: { userEmail, deletedCount, remainingCount: recentEmails.length },
+          context: {
+            userEmail,
+            deletedCount,
+            remainingCount: recentEmails.length,
+          },
         });
       }
 

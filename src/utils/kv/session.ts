@@ -1,4 +1,4 @@
-import { SessionSchema, type Session } from "./schema";
+import { SessionSchema, type Session } from "../schema";
 
 export const SessionKV = {
   async get(kv: KVNamespace, sessionId: string): Promise<Session | null> {

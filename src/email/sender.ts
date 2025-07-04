@@ -5,9 +5,9 @@
  */
 
 import { logger } from "~/utils/logger";
-import type { EmailAttachment } from "~/utils/kv/schema";
+import type { EmailAttachment } from "~/utils/schema";
 import { Resend, type CreateEmailOptions } from "resend";
-import type { SendEmailRequest } from "~/utils/kv/schema";
+import type { SendEmailRequest } from "~/utils/schema";
 
 export type SendEmailResult = {
   id: string;

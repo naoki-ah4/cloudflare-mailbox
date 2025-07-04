@@ -26,4 +26,4 @@ export type {
   UserSettings,
   RateLimitRecord,
   RateLimitResult,
-} from "./schema";
+} from "../schema";

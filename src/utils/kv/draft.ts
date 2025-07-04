@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { DraftEmailSchema, DraftMessagesSchema } from "./schema";
+import { DraftEmailSchema, DraftMessagesSchema } from "../schema";
 import { logger } from "../logger";
 
 export type DraftEmail = z.infer<typeof DraftEmailSchema>;
@@ -20,7 +20,7 @@ export class DraftKV {
   ): Promise<void> {
     try {
       const key = `drafts:${userEmail}`;
-      
+
       // 既存の下書き一覧を取得
       const existingData = await kv.get(key);
       const existingDrafts = existingData
@@ -29,7 +29,7 @@ export class DraftKV {
 
       // 同じIDの下書きがある場合は更新、なければ追加
       const existingIndex = existingDrafts.findIndex((d) => d.id === draft.id);
-      
+
       if (existingIndex >= 0) {
         existingDrafts[existingIndex] = {
           ...draft,
@@ -43,7 +43,7 @@ export class DraftKV {
       const limitedDrafts = existingDrafts.slice(0, 100);
 
       await kv.put(key, JSON.stringify(limitedDrafts));
-      
+
       logger.info("下書き保存", {
         context: {
           userEmail,
@@ -71,18 +71,19 @@ export class DraftKV {
     try {
       const key = `drafts:${userEmail}`;
       const data = await kv.get(key);
-      
+
       if (!data) {
         return [];
       }
 
       const drafts = DraftMessagesSchema.parse(JSON.parse(data));
-      
+
       // 更新日時順でソート（新しい順）
       const sortedDrafts = drafts.sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       );
-      
+
       logger.info("下書き一覧取得", {
         context: {
           userEmail,
@@ -111,7 +112,7 @@ export class DraftKV {
     try {
       const drafts = await this.getDrafts(kv, userEmail);
       const foundDraft = drafts.find((draft) => draft.id === draftId);
-      
+
       if (foundDraft) {
         logger.info("下書き詳細取得", {
           context: { userEmail, draftId },
@@ -139,21 +140,21 @@ export class DraftKV {
     try {
       const key = `drafts:${userEmail}`;
       const data = await kv.get(key);
-      
+
       if (!data) {
         return false;
       }
 
       const drafts = DraftMessagesSchema.parse(JSON.parse(data));
       const filteredDrafts = drafts.filter((draft) => draft.id !== draftId);
-      
+
       if (filteredDrafts.length === drafts.length) {
         // 削除対象が見つからなかった
         return false;
       }
 
       await kv.put(key, JSON.stringify(filteredDrafts));
-      
+
       logger.info("下書き削除", {
         context: {
           userEmail,
@@ -182,16 +183,16 @@ export class DraftKV {
     try {
       const key = `drafts:${userEmail}`;
       const data = await kv.get(key);
-      
+
       if (!data) {
         return 0;
       }
 
       const drafts = DraftMessagesSchema.parse(JSON.parse(data));
       const deletedCount = drafts.length;
-      
+
       await kv.delete(key);
-      
+
       logger.info("全下書き削除", {
         context: { userEmail, deletedCount },
       });
@@ -217,23 +218,23 @@ export class DraftKV {
     try {
       const key = `drafts:${userEmail}`;
       const data = await kv.get(key);
-      
+
       if (!data) {
         return 0;
       }
 
       const drafts = DraftMessagesSchema.parse(JSON.parse(data));
       const cutoffTime = new Date(Date.now() - maxAge).toISOString();
-      
+
       const recentDrafts = drafts.filter(
         (draft) => draft.updatedAt > cutoffTime
       );
-      
+
       const deletedCount = drafts.length - recentDrafts.length;
-      
+
       if (deletedCount > 0) {
         await kv.put(key, JSON.stringify(recentDrafts));
-        
+
         logger.info("古い下書き削除", {
           context: {
             userEmail,
@@ -266,15 +267,14 @@ export class DraftKV {
   }> {
     try {
       const drafts = await this.getDrafts(kv, userEmail);
-      
+
       const stats = {
         totalCount: drafts.length,
         lastUpdatedAt: drafts.length > 0 ? drafts[0].updatedAt : undefined,
-        oldestDraftAt: drafts.length > 0 
-          ? drafts[drafts.length - 1].updatedAt 
-          : undefined,
+        oldestDraftAt:
+          drafts.length > 0 ? drafts[drafts.length - 1].updatedAt : undefined,
       };
-      
+
       logger.info("下書き統計取得", {
         context: { userEmail, ...stats },
       });

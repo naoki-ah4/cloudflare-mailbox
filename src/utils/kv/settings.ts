@@ -1,4 +1,4 @@
-import { UserSettingsSchema, type UserSettings } from "./schema";
+import { UserSettingsSchema, type UserSettings } from "../schema";
 
 export const SettingsKV = {
   async get(kv: KVNamespace, userId: string): Promise<UserSettings | null> {

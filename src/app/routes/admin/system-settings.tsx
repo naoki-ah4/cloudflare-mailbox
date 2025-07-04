@@ -7,7 +7,7 @@ import {
 import { useState } from "react";
 import { SystemKV } from "~/utils/kv/system";
 import LoadingButton from "~/app/components/elements/LoadingButton";
-import type { SystemSettings } from "~/utils/kv/schema";
+import type { SystemSettings } from "~/utils/schema";
 import type { Route } from "./+types/system-settings";
 import { SafeFormData } from "~/app/utils/formdata";
 

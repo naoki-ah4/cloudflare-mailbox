@@ -1,4 +1,4 @@
-import { EmailMessageSchema, type EmailMessage } from "./schema";
+import { EmailMessageSchema, type EmailMessage } from "../schema";
 
 export const MessageKV = {
   async get(kv: KVNamespace, messageId: string): Promise<EmailMessage | null> {

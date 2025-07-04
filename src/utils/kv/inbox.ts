@@ -2,7 +2,7 @@ import {
   InboxMessagesSchema,
   type InboxMessages,
   type EmailMetadata,
-} from "./schema";
+} from "../schema";
 
 export const InboxKV = {
   async get(kv: KVNamespace, recipient: string): Promise<InboxMessages> {

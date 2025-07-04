@@ -1,4 +1,4 @@
-import { InviteSchema, type Invite } from "./schema";
+import { InviteSchema, type Invite } from "../schema";
 
 export const InviteKV = {
   async get(kv: KVNamespace, token: string): Promise<Invite | null> {

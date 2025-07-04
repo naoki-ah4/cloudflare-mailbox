@@ -1,4 +1,4 @@
-import type { EmailMessage, EmailMetadata } from "~/utils/kv/schema";
+import type { EmailMessage, EmailMetadata } from "~/utils/schema";
 import { MessageKV, InboxKV, ThreadKV } from "../utils/kv";
 /**
  * メールメッセージをKVに保存します。

@@ -1,5 +1,5 @@
 import type { Email } from "postal-mime";
-import type { EmailMessage } from "~/utils/kv/schema";
+import type { EmailMessage } from "~/utils/schema";
 
 export const saveAttachments = async (
   attachments: Email["attachments"],

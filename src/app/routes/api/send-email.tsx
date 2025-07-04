@@ -22,7 +22,7 @@ import {
   EmailAttachmentSchema,
   SendEmailRequestSchema,
   type SendEmailRequest,
-} from "~/utils/kv/schema";
+} from "~/utils/schema";
 import { SafeFormData } from "~/app/utils/formdata";
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
