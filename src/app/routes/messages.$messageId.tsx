@@ -60,7 +60,7 @@ export const loader = async ({
     const canAccess = message.to.some((email) =>
       kvSession.managedEmails.includes(email)
     );
-    if (!canAccess) {
+    if (!canAccess && !message.isCatchAll) {
       throw new Error("このメッセージにアクセスする権限がありません");
     }
 
