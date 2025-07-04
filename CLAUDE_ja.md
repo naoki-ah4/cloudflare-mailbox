@@ -65,8 +65,28 @@
 
 ### AI アシスタント向けガイドライン
 
-- **開発用サーバーを起動しないこと**: Claude や Gemini などの AI は `npm run dev` や `bun run dev` などのサーバー起動コマンドを実行してはいけません
+- **開発用サーバーを起動しないこと**: Claude や Gemini などの AI は `bun run dev` などのサーバー起動コマンドを実行してはいけません
   - 理由: プロセスが停止せず、セッションが応答不能になるため
+
+## プロジェクト構成
+
+```
+cloudflare-mailbox/
+├── workers/                         # Cloudflare Workers
+│   └── app.ts                       # メインワーカーエントリーポイント
+├── src/
+│   ├── email/                       # メール処理システム
+│   ├── utils/                       # 共通ユーティリティ
+│   │   └── kv/                      # KVストレージ関連
+│   └── app/                         # React Router v7 アプリ
+│       ├── routes/                  # ページコンポーネント
+│       │   ├── admin/               # 管理者ページ
+│       │   ├── api/                 # API ルート
+│       ├── components/              # 再利用可能コンポーネント
+│       └── routes.ts                # ルーティング定義
+├── public/                          # 静的ファイル
+└── 設定ファイル (package.json, eslint.config.mjs, lint-staged.config.mjs, prettier.config.js, vite.config.ts, wrangler.sample.jsonc)
+```
 
 # Cloudflare Mailbox システム仕様書
 

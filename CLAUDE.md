@@ -65,8 +65,28 @@ This repository adopts the following coding rules.
 
 ### Guidelines for AI Assistants
 
-- **Do not start development servers**: AIs like Claude or Gemini must not execute server startup commands like `npm run dev` or `bun run dev`
+- **Do not start development servers**: AIs like Claude or Gemini must not execute server startup commands like `bun run dev`
   - Reason: The process does not stop, making the session unresponsive
+
+## Project Structure
+
+```
+cloudflare-mailbox/
+├── workers/                         # Cloudflare Workers
+│   └── app.ts                       # Main worker entry point
+├── src/
+│   ├── email/                       # Email processing system
+│   ├── utils/                       # Common utilities
+│   │   └── kv/                      # KV storage related
+│   └── app/                         # React Router v7 app
+│       ├── routes/                  # Page components
+│       │   ├── admin/               # Admin pages
+│       │   ├── api/                 # API routes
+│       ├── components/              # Reusable components
+│       └── routes.ts                # Route definitions
+├── public/                          # Static files
+└── Configuration files (package.json, eslint.config.mjs, lint-staged.config.mjs, prettier.config.js, vite.config.ts, wrangler.sample.jsonc)
+```
 
 # Cloudflare Mailbox System Specifications
 
