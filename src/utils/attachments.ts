@@ -1,4 +1,4 @@
-import type { EmailMessage } from "~/email/types";
+import type { EmailMessage } from "~/utils/kv/schema";
 
 export const generateAttachementSignedUrl = async (
   env: Env,
