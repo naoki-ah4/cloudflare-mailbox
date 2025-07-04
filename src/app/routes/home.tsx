@@ -30,7 +30,7 @@ const Home = ({
         {/* ヘッダー */}
         <div className="mb-8">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-            📧 Cloudflare Mailbox
+            <span aria-hidden="true">📧</span> Cloudflare Mailbox
           </h1>
           <p className="text-xl text-gray-600 leading-relaxed">
             Cloudflare Workers上で動作する
@@ -42,7 +42,7 @@ const Home = ({
         {/* 特徴 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="p-4">
-            <div className="text-3xl mb-2">🔒</div>
+            <div className="text-3xl mb-2" aria-hidden="true">🔒</div>
             <h3 className="text-lg font-semibold mb-2">招待制アクセス</h3>
             <p className="text-sm text-gray-600">
               管理者による招待制で
@@ -52,7 +52,7 @@ const Home = ({
           </div>
 
           <div className="p-4">
-            <div className="text-3xl mb-2">⚡</div>
+            <div className="text-3xl mb-2" aria-hidden="true">⚡</div>
             <h3 className="text-lg font-semibold mb-2">高速・軽量</h3>
             <p className="text-sm text-gray-600">
               Cloudflare Workers
@@ -62,7 +62,7 @@ const Home = ({
           </div>
 
           <div className="p-4">
-            <div className="text-3xl mb-2">📱</div>
+            <div className="text-3xl mb-2" aria-hidden="true">📱</div>
             <h3 className="text-lg font-semibold mb-2">マルチデバイス</h3>
             <p className="text-sm text-gray-600">
               デスクトップ・モバイル

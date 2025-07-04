@@ -19,6 +19,7 @@ import { logger } from "~/utils/logger";
 // Tailwindでスタイリング
 import { v4 as uuidv4 } from "uuid";
 import { SafeFormData } from "~/app/utils/formdata";
+import { useToastContext } from "~/context/ToastContext";
 
 export const meta = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -179,12 +180,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 };
 
-export default () => {
+const ComposeComponent = () => {
   const { managedEmails, draftData, replyData } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
+  const { showSuccess, showError, showWarning } = useToastContext();
 
   // フォーム状態
   const [from, setFrom] = useState(draftData?.from || managedEmails[0] || "");
@@ -281,22 +283,26 @@ export default () => {
       }>();
 
       if (result.success) {
-        // 送信成功時は受信トレイにリダイレクト
-        window.location.href = "/messages";
+        // 送信成功時はトーストで通知してからリダイレクト
+        showSuccess("送信完了", "メールが正常に送信されました");
+        setTimeout(() => {
+          window.location.href = "/messages";
+        }, 1500);
       } else {
         // エラーの種類に応じて適切なメッセージを表示
         const errorMessage = result.error || "送信に失敗しました";
         if (errorMessage.includes("メール送信サービスが設定されていません")) {
-          alert(
-            "メール送信機能が利用できません。管理者にお問い合わせください。"
+          showWarning(
+            "送信機能が利用できません",
+            "管理者にお問い合わせください"
           );
         } else {
-          alert(`送信エラー: ${errorMessage}`);
+          showError("送信エラー", errorMessage);
         }
       }
-    } catch (error) {
-      alert("ネットワークエラーが発生しました。もう一度お試しください。");
-      throw error; // エラーを再スローしてログに記録
+    } catch (error: unknown) {
+      showError("ネットワークエラー", "送信に失敗しました。もう一度お試しください");
+      console.error("Send email error:", error);
     }
   };
 
@@ -553,3 +559,5 @@ export default () => {
     </div>
   );
 };
+
+export default ComposeComponent;

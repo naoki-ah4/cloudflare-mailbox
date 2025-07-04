@@ -1,5 +1,7 @@
 import { useLocation } from "react-router";
 import { useState } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 interface SettingsNavProps {
   className?: string;
@@ -8,6 +10,10 @@ interface SettingsNavProps {
 const SettingsNav = ({ className = "" }: SettingsNavProps) => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  
+  // キーボードナビゲーション対応
+  const focusTrapRef = useFocusTrap(isOpen);
+  useEscapeKey(() => setIsOpen(false), isOpen);
 
   const navItems = [
     {
@@ -52,6 +58,9 @@ const SettingsNav = ({ className = "" }: SettingsNavProps) => {
       <button
         className="hidden md:hidden lg:hidden max-md:block bg-none border-none text-xl cursor-pointer p-2 text-gray-700"
         onClick={toggleMenu}
+        aria-expanded={isOpen}
+        aria-controls="settings-nav"
+        aria-label="設定メニューを開く"
       >
         ☰
       </button>
@@ -63,12 +72,17 @@ const SettingsNav = ({ className = "" }: SettingsNavProps) => {
       />
 
       <nav
+        ref={focusTrapRef}
+        id="settings-nav"
+        role="navigation"
+        aria-label="設定メニュー"
         className={`bg-white rounded-lg border border-gray-200 p-4 lg:p-3 max-md:p-3 max-md:hidden max-md:fixed max-md:top-0 max-md:left-0 max-md:h-screen max-md:w-72 max-md:z-[1000] max-md:shadow-lg ${isOpen ? "max-md:block" : ""} ${className}`}
       >
         {/* モバイル用閉じるボタン */}
         <button
           className="hidden max-md:block max-md:absolute max-md:top-4 max-md:right-4 max-md:bg-none max-md:border-none max-md:text-xl max-md:cursor-pointer max-md:text-gray-500 max-md:z-[1001]"
           onClick={closeMenu}
+          aria-label="設定メニューを閉じる"
         >
           ✕
         </button>
@@ -87,8 +101,9 @@ const SettingsNav = ({ className = "" }: SettingsNavProps) => {
                     : ""
                 }`}
                 onClick={closeMenu}
+                aria-current={isActiveItem(item.paths) ? "page" : undefined}
               >
-                <span className="text-lg shrink-0">{item.icon}</span>
+                <span className="text-lg shrink-0" aria-hidden="true">{item.icon}</span>
                 <span className="text-sm max-md:text-base">{item.label}</span>
               </a>
             </li>
@@ -101,7 +116,7 @@ const SettingsNav = ({ className = "" }: SettingsNavProps) => {
             className="flex items-center gap-3 p-3 text-gray-500 rounded-md no-underline transition-colors duration-200 hover:text-gray-900 hover:no-underline max-md:p-3.5"
             onClick={closeMenu}
           >
-            <span className="text-lg shrink-0">🏠</span>
+            <span className="text-lg shrink-0" aria-hidden="true">🏠</span>
             <span className="text-sm max-md:text-base">ダッシュボード</span>
           </a>
         </div>

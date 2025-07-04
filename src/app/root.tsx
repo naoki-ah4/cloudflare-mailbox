@@ -11,6 +11,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import "./styles/theme.scss";
 import ThemeScript from "./components/elements/ThemeScript";
+import { ToastProvider } from "./context/ToastContext";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -27,7 +28,7 @@ export const links: Route.LinksFunction = () => [
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
+    <html lang="ja">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -45,7 +46,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
-  return <Outlet />;
+  return (
+    <ToastProvider>
+      <Outlet />
+    </ToastProvider>
+  );
 };
 
 export default App;

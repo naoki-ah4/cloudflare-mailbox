@@ -7,6 +7,11 @@ import { sanitizeEmailText, sanitizeSearchQuery } from "~/utils/sanitize";
 import Pagination from "../components/Pagination";
 import { useState } from "react";
 import { SkeletonMessageItem } from "../components/elements/SkeletonLoader";
+import { useEscapeKey } from "../hooks/useEscapeKey";
+import { useFocusTrap } from "../hooks/useFocusTrap";
+import { useNewEmailNotification } from "../hooks/useNewEmailNotification";
+import { useToastContext } from "../context/ToastContext";
+import VirtualMessageList from "../components/elements/VirtualMessageList";
 
 export const meta = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -142,8 +147,24 @@ const Messages = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigation = useNavigation();
+  const { showInfo: _showInfo } = useToastContext();
 
   const isLoading = navigation.state === "loading";
+  
+  // キーボードナビゲーション対応
+  const focusTrapRef = useFocusTrap(sidebarOpen);
+  useEscapeKey(() => setSidebarOpen(false), sidebarOpen);
+  
+  // 新着メール通知
+  const { canShowNotifications, enableNotifications } = useNewEmailNotification({
+    emails: messages,
+    enabled: true,
+  });
+  
+  // _showInfoは新着メール通知のuseNewEmailNotificationで使用されている（showInfo変数として）
+
+  // 大量メール時の仮想スクロール判定
+  const useVirtualScrolling = messages.length > 100;
 
   const handleMailboxChange = (mailbox: string) => {
     const params = new URLSearchParams(searchParams);
@@ -186,13 +207,18 @@ const Messages = () => {
       />
 
       {/* サイドバー */}
-      <div
+      <aside
+        id="sidebar"
+        ref={focusTrapRef}
+        role="navigation"
+        aria-label="メールボックス一覧"
         className={`w-72 bg-gray-50 border-r border-gray-300 p-4 max-lg:w-full max-lg:border-r-0 max-lg:border-b max-lg:border-gray-300 max-md:hidden max-md:fixed max-md:top-0 max-md:left-0 max-md:h-screen max-md:w-72 max-md:z-[1000] max-md:shadow-lg ${sidebarOpen ? "max-md:block" : ""}`}
       >
         {/* モバイル用閉じるボタン */}
         <button
           className="hidden max-md:block max-md:absolute max-md:top-4 max-md:right-4 max-md:bg-transparent max-md:border-none max-md:text-xl max-md:cursor-pointer max-md:text-gray-500 max-md:z-[1001]"
           onClick={closeSidebar}
+          aria-label="サイドバーを閉じる"
         >
           ✕
         </button>
@@ -274,7 +300,7 @@ const Messages = () => {
             ダッシュボードに戻る
           </a>
         </div>
-      </div>
+      </aside>
 
       {/* メインコンテンツ */}
       <div className="flex-1 p-4 max-md:p-3">
@@ -284,6 +310,9 @@ const Messages = () => {
             <button
               className="hidden max-md:block bg-transparent border-none text-xl cursor-pointer p-2 text-gray-700"
               onClick={toggleSidebar}
+              aria-expanded={sidebarOpen}
+              aria-controls="sidebar"
+              aria-label="サイドバーを開く"
             >
               ☰
             </button>
@@ -298,14 +327,27 @@ const Messages = () => {
             </div>
           </div>
 
-          <form method="post" action="/api/logout">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-red-600 text-white border-none rounded cursor-pointer"
-            >
-              ログアウト
-            </button>
-          </form>
+          <div className="flex items-center gap-2">
+            {/* 通知設定ボタン */}
+            {!canShowNotifications && (
+              <button
+                onClick={() => void enableNotifications()}
+                className="px-3 py-2 bg-blue-600 text-white border-none rounded cursor-pointer text-sm hover:bg-blue-700 transition-colors"
+                title="デスクトップ通知を有効にする"
+              >
+                🔔 通知を有効にする
+              </button>
+            )}
+
+            <form method="post" action="/api/logout">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-red-600 text-white border-none rounded cursor-pointer"
+              >
+                ログアウト
+              </button>
+            </form>
+          </div>
         </header>
 
         {/* 検索バー と 新規作成ボタン */}
@@ -342,8 +384,21 @@ const Messages = () => {
               ? `「${sanitizeSearchQuery(searchQuery)}」に該当するメールが見つかりません`
               : "メールがありません"}
           </div>
+        ) : useVirtualScrolling ? (
+          <>
+            {/* 仮想スクロール使用時 */}
+            <div className="mb-4 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+              📊 大量のメール（{messages.length}件）のため、仮想スクロールを使用しています
+            </div>
+            <VirtualMessageList
+              messages={messages}
+              selectedMailbox={selectedMailbox}
+              containerHeight={600}
+            />
+          </>
         ) : (
           <>
+            {/* 通常のリスト表示 */}
             <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
               {messages.map((message) => (
                 <a
@@ -365,7 +420,7 @@ const Messages = () => {
                           </span>
                         )}
                         {message.hasAttachments && (
-                          <span className="ml-2 text-xs">📎</span>
+                          <span className="ml-2 text-xs" aria-hidden="true">📎</span>
                         )}
                       </div>
                       <div
@@ -375,12 +430,14 @@ const Messages = () => {
                       </div>
                     </div>
                     <div className="text-xs text-gray-600 text-right min-w-[100px] max-sm:text-left max-sm:min-w-auto">
-                      {new Date(message.date).toLocaleString("ja-JP", {
-                        month: "numeric",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      <time dateTime={message.date}>
+                        {new Date(message.date).toLocaleString("ja-JP", {
+                          month: "numeric",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </time>
                     </div>
                   </div>
                 </a>

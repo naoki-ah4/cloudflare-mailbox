@@ -98,12 +98,14 @@ const Pagination = ({
         </div>
 
         {/* ページネーション */}
-        <div className="flex items-center space-x-2">
+        <nav role="navigation" aria-label="ページネーション">
+          <div className="flex items-center space-x-2">
           {/* 前のページ */}
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="前のページへ"
           >
             前
           </button>
@@ -127,6 +129,8 @@ const Pagination = ({
                       ? "bg-blue-600 text-white border-blue-600"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}
+                  aria-label={`${page}ページへ`}
+                  aria-current={currentPage === page ? "page" : undefined}
                 >
                   {page}
                 </button>
@@ -146,10 +150,12 @@ const Pagination = ({
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
             className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="次のページへ"
           >
             次
           </button>
-        </div>
+          </div>
+        </nav>
       </div>
 
       {/* ページサイズ変更（将来拡張用） */}
