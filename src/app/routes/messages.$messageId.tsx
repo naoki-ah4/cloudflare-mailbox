@@ -143,6 +143,10 @@ export const action = async ({
         targetEmails.push(settings.catchAllEmailAddress);
       }
 
+      if (targetEmails.length === 0) {
+        return { error: "更新するメールアドレスがありません" };
+      }
+
       // 既読/未読状態を更新
       const updatePromises = targetEmails.map((email) =>
         InboxKV.updateReadStatus(env.MAILBOXES_KV, email, messageId, isRead)
