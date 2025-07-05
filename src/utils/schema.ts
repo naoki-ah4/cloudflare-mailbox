@@ -98,6 +98,12 @@ export const EmailMetadataSchema = z.object({
 export const ThreadMessagesSchema = z.array(z.string().uuid());
 
 // 送信メール関連スキーマ
+export const SendEmailAttachmentSchema = z.object({
+  filename: z.string(),
+  contentType: z.string(),
+  content: z.instanceof(File),
+});
+
 export const SendEmailRequestSchema = z
   .object({
     from: z.string().email(),
@@ -107,7 +113,7 @@ export const SendEmailRequestSchema = z
     subject: z.string(),
     text: z.string().optional(),
     html: z.string().optional(),
-    attachments: z.array(EmailAttachmentSchema).optional(),
+    attachments: z.array(SendEmailAttachmentSchema).optional(),
     inReplyTo: z.string().optional(),
     references: z.array(z.string()).optional(),
   })

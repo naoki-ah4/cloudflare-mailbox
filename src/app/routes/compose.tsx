@@ -15,6 +15,8 @@ import { getUserSession } from "~/utils/session.server";
 import { SessionKV } from "~/utils/kv";
 import { logger } from "~/utils/logger";
 import { SafeFormData } from "~/app/utils/formdata";
+import { sendEmailViaResend } from "~/email/sender";
+import type { SendEmailRequest } from "~/utils/schema";
 // Tailwindでスタイリング
 // import { useToastContext } from "~/app/context/ToastContext";
 
@@ -109,6 +111,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const html = formData.get("html");
     const inReplyTo = formData.get("inReplyTo");
     const references = formData.get("references");
+    const attachments = formData.getFiles("attachments");
 
     // toを配列に変換
     const to = toValue
@@ -137,7 +140,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     // 送信データの準備
-    const emailData = {
+    const emailData: SendEmailRequest = {
       from,
       to,
       cc: cc
@@ -157,9 +160,18 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       html: html || undefined,
       inReplyTo: inReplyTo || undefined,
       references: references ? (JSON.parse(references) as string[]) : undefined,
+      attachments: attachments.length
+        ? attachments.map((file) => ({
+            filename: file.name,
+            content: file,
+            contentType: file.type || "application/octet-stream",
+          }))
+        : undefined,
     };
 
     // TODO: 実際の送信処理を実装
+    await sendEmailViaResend(emailData, env.RESEND_API_KEY);
+
     // 現在は成功を返す
     logger.info("メール送信リクエスト", {
       context: {
@@ -181,6 +193,14 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 };
 
+type AttachedFile = {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+};
+
 type FormState = {
   from: string;
   to: string;
@@ -191,6 +211,7 @@ type FormState = {
   html: string;
   showCcBcc: boolean;
   isHtmlMode: boolean;
+  attachments: AttachedFile[];
 };
 
 const ComposeComponent = () => {
@@ -210,12 +231,59 @@ const ComposeComponent = () => {
     html: "",
     showCcBcc: false,
     isHtmlMode: false,
+    attachments: [],
   });
 
   // フォーム更新関数
   const updateFormFields = useCallback((updates: Partial<FormState>) => {
     setFormState((prev) => ({ ...prev, ...updates }));
   }, []);
+
+  // ファイル操作関数
+  const addAttachment = useCallback((file: File) => {
+    const attachedFile: AttachedFile = {
+      id: crypto.randomUUID(),
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    };
+    setFormState((prev) => ({
+      ...prev,
+      attachments: [...prev.attachments, attachedFile],
+    }));
+  }, []);
+
+  const removeAttachment = useCallback((id: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      attachments: prev.attachments.filter(
+        (attachment) => attachment.id !== id
+      ),
+    }));
+  }, []);
+
+  const formatFileSize = useCallback((bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }, []);
+
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (files) {
+        Array.from(files).forEach((file) => {
+          addAttachment(file);
+        });
+      }
+      // ファイル選択後にinputをリセット（同じファイルを再選択可能にする）
+      event.target.value = "";
+    },
+    [addAttachment]
+  );
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
@@ -440,16 +508,114 @@ const ComposeComponent = () => {
           )}
         </div>
 
-        {/* TODO: 添付ファイルアップロード機能 */}
-        <div className="space-y-2">
+        {/* 添付ファイルアップロード機能 */}
+        <div className="space-y-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             添付ファイル
           </label>
-          <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              添付ファイル機能は準備中です
-            </p>
+
+          {/* ファイル選択ボタン */}
+          <div className="flex items-center space-x-4">
+            <input
+              type="file"
+              id="file-upload"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <label
+              htmlFor="file-upload"
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer transition-colors inline-flex items-center space-x-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                />
+              </svg>
+              <span>ファイルを選択</span>
+            </label>
+            {formState.attachments.length > 0 && (
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {formState.attachments.length}個のファイルが選択されています
+              </span>
+            )}
           </div>
+
+          {/* 添付ファイル一覧 */}
+          {formState.attachments.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                添付されたファイル
+              </h4>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {formState.attachments.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      {/* ファイルアイコン */}
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="w-8 h-8 text-gray-400"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+
+                      {/* ファイル情報 */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {attachment.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatFileSize(attachment.size)}
+                          {attachment.type &&
+                            ` • ${attachment.type.split("/")[1]?.toUpperCase()}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 削除ボタン */}
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(attachment.id)}
+                      className="ml-3 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      title="削除"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </Form>
     </div>

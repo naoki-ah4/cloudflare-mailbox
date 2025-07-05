@@ -12,6 +12,19 @@ export class SafeFormData extends FormData {
     return values.filter((value): value is string => typeof value === "string");
   }
 
+  getFile(key: string): File | null {
+    const value = super.get(key);
+    if (value instanceof File) {
+      return value;
+    }
+    return null;
+  }
+
+  getFiles(key: string): File[] {
+    const values = super.getAll(key);
+    return values.filter((value) => value instanceof File);
+  }
+
   static fromObject(
     obj: FormData | Record<string, string | File | Array<string | File>>
   ): SafeFormData {
@@ -20,11 +33,11 @@ export class SafeFormData extends FormData {
       for (const [key, value] of obj.entries()) {
         if (typeof value === "string") {
           formData.append(key, value);
-        } else if (value instanceof Blob) {
+        } else if (value instanceof File) {
           formData.append(key, value);
         } else if (Array.isArray(value)) {
-          for (const item of value as (string | Blob)[]) {
-            if (typeof item === "string" || item instanceof Blob) {
+          for (const item of value as (string | File)[]) {
+            if (typeof item === "string" || item instanceof File) {
               formData.append(key, item);
             }
           }
@@ -34,11 +47,11 @@ export class SafeFormData extends FormData {
       for (const [key, value] of Object.entries(obj)) {
         if (typeof value === "string") {
           formData.append(key, value);
-        } else if (value instanceof Blob) {
+        } else if (value instanceof File) {
           formData.append(key, value);
         } else if (Array.isArray(value)) {
           for (const item of value) {
-            if (typeof item === "string" || item instanceof Blob) {
+            if (typeof item === "string" || item instanceof File) {
               formData.append(key, item);
             }
           }

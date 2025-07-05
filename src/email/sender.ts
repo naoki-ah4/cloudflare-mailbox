@@ -20,8 +20,7 @@ export type SendEmailResult = {
  */
 export const sendEmailViaResend = async (
   emailData: SendEmailRequest,
-  resendApiKey: string,
-  env: Env
+  resendApiKey: string
 ): Promise<SendEmailResult> => {
   try {
     // API キーの確認
@@ -30,34 +29,28 @@ export const sendEmailViaResend = async (
     }
     // 添付ファイルの処理
     const attachments = await Promise.all(
-      (emailData.attachments || []).map(async (attachment) => {
-        try {
-          // R2から添付ファイルを取得
-          const r2Object = await env.ATTACHMENTS_R2.get(attachment.r2Key);
-          if (!r2Object) {
-            throw new Error(
-              `添付ファイルが見つかりません: ${attachment.filename}`
-            );
+      (emailData.attachments || []).map(
+        async ({ filename, content, contentType }) => {
+          try {
+            // R2から添付ファイルを取得
+            const base64Content = await content.arrayBuffer().then((buffer) => {
+              return Buffer.from(buffer).toString("base64");
+            });
+
+            return {
+              filename,
+              content: base64Content,
+              contentType,
+            };
+          } catch (error) {
+            logger.error("添付ファイル処理エラー", {
+              error: error as Error,
+              context: { filename: filename, contentType },
+            });
+            throw error;
           }
-
-          const arrayBuffer = await r2Object.arrayBuffer();
-          const base64Content = btoa(
-            String.fromCharCode(...new Uint8Array(arrayBuffer))
-          );
-
-          return {
-            filename: attachment.filename,
-            content: base64Content,
-            type: attachment.contentType,
-          };
-        } catch (error) {
-          logger.error("添付ファイル処理エラー", {
-            error: error as Error,
-            context: { filename: attachment.filename, r2Key: attachment.r2Key },
-          });
-          throw error;
         }
-      })
+      )
     );
 
     // Resend APIリクエスト
