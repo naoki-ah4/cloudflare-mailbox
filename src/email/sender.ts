@@ -20,12 +20,27 @@ export type SendEmailResult = {
  */
 export const sendEmailViaResend = async (
   emailData: SendEmailRequest,
-  resendApiKey: string
+  resendApiKey: string,
+  maxAttachmentSize = 40 * 1024 * 1024 // 40MB
 ): Promise<SendEmailResult> => {
   try {
     // API キーの確認
     if (!resendApiKey || resendApiKey.trim() === "") {
       throw new Error("Resend API キーが設定されていません");
+    }
+
+    //ファイルサイズのチェック
+    if (emailData.attachments) {
+      const totalSize = emailData.attachments.reduce(
+        (sum, att) => sum + (att.content.length / 4) * 3,
+        0
+      );
+      if (totalSize > maxAttachmentSize) {
+        // 25MB
+        throw new Error(
+          `添付ファイルの合計サイズが制限を超えています (${Math.round(totalSize / 1024 / 1024)}MB > ${Math.round(maxAttachmentSize / 1024 / 1024)}MB)`
+        );
+      }
     }
 
     // Resend APIリクエスト

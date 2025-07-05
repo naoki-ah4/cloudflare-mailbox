@@ -162,7 +162,11 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     };
 
     // TODO: 実際の送信処理を実装
-    await sendEmailViaResend(emailData, env.RESEND_API_KEY);
+    await sendEmailViaResend(
+      emailData,
+      env.RESEND_API_KEY,
+      parseInt(env.MAX_ATTACHMENTS_SIZE || "26214400")
+    );
 
     // 現在は成功を返す
     logger.info("メール送信リクエスト", {
