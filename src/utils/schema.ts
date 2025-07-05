@@ -133,27 +133,9 @@ export const SentEmailSchema = z.object({
   status: z.enum(["sent", "failed", "bounced"]),
 });
 
-export const DraftEmailSchema = z.object({
-  id: z.string().uuid(),
-  from: z.string().email(),
-  to: z.array(z.string().email()),
-  cc: z.array(z.string().email()).optional(),
-  bcc: z.array(z.string().email()).optional(),
-  subject: z.string(),
-  text: z.string().optional(),
-  html: z.string().optional(),
-  attachments: z.array(EmailAttachmentSchema),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  threadId: z.string().optional(),
-  inReplyTo: z.string().optional(),
-  references: z.array(z.string()).optional(),
-});
-
 // メールボックス関連スキーマ
 export const InboxMessagesSchema = z.array(EmailMetadataSchema);
 export const SentMessagesSchema = z.array(SentEmailSchema);
-export const DraftMessagesSchema = z.array(DraftEmailSchema);
 
 export const FolderMessagesSchema = z.array(EmailMetadataSchema);
 
