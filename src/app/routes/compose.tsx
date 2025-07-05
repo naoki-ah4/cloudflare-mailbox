@@ -13,7 +13,6 @@ import { SafeFormData } from "~/app/utils/formdata";
 import { sendEmailViaResend } from "~/email/sender";
 import type { SendEmailRequest } from "~/utils/schema";
 import { useSubmit } from "react-router";
-import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 // Tailwindでスタイリング
 // import { useToastContext } from "~/app/context/ToastContext";
 
@@ -96,43 +95,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       return { error: "セッションが無効です" };
     }
 
-    const uploadedFiles: File[] = [];
-
-    const uploadHandler = (fileUpload: FileUpload) => {
-      if (fileUpload.fieldName === "attachments") {
-        const totalSize = uploadedFiles.reduce(
-          (sum, file) => sum + file.size,
-          0
-        );
-        if (
-          totalSize + fileUpload.size >
-          parseInt(env.MAX_ATTACHMENTS_SIZE || "10485760")
-        ) {
-          logger.warn("添付ファイルのサイズが制限を超えています", {
-            context: {
-              userEmail: kvSession.email,
-              fileName: fileUpload.name,
-              size: fileUpload.size,
-              totalSize,
-            },
-          });
-          return null; // サイズ制限を超えた場合はファイルを無視
-        }
-        uploadedFiles.push(fileUpload);
-        logger.info("添付ファイルアップロード", {
-          context: {
-            userEmail: kvSession.email,
-            fileName: fileUpload.name,
-            size: fileUpload.size,
-          },
-        });
-        return fileUpload.name; // 添付ファイルとして保存
-      }
-      return null;
-    };
-
-    const parsedFormData = await parseFormData(request, uploadHandler);
-    const formData = SafeFormData.fromObject(parsedFormData);
+    const formData = SafeFormData.fromObject(await request.formData());
 
     // フォームデータから値を取得
     const from = formData.get("from");
@@ -144,6 +107,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const html = formData.get("html");
     const inReplyTo = formData.get("inReplyTo");
     const references = formData.get("references");
+    const attachments = formData.get("attachments");
 
     // toを配列に変換
     const to = toValue
@@ -192,12 +156,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       html: html || undefined,
       inReplyTo: inReplyTo || undefined,
       references: references ? (JSON.parse(references) as string[]) : undefined,
-      attachments: uploadedFiles.length
-        ? uploadedFiles.map((file) => ({
-            filename: file.name,
-            content: file,
-            contentType: file.type || "application/octet-stream",
-          }))
+      attachments: attachments
+        ? (JSON.parse(attachments) as Array<PostAttachment>)
         : undefined,
     };
 
@@ -223,6 +183,12 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     });
     return { error: "送信に失敗しました" };
   }
+};
+
+type PostAttachment = {
+  filename: string;
+  content: string;
+  contentType: string;
 };
 
 type FormState = {
@@ -278,9 +244,17 @@ const ComposeComponent = () => {
     if (replyData?.references)
       formData.append("references", JSON.stringify(replyData.references));
     // 添付ファイルをFormDataに追加
-    for (const attachment of attachments) {
-      formData.append("attachments", attachment.file, attachment.file.name);
-    }
+    const attachmentsData: PostAttachment[] = await Promise.all(
+      attachments.map(async ({ file }) => ({
+        filename: file.name,
+        contentType: file.type,
+        content: await file.arrayBuffer().then((buffer) => {
+          const byteArray = new Uint8Array(buffer);
+          return btoa(String.fromCharCode(...byteArray));
+        }),
+      }))
+    );
+    formData.append("attachments", JSON.stringify(attachmentsData));
 
     // 送信リクエスト
     await submit(formData, {

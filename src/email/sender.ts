@@ -27,31 +27,6 @@ export const sendEmailViaResend = async (
     if (!resendApiKey || resendApiKey.trim() === "") {
       throw new Error("Resend API キーが設定されていません");
     }
-    // 添付ファイルの処理
-    const attachments = await Promise.all(
-      (emailData.attachments || []).map(
-        async ({ filename, content, contentType }) => {
-          try {
-            // 添付ファイルをBase64エンコード
-            const base64Content = await content.arrayBuffer().then((buffer) => {
-              return Buffer.from(buffer).toString("base64");
-            });
-
-            return {
-              filename,
-              content: base64Content,
-              contentType,
-            };
-          } catch (error) {
-            logger.error("添付ファイル処理エラー", {
-              error: error as Error,
-              context: { filename: filename, contentType },
-            });
-            throw error;
-          }
-        }
-      )
-    );
 
     // Resend APIリクエスト
     const resendPayload: CreateEmailOptions = {
@@ -62,7 +37,7 @@ export const sendEmailViaResend = async (
       subject: emailData.subject,
       text: emailData.text || "",
       html: emailData.html,
-      attachments: attachments.length > 0 ? attachments : undefined,
+      attachments: emailData.attachments,
       headers: {
         ...(emailData.inReplyTo && { "In-Reply-To": emailData.inReplyTo }),
         ...(emailData.references && {
@@ -76,7 +51,7 @@ export const sendEmailViaResend = async (
         from: emailData.from,
         to: emailData.to,
         subject: emailData.subject,
-        attachmentCount: attachments.length,
+        attachmentCount: emailData.attachments?.length,
       },
     });
 

@@ -101,7 +101,7 @@ export const ThreadMessagesSchema = z.array(z.string().uuid());
 export const SendEmailAttachmentSchema = z.object({
   filename: z.string(),
   contentType: z.string(),
-  content: z.instanceof(File),
+  content: z.string(),
 });
 
 export const SendEmailRequestSchema = z
