@@ -3,12 +3,7 @@
  * /compose
  */
 
-import {
-  useNavigation,
-  useLoaderData,
-  useActionData,
-  Form,
-} from "react-router";
+import { useNavigation, useLoaderData, useActionData } from "react-router";
 import type { Route } from "./+types/compose";
 import { useState, useCallback } from "react";
 import { getUserSession } from "~/utils/session.server";
@@ -17,6 +12,8 @@ import { logger } from "~/utils/logger";
 import { SafeFormData } from "~/app/utils/formdata";
 import { sendEmailViaResend } from "~/email/sender";
 import type { SendEmailRequest } from "~/utils/schema";
+import { useSubmit } from "react-router";
+
 // Tailwindでスタイリング
 // import { useToastContext } from "~/app/context/ToastContext";
 
@@ -193,14 +190,6 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 };
 
-type AttachedFile = {
-  id: string;
-  file: File;
-  name: string;
-  size: number;
-  type: string;
-};
-
 type FormState = {
   from: string;
   to: string;
@@ -211,14 +200,13 @@ type FormState = {
   html: string;
   showCcBcc: boolean;
   isHtmlMode: boolean;
-  attachments: AttachedFile[];
 };
 
 const ComposeComponent = () => {
   const { managedEmails, replyData } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
-  // const { showSuccess, showError, showWarning } = useToastContext();
+  const submit = useSubmit();
 
   // フォーム状態
   const [formState, setFormState] = useState<FormState>({
@@ -231,59 +219,39 @@ const ComposeComponent = () => {
     html: "",
     showCcBcc: false,
     isHtmlMode: false,
-    attachments: [],
   });
+  const { attachments, removeAttachment, formatFileSize, handleFileSelect } =
+    useAttachments();
 
   // フォーム更新関数
   const updateFormFields = useCallback((updates: Partial<FormState>) => {
     setFormState((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // ファイル操作関数
-  const addAttachment = useCallback((file: File) => {
-    const attachedFile: AttachedFile = {
-      id: crypto.randomUUID(),
-      file,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    };
-    setFormState((prev) => ({
-      ...prev,
-      attachments: [...prev.attachments, attachedFile],
-    }));
-  }, []);
+  const handleSendEmail = async () => {
+    const formData = new FormData();
+    // フォームデータをFormDataに追加
+    formData.append("from", formState.from);
+    formData.append("to", formState.to);
+    if (formState.cc) formData.append("cc", formState.cc);
+    if (formState.bcc) formData.append("bcc", formState.bcc);
+    formData.append("subject", formState.subject);
+    formData.append("text", formState.text);
+    formData.append("html", formState.html);
+    if (formState.showCcBcc) formData.append("showCcBcc", "true");
+    if (replyData?.inReplyTo) formData.append("inReplyTo", replyData.inReplyTo);
+    if (replyData?.references)
+      formData.append("references", JSON.stringify(replyData.references));
+    // 添付ファイルをFormDataに追加
+    for (const attachment of attachments) {
+      formData.append("attachments", attachment.file, attachment.file.name);
+    }
 
-  const removeAttachment = useCallback((id: string) => {
-    setFormState((prev) => ({
-      ...prev,
-      attachments: prev.attachments.filter(
-        (attachment) => attachment.id !== id
-      ),
-    }));
-  }, []);
-
-  const formatFileSize = useCallback((bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  }, []);
-
-  const handleFileSelect = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files;
-      if (files) {
-        Array.from(files).forEach((file) => {
-          addAttachment(file);
-        });
-      }
-      // ファイル選択後にinputをリセット（同じファイルを再選択可能にする）
-      event.target.value = "";
-    },
-    [addAttachment]
-  );
+    // 送信リクエスト
+    await submit(formData, {
+      method: "post",
+    });
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
@@ -300,12 +268,13 @@ const ComposeComponent = () => {
             キャンセル
           </button>
           <button
-            type="submit"
+            type="button"
             form="compose-form"
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
             disabled={
               navigation.state !== "idle" || !formState.to || !formState.subject
             }
+            onClick={() => void handleSendEmail()}
           >
             {navigation.state !== "idle" ? "送信中..." : "送信"}
           </button>
@@ -324,11 +293,7 @@ const ComposeComponent = () => {
         </div>
       )}
 
-      <Form
-        id="compose-form"
-        method="post"
-        className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 md:p-6 space-y-6"
-      >
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 md:p-6 space-y-6">
         {replyData?.inReplyTo && (
           <input type="hidden" name="inReplyTo" value={replyData.inReplyTo} />
         )}
@@ -542,23 +507,23 @@ const ComposeComponent = () => {
               </svg>
               <span>ファイルを選択</span>
             </label>
-            {formState.attachments.length > 0 && (
+            {attachments.length > 0 && (
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {formState.attachments.length}個のファイルが選択されています
+                {attachments.length}個のファイルが選択されています
               </span>
             )}
           </div>
 
           {/* 添付ファイル一覧 */}
-          {formState.attachments.length > 0 && (
+          {attachments.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 添付されたファイル
               </h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {formState.attachments.map((attachment) => (
+                {attachments.map(({ id, file: attachmentFile }) => (
                   <div
-                    key={attachment.id}
+                    key={id}
                     className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -580,12 +545,12 @@ const ComposeComponent = () => {
                       {/* ファイル情報 */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {attachment.name}
+                          {attachmentFile.name}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatFileSize(attachment.size)}
-                          {attachment.type &&
-                            ` • ${attachment.type.split("/")[1]?.toUpperCase()}`}
+                          {formatFileSize(attachmentFile.size)}
+                          {attachmentFile.type &&
+                            ` • ${attachmentFile.type.split("/")[1]?.toUpperCase()}`}
                         </p>
                       </div>
                     </div>
@@ -593,7 +558,7 @@ const ComposeComponent = () => {
                     {/* 削除ボタン */}
                     <button
                       type="button"
-                      onClick={() => removeAttachment(attachment.id)}
+                      onClick={() => removeAttachment(id)}
                       className="ml-3 p-1 text-gray-400 hover:text-red-500 transition-colors"
                       title="削除"
                     >
@@ -617,9 +582,59 @@ const ComposeComponent = () => {
             </div>
           )}
         </div>
-      </Form>
+      </div>
     </div>
   );
 };
 
 export default ComposeComponent;
+
+const useAttachments = <T,>() => {
+  const [attachments, setAttachments] = useState<
+    Array<{ id: string; file: File }>
+  >([]);
+
+  // ファイル操作関数
+  const addAttachment = useCallback((file: File) => {
+    const attachedFile = {
+      id: crypto.randomUUID(),
+      file,
+    };
+    setAttachments((prev) => [...prev, attachedFile]);
+  }, []);
+
+  const removeAttachment = useCallback((id: string) => {
+    setAttachments((prev) => prev.filter((attachment) => attachment.id !== id));
+  }, []);
+
+  const formatFileSize = useCallback((bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }, []);
+
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (files) {
+        Array.from(files).forEach((file) => {
+          addAttachment(file);
+        });
+      }
+      // ファイル選択後にinputをリセット（同じファイルを再選択可能にする）
+      event.target.value = "";
+    },
+    [addAttachment]
+  );
+
+  return {
+    attachments,
+    setAttachments,
+    addAttachment,
+    removeAttachment,
+    formatFileSize,
+    handleFileSelect,
+  };
+};
