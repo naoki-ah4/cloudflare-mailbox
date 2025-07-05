@@ -1,6 +1,6 @@
 import { useLoaderData, useActionData, Form, useNavigate } from "react-router";
 import type { Route } from "./+types/messages.$messageId";
-import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
+import { SessionKV, MessageKV, InboxKV, SettingsKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import { useState, useEffect } from "react";
 import {
@@ -9,6 +9,7 @@ import {
   sanitizeEmailText,
 } from "~/utils/sanitize";
 import { SafeFormData } from "~/app/utils/formdata";
+import { SystemKV } from "~/utils/kv/system";
 
 export const meta = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -127,12 +128,25 @@ export const action = async ({
 
       const isRead = action === "markRead";
 
-      // 各受信者のInboxで既読/未読状態を更新
-      const updatePromises = message.to
-        .filter((email) => kvSession.managedEmails.includes(email))
-        .map((email) =>
-          InboxKV.updateReadStatus(env.MAILBOXES_KV, email, messageId, isRead)
-        );
+      // 既読/未読状態を更新するメールボックスを特定
+      const targetEmails = message.to.filter((email) =>
+        kvSession.managedEmails.includes(email)
+      );
+
+      // キャッチオールアドレスが設定されている場合は追加
+      const settings = await SystemKV.getSettings(env.SYSTEM_KV);
+      if (
+        message.isCatchAll &&
+        settings?.catchAllEmailAddress &&
+        !kvSession.managedEmails.includes(settings.catchAllEmailAddress)
+      ) {
+        targetEmails.push(settings.catchAllEmailAddress);
+      }
+
+      // 既読/未読状態を更新
+      const updatePromises = targetEmails.map((email) =>
+        InboxKV.updateReadStatus(env.MAILBOXES_KV, email, messageId, isRead)
+      );
 
       await Promise.all(updatePromises);
 
