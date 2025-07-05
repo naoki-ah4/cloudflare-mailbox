@@ -18,6 +18,7 @@
     "test": " bun test src/__tests__ --coverage"
   },
   "dependencies": {
+    "@mjackson/form-data-parser": "^0.9.1",
     "@types/dompurify": "^3.2.0",
     "dompurify": "^3.2.6",
     "isbot": "^5.1.27",

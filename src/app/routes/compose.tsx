@@ -13,7 +13,7 @@ import { SafeFormData } from "~/app/utils/formdata";
 import { sendEmailViaResend } from "~/email/sender";
 import type { SendEmailRequest } from "~/utils/schema";
 import { useSubmit } from "react-router";
-
+import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 // Tailwindでスタイリング
 // import { useToastContext } from "~/app/context/ToastContext";
 
@@ -96,7 +96,36 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       return { error: "セッションが無効です" };
     }
 
-    const formData = SafeFormData.fromObject(await request.formData());
+    const uploadedFiles: File[] = [];
+
+    const uploadHandler = async (fileUpload: FileUpload) => {
+      if (fileUpload.fieldName === "attachments") {
+        const totalSize = uploadedFiles.reduce(
+          (sum, file) => sum + file.size,
+          0
+        );
+        if (
+          totalSize + fileUpload.size >
+          parseInt(env.MAX_ATTACHMENTS_SIZE || "10485760")
+        ) {
+          logger.warn("添付ファイルのサイズが制限を超えています", {
+            context: {
+              userEmail: kvSession.email,
+              fileName: fileUpload.name,
+              size: fileUpload.size,
+              totalSize,
+            },
+          });
+          return null; // サイズ制限を超えた場合はファイルを無視
+        }
+        const file: File = fileUpload;
+        return file; // 添付ファイルとして保存
+      }
+      return null;
+    };
+
+    const parsedFormData = await parseFormData(request, uploadHandler);
+    const formData = SafeFormData.fromObject(parsedFormData);
 
     // フォームデータから値を取得
     const from = formData.get("from");
