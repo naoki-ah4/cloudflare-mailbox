@@ -1,4 +1,4 @@
-import { useLoaderData, useActionData, Form } from "react-router";
+import { useLoaderData, useActionData, Form, useNavigate } from "react-router";
 import type { Route } from "./+types/messages.$messageId";
 import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
@@ -153,6 +153,7 @@ export const action = async ({
 const MessageDetail = () => {
   const { message, recipientEmail } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const navigate = useNavigate();
   const [displayMode, setDisplayMode] = useState<"html" | "text">("html");
   const [allowExternalImages, setAllowExternalImages] = useState(false);
   const [isMarkedAsRead, setIsMarkedAsRead] = useState(false);
@@ -205,12 +206,14 @@ const MessageDetail = () => {
     <div className="max-w-4xl mx-auto p-4">
       <header className="flex justify-between items-center mb-4 border-b border-gray-200 pb-4">
         <div>
-          <a
-            href="/messages"
-            className="text-blue-600 no-underline text-sm hover:text-blue-800"
+          <button
+            onClick={() => {
+              void navigate("/messages", { replace: true });
+            }}
+            className="text-blue-600 no-underline text-sm hover:text-blue-800 bg-transparent border-none cursor-pointer"
           >
             ← メール一覧に戻る
-          </a>
+          </button>
         </div>
 
         <form method="post" action="/api/logout">
