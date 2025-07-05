@@ -10,7 +10,6 @@ import { SkeletonMessageItem } from "../components/elements/SkeletonLoader";
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useNewEmailNotification } from "../hooks/useNewEmailNotification";
-import { useToastContext } from "../context/ToastContext";
 import VirtualMessageList from "../components/elements/VirtualMessageList";
 
 export const meta = ({
@@ -147,7 +146,6 @@ const Messages = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigation = useNavigation();
-  const { showInfo: _showInfo } = useToastContext();
 
   const isLoading = navigation.state === "loading";
 

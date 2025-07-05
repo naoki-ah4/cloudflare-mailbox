@@ -1,6 +1,6 @@
 import { useLoaderData, useActionData, Form, useNavigate } from "react-router";
 import type { Route } from "./+types/messages.$messageId";
-import { SessionKV, MessageKV, InboxKV, SettingsKV } from "~/utils/kv";
+import { SessionKV, MessageKV, InboxKV } from "~/utils/kv";
 import { getUserSession } from "~/utils/session.server";
 import { useState, useEffect } from "react";
 import {
