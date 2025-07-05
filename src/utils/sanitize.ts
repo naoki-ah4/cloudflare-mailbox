@@ -117,6 +117,31 @@ const basicSanitize = (html: string): string => {
       // javascript: スキームを除去
       .replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"')
       .replace(/src\s*=\s*["']javascript:[^"']*["']/gi, 'src=""')
+      // 外部画像を常時ブロック（SSR時のみ使用）
+      .replace(
+        /<img\b[^>]*\ssrc\s*=\s*["']https?:\/\/[^"']*["'][^>]*>/gi,
+        (match) => {
+          const srcMatch = match.match(
+            /src\s*=\s*["'](https?:\/\/[^"']*)["']/i
+          );
+          if (srcMatch) {
+            return match
+              .replace(
+                /src\s*=\s*["']https?:\/\/[^"']*["']/gi,
+                'data-original-src="' + srcMatch[1] + '"'
+              )
+              .replace(
+                /alt\s*=\s*["'][^"']*["']/gi,
+                'alt="[外部画像を読み込むには許可が必要です]"'
+              )
+              .replace(
+                />/,
+                ' style="border: 2px dashed #ccc; padding: 20px; background: #f9f9f9; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center;">'
+              );
+          }
+          return match;
+        }
+      )
   );
 };
 
