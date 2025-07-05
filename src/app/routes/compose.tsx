@@ -119,6 +119,13 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
           return null; // サイズ制限を超えた場合はファイルを無視
         }
         uploadedFiles.push(fileUpload);
+        logger.info("添付ファイルアップロード", {
+          context: {
+            userEmail: kvSession.email,
+            fileName: fileUpload.name,
+            size: fileUpload.size,
+          },
+        });
         return fileUpload.name; // 添付ファイルとして保存
       }
       return null;
