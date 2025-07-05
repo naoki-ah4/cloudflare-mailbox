@@ -118,8 +118,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
           });
           return null; // サイズ制限を超えた場合はファイルを無視
         }
-        const file: File = fileUpload;
-        return file; // 添付ファイルとして保存
+        uploadedFiles.push(fileUpload);
+        return fileUpload.name; // 添付ファイルとして保存
       }
       return null;
     };
@@ -137,7 +137,6 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     const html = formData.get("html");
     const inReplyTo = formData.get("inReplyTo");
     const references = formData.get("references");
-    const attachments = formData.getFiles("attachments");
 
     // toを配列に変換
     const to = toValue
@@ -186,8 +185,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
       html: html || undefined,
       inReplyTo: inReplyTo || undefined,
       references: references ? (JSON.parse(references) as string[]) : undefined,
-      attachments: attachments.length
-        ? attachments.map((file) => ({
+      attachments: uploadedFiles.length
+        ? uploadedFiles.map((file) => ({
             filename: file.name,
             content: file,
             contentType: file.type || "application/octet-stream",
