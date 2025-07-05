@@ -1,3 +1,5 @@
+import { logger } from "~/utils/logger";
+
 export class SafeFormData extends FormData {
   get(key: string): string | null {
     const value = super.get(key);
@@ -22,7 +24,21 @@ export class SafeFormData extends FormData {
 
   getFiles(key: string): File[] {
     const values = super.getAll(key);
-    return values.filter((value) => value instanceof File);
+    const results = values.filter((value) => value instanceof File);
+    if (values.length > results.length) {
+      logger.warn(
+        "getFilesメソッドでファイル以外の値が含まれています。フィルタリングされました。",
+        {
+          key,
+          originalCount: values.length,
+          filteredCount: results.length,
+          originalValues: values.map((v) =>
+            v instanceof File ? `File${v.name}` : `${typeof v}:${v}`
+          ),
+        }
+      );
+    }
+    return results;
   }
 
   static fromObject(
