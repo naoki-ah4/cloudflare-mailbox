@@ -10,7 +10,7 @@ import {
   useLoaderData,
 } from "react-router";
 import type { Route } from "./+types/compose";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV } from "~/utils/kv";
 import { DraftKV } from "~/utils/kv/draft";
@@ -180,6 +180,18 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   }
 };
 
+type FormState = {
+  from: string;
+  to: string;
+  cc: string;
+  bcc: string;
+  subject: string;
+  text: string;
+  html: string;
+  showCcBcc: boolean;
+  isHtmlMode: boolean;
+};
+
 const ComposeComponent = () => {
   const { managedEmails, draftData, replyData } =
     useLoaderData<typeof loader>();
@@ -189,25 +201,31 @@ const ComposeComponent = () => {
   const { showSuccess, showError, showWarning } = useToastContext();
 
   // フォーム状態
-  const [from, setFrom] = useState(draftData?.from || managedEmails[0] || "");
-  const [to, setTo] = useState(draftData?.to?.join(", ") || "");
-  const [cc, setCc] = useState(draftData?.cc?.join(", ") || "");
-  const [bcc, setBcc] = useState(draftData?.bcc?.join(", ") || "");
-  const [subject, setSubject] = useState(
-    draftData?.subject || replyData?.subject || ""
-  );
-  const [text, setText] = useState(draftData?.text || "");
-  const [html, setHtml] = useState(draftData?.html || "");
-  const [showCcBcc, setShowCcBcc] = useState(
-    Boolean(draftData?.cc?.length || draftData?.bcc?.length)
-  );
-  const [isHtmlMode, setIsHtmlMode] = useState(Boolean(draftData?.html));
+  const [formState, setFormState] = useState<FormState>({
+    from: draftData?.from || managedEmails[0] || "",
+    to: draftData?.to?.join(", ") || "",
+    cc: draftData?.cc?.join(", ") || "",
+    bcc: draftData?.bcc?.join(", ") || "",
+    subject: draftData?.subject || replyData?.subject || "",
+    text: draftData?.text || "",
+    html: draftData?.html || "",
+    showCcBcc: Boolean(draftData?.cc?.length || draftData?.bcc?.length),
+    isHtmlMode: Boolean(draftData?.html),
+  });
   const draftId = draftData?.id;
+
+  // フォーム更新関数
+  const updateFormFields = useCallback((updates: Partial<FormState>) => {
+    setFormState((prev) => ({ ...prev, ...updates }));
+  }, []);
 
   // 自動下書き保存（5秒間隔）
   useEffect(() => {
     const autoSave = setInterval(() => {
-      if (formRef.current && (to || subject || text || html)) {
+      if (
+        formRef.current &&
+        (formState.to || formState.subject || formState.text || formState.html)
+      ) {
         const formData = new FormData(formRef.current);
         formData.set("action", "save_draft");
         formData.set("draftId", draftId || "");
@@ -221,18 +239,24 @@ const ComposeComponent = () => {
     }, 5000);
 
     return () => clearInterval(autoSave);
-  }, [to, subject, text, html, draftId]);
+  }, [
+    formState.to,
+    formState.subject,
+    formState.text,
+    formState.html,
+    draftId,
+  ]);
 
   const handleSendEmail = async () => {
     if (!formRef.current) return;
 
     // 送信API用のデータ準備
     const sendData = new FormData();
-    sendData.set("from", from);
+    sendData.set("from", formState.from);
     sendData.set(
       "to",
       JSON.stringify(
-        to
+        formState.to
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean)
@@ -241,7 +265,7 @@ const ComposeComponent = () => {
     sendData.set(
       "cc",
       JSON.stringify(
-        cc
+        formState.cc
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean)
@@ -250,15 +274,15 @@ const ComposeComponent = () => {
     sendData.set(
       "bcc",
       JSON.stringify(
-        bcc
+        formState.bcc
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean)
       )
     );
-    sendData.set("subject", subject);
-    sendData.set("text", text);
-    sendData.set("html", isHtmlMode ? html : "");
+    sendData.set("subject", formState.subject);
+    sendData.set("text", formState.text);
+    sendData.set("html", formState.isHtmlMode ? formState.html : "");
     sendData.set("attachments", JSON.stringify([])); // TODO: 添付ファイル
     if (replyData?.inReplyTo) {
       sendData.set("inReplyTo", replyData.inReplyTo);
@@ -327,7 +351,9 @@ const ComposeComponent = () => {
             type="button"
             onClick={() => void handleSendEmail()}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
-            disabled={navigation.state !== "idle" || !to || !subject}
+            disabled={
+              navigation.state !== "idle" || !formState.to || !formState.subject
+            }
           >
             {navigation.state !== "idle" ? "送信中..." : "送信"}
           </button>
@@ -379,8 +405,8 @@ const ComposeComponent = () => {
           <select
             id="from"
             name="from"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            value={formState.from}
+            onChange={(e) => updateFormFields({ from: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
           >
@@ -403,8 +429,8 @@ const ComposeComponent = () => {
             type="email"
             id="to"
             name="to"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
+            value={formState.to}
+            onChange={(e) => updateFormFields({ to: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="recipient@example.com, another@example.com"
             multiple
@@ -412,17 +438,17 @@ const ComposeComponent = () => {
           />
         </div>
 
-        {!showCcBcc && (
+        {!formState.showCcBcc && (
           <button
             type="button"
-            onClick={() => setShowCcBcc(true)}
+            onClick={() => updateFormFields({ showCcBcc: true })}
             className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors cursor-pointer"
           >
             CC/BCC を追加
           </button>
         )}
 
-        {showCcBcc && (
+        {formState.showCcBcc && (
           <>
             <div className="space-y-2">
               <label
@@ -435,8 +461,8 @@ const ComposeComponent = () => {
                 type="email"
                 id="cc"
                 name="cc"
-                value={cc}
-                onChange={(e) => setCc(e.target.value)}
+                value={formState.cc}
+                onChange={(e) => updateFormFields({ cc: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="cc@example.com, another@example.com"
                 multiple
@@ -454,8 +480,8 @@ const ComposeComponent = () => {
                 type="email"
                 id="bcc"
                 name="bcc"
-                value={bcc}
-                onChange={(e) => setBcc(e.target.value)}
+                value={formState.bcc}
+                onChange={(e) => updateFormFields({ bcc: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="bcc@example.com, another@example.com"
                 multiple
@@ -475,8 +501,8 @@ const ComposeComponent = () => {
             type="text"
             id="subject"
             name="subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
+            value={formState.subject}
+            onChange={(e) => updateFormFields({ subject: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
           />
@@ -485,9 +511,9 @@ const ComposeComponent = () => {
         <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
           <button
             type="button"
-            onClick={() => setIsHtmlMode(false)}
+            onClick={() => updateFormFields({ isHtmlMode: false })}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-              !isHtmlMode
+              !formState.isHtmlMode
                 ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
@@ -496,9 +522,9 @@ const ComposeComponent = () => {
           </button>
           <button
             type="button"
-            onClick={() => setIsHtmlMode(true)}
+            onClick={() => updateFormFields({ isHtmlMode: true })}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-              isHtmlMode
+              formState.isHtmlMode
                 ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
@@ -509,17 +535,17 @@ const ComposeComponent = () => {
 
         <div className="space-y-2">
           <label
-            htmlFor={isHtmlMode ? "html" : "text"}
+            htmlFor={formState.isHtmlMode ? "html" : "text"}
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
             本文
           </label>
-          {isHtmlMode ? (
+          {formState.isHtmlMode ? (
             <textarea
               id="html"
               name="html"
-              value={html}
-              onChange={(e) => setHtml(e.target.value)}
+              value={formState.html}
+              onChange={(e) => updateFormFields({ html: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm resize-y min-h-[300px]"
               rows={15}
               placeholder="HTMLメールの内容を入力してください..."
@@ -528,8 +554,8 @@ const ComposeComponent = () => {
             <textarea
               id="text"
               name="text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
+              value={formState.text}
+              onChange={(e) => updateFormFields({ text: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm resize-y min-h-[300px]"
               rows={15}
               placeholder="メールの内容を入力してください..."
