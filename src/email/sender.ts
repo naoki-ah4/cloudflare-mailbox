@@ -32,7 +32,7 @@ export const sendEmailViaResend = async (
       (emailData.attachments || []).map(
         async ({ filename, content, contentType }) => {
           try {
-            // R2から添付ファイルを取得
+            // 添付ファイルをBase64エンコード
             const base64Content = await content.arrayBuffer().then((buffer) => {
               return Buffer.from(buffer).toString("base64");
             });
