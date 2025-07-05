@@ -121,7 +121,7 @@ export const action = async ({
       const canAccess = message.to.some((email) =>
         kvSession.managedEmails.includes(email)
       );
-      if (!canAccess) {
+      if (!canAccess && !message.isCatchAll) {
         return { error: "権限がありません" };
       }
 
