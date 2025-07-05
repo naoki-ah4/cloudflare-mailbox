@@ -19,7 +19,7 @@ import { logger } from "~/utils/logger";
 // Tailwindでスタイリング
 import { v4 as uuidv4 } from "uuid";
 import { SafeFormData } from "~/app/utils/formdata";
-import { useToastContext } from "~/context/ToastContext";
+import { useToastContext } from "~/app/context/ToastContext";
 
 export const meta = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -301,7 +301,10 @@ const ComposeComponent = () => {
         }
       }
     } catch (error: unknown) {
-      showError("ネットワークエラー", "送信に失敗しました。もう一度お試しください");
+      showError(
+        "ネットワークエラー",
+        "送信に失敗しました。もう一度お試しください"
+      );
       console.error("Send email error:", error);
     }
   };

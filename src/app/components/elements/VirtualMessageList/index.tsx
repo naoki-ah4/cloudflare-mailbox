@@ -46,7 +46,9 @@ const VirtualMessageList = ({
               </span>
             )}
             {message.hasAttachments && (
-              <span className="ml-2 text-xs flex-shrink-0" aria-hidden="true">📎</span>
+              <span className="ml-2 text-xs flex-shrink-0" aria-hidden="true">
+                📎
+              </span>
             )}
           </div>
           <div
@@ -56,12 +58,12 @@ const VirtualMessageList = ({
             {sanitizeEmailText(message.subject) || "(件名なし)"}
           </div>
           <div className="text-xs text-gray-500 truncate">
-            {message.preview || ""}
+            {/* preview is not available in EmailMetadata, remove this line */}
           </div>
         </div>
         <div className="text-xs text-gray-600 text-right min-w-[100px] max-sm:text-left max-sm:min-w-auto flex-shrink-0">
-          <time dateTime={message.date}>
-            {new Date(message.date).toLocaleString("ja-JP", {
+          <time dateTime={message.date.toISOString()}>
+            {message.date.toLocaleString("ja-JP", {
               month: "numeric",
               day: "numeric",
               hour: "2-digit",
@@ -73,7 +75,7 @@ const VirtualMessageList = ({
     </a>
   );
 
-  const keyExtractor = (message: EmailMetadata & { mailbox: string }) => 
+  const keyExtractor = (message: EmailMetadata & { mailbox: string }) =>
     message.messageId;
 
   return (

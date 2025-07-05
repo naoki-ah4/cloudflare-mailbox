@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useToast } from "../hooks/useToast";
 import ToastContainer from "../components/elements/ToastContainer";
 import type { ToastData, ToastType } from "../components/elements/Toast";
@@ -43,9 +43,9 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
   return (
     <ToastContext.Provider value={toastHook}>
       {children}
-      <ToastContainer 
-        toasts={toastHook.toasts} 
-        onRemoveToast={toastHook.removeToast} 
+      <ToastContainer
+        toasts={toastHook.toasts}
+        onRemoveToast={toastHook.removeToast}
       />
     </ToastContext.Provider>
   );

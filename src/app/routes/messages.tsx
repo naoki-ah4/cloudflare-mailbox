@@ -150,17 +150,19 @@ const Messages = () => {
   const { showInfo: _showInfo } = useToastContext();
 
   const isLoading = navigation.state === "loading";
-  
+
   // キーボードナビゲーション対応
   const focusTrapRef = useFocusTrap(sidebarOpen);
   useEscapeKey(() => setSidebarOpen(false), sidebarOpen);
-  
+
   // 新着メール通知
-  const { canShowNotifications, enableNotifications } = useNewEmailNotification({
-    emails: messages,
-    enabled: true,
-  });
-  
+  const { canShowNotifications, enableNotifications } = useNewEmailNotification(
+    {
+      emails: messages,
+      enabled: true,
+    }
+  );
+
   // _showInfoは新着メール通知のuseNewEmailNotificationで使用されている（showInfo変数として）
 
   // 大量メール時の仮想スクロール判定
@@ -388,7 +390,8 @@ const Messages = () => {
           <>
             {/* 仮想スクロール使用時 */}
             <div className="mb-4 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-              📊 大量のメール（{messages.length}件）のため、仮想スクロールを使用しています
+              📊 大量のメール（{messages.length}
+              件）のため、仮想スクロールを使用しています
             </div>
             <VirtualMessageList
               messages={messages}
@@ -420,7 +423,9 @@ const Messages = () => {
                           </span>
                         )}
                         {message.hasAttachments && (
-                          <span className="ml-2 text-xs" aria-hidden="true">📎</span>
+                          <span className="ml-2 text-xs" aria-hidden="true">
+                            📎
+                          </span>
                         )}
                       </div>
                       <div
@@ -430,8 +435,8 @@ const Messages = () => {
                       </div>
                     </div>
                     <div className="text-xs text-gray-600 text-right min-w-[100px] max-sm:text-left max-sm:min-w-auto">
-                      <time dateTime={message.date}>
-                        {new Date(message.date).toLocaleString("ja-JP", {
+                      <time dateTime={message.date.toISOString()}>
+                        {message.date.toLocaleString("ja-JP", {
                           month: "numeric",
                           day: "numeric",
                           hour: "2-digit",
