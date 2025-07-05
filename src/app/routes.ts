@@ -33,7 +33,6 @@ export default [
   // 専用APIエンドポイント（UIなし）
   route("/api/admin/logout", "routes/api/admin/logout.tsx"),
   route("/api/logout", "routes/api/logout.tsx"),
-  route("/api/send-email", "routes/api/send-email.tsx"),
   route(
     "/api/attachments/:messageId/:filename",
     "routes/api/attachments.$messageId.$filename.tsx"

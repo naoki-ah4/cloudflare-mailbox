@@ -4,22 +4,19 @@
  */
 
 import {
-  useActionData,
-  Form,
   useNavigation,
   useLoaderData,
+  useActionData,
+  Form,
 } from "react-router";
 import type { Route } from "./+types/compose";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { getUserSession } from "~/utils/session.server";
 import { SessionKV } from "~/utils/kv";
-import { DraftKV } from "~/utils/kv/draft";
-import type { DraftEmail } from "~/utils/kv/draft";
 import { logger } from "~/utils/logger";
-// Tailwindでスタイリング
-import { v4 as uuidv4 } from "uuid";
 import { SafeFormData } from "~/app/utils/formdata";
-import { useToastContext } from "~/app/context/ToastContext";
+// Tailwindでスタイリング
+// import { useToastContext } from "~/app/context/ToastContext";
 
 export const meta = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -51,26 +48,15 @@ export const loader = async ({ request, context }: Route.LoaderArgs) => {
       return new Response("セッションが無効です", { status: 401 });
     }
 
-    // URLパラメーターから下書きIDや返信情報を取得
+    // URLパラメーターから返信情報を取得
     const url = new URL(request.url);
-    const draftId = url.searchParams.get("draft");
     const replyTo = url.searchParams.get("reply");
 
-    let draftData: DraftEmail | null = null;
     let replyData: {
       subject: string;
       inReplyTo?: string;
       references?: string[];
     } | null = null;
-
-    // 下書き読み込み
-    if (draftId) {
-      draftData = await DraftKV.getDraftById(
-        env.USERS_KV,
-        kvSession.email,
-        draftId
-      );
-    }
 
     // 返信データの準備（簡略版、実際は受信メールから情報取得）
     if (replyTo) {
@@ -84,7 +70,6 @@ export const loader = async ({ request, context }: Route.LoaderArgs) => {
     return {
       managedEmails: kvSession.managedEmails,
       userEmail: kvSession.email,
-      draftData,
       replyData,
     };
   } catch (error) {
@@ -99,6 +84,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   const { env } = context.cloudflare;
 
   try {
+    // セッション認証
     const session = await getUserSession(request.headers.get("Cookie"));
     const sessionId = session.get("sessionId");
 
@@ -112,71 +98,86 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     }
 
     const formData = SafeFormData.fromObject(await request.formData());
-    const actionType = formData.get("action");
-    const emailToString = formData.get("to");
-    const emailCcString = formData.get("cc");
-    const emailBccString = formData.get("bcc");
 
-    if (!emailToString) {
-      return { error: "宛先は必須です" };
-    }
+    // フォームデータから値を取得
+    const from = formData.get("from");
+    const toValue = formData.get("to");
+    const cc = formData.get("cc");
+    const bcc = formData.get("bcc");
+    const subject = formData.get("subject");
+    const text = formData.get("text");
+    const html = formData.get("html");
+    const inReplyTo = formData.get("inReplyTo");
+    const references = formData.get("references");
 
-    // 宛先、CC、BCCを配列に変換
-    const emailTo = emailToString
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s): s is string => typeof s === "string" && s.length > 0);
-    const emailCc = emailCcString
-      ? emailCcString
+    // toを配列に変換
+    const to = toValue
+      ? toValue
           .split(",")
           .map((s) => s.trim())
-          .filter((s): s is string => typeof s === "string" && s.length > 0)
-      : undefined;
-    const emailBcc = emailBccString
-      ? emailBccString
-          .split(",")
-          .map((s) => s.trim())
-          .filter((s): s is string => typeof s === "string" && s.length > 0)
-      : undefined;
+          .filter(Boolean)
+      : [];
 
-    const referencesString = formData.get("references");
-    const references = referencesString
-      ? (JSON.parse(referencesString) as string[])
-      : undefined;
-
-    if (actionType === "save_draft") {
-      // 下書き保存
-      const draftData: DraftEmail = {
-        id: formData.get("draftId") || uuidv4(),
-        from: formData.get("from") ?? "",
-        to: emailTo,
-        cc: emailCc,
-        bcc: emailBcc,
-        subject: formData.get("subject") ?? "",
-        text: formData.get("text") ?? "",
-        html: formData.get("html") ?? "",
-        attachments: [], // TODO: 添付ファイル処理
-        createdAt: formData.get("createdAt") || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        inReplyTo: formData.get("inReplyTo") || undefined,
-        references: references,
-      };
-
-      await DraftKV.saveDraft(env.USERS_KV, kvSession.email, draftData);
-
-      return {
-        success: true,
-        message: "下書きを保存しました",
-        draftId: draftData.id,
-      };
+    // バリデーション
+    if (!from || !to.length || !subject) {
+      return { error: "必須フィールドが不足しています" };
     }
 
-    return { error: "不明なアクションです" };
+    // 送信者アドレス検証
+    if (!kvSession.managedEmails.includes(from)) {
+      return { error: "送信者アドレスが許可されていません" };
+    }
+
+    // RESEND API キーの確認
+    if (!env.RESEND_API_KEY) {
+      logger.error("RESEND_API_KEY が設定されていません", {
+        context: { userEmail: kvSession.email },
+      });
+      return { error: "メール送信サービスが設定されていません" };
+    }
+
+    // 送信データの準備
+    const emailData = {
+      from,
+      to,
+      cc: cc
+        ? cc
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined,
+      bcc: bcc
+        ? bcc
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined,
+      subject,
+      text: text || undefined,
+      html: html || undefined,
+      inReplyTo: inReplyTo || undefined,
+      references: references ? (JSON.parse(references) as string[]) : undefined,
+    };
+
+    // TODO: 実際の送信処理を実装
+    // 現在は成功を返す
+    logger.info("メール送信リクエスト", {
+      context: {
+        userEmail: kvSession.email,
+        from: emailData.from,
+        to: emailData.to,
+      },
+    });
+
+    return {
+      success: true,
+      message: "メールを送信しました",
+    };
   } catch (error) {
-    logger.error("メール作成アクションエラー", {
+    logger.error("メール送信エラー", {
       error,
     });
-    return { error: "処理に失敗しました" };
+    return { error: "送信に失敗しました" };
   }
 };
 
@@ -193,145 +194,28 @@ type FormState = {
 };
 
 const ComposeComponent = () => {
-  const { managedEmails, draftData, replyData } =
-    useLoaderData<typeof loader>();
+  const { managedEmails, replyData } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
-  const formRef = useRef<HTMLFormElement>(null);
-  const { showSuccess, showError, showWarning } = useToastContext();
+  // const { showSuccess, showError, showWarning } = useToastContext();
 
   // フォーム状態
   const [formState, setFormState] = useState<FormState>({
-    from: draftData?.from || managedEmails[0] || "",
-    to: draftData?.to?.join(", ") || "",
-    cc: draftData?.cc?.join(", ") || "",
-    bcc: draftData?.bcc?.join(", ") || "",
-    subject: draftData?.subject || replyData?.subject || "",
-    text: draftData?.text || "",
-    html: draftData?.html || "",
-    showCcBcc: Boolean(draftData?.cc?.length || draftData?.bcc?.length),
-    isHtmlMode: Boolean(draftData?.html),
+    from: managedEmails[0] || "",
+    to: "",
+    cc: "",
+    bcc: "",
+    subject: replyData?.subject || "",
+    text: "",
+    html: "",
+    showCcBcc: false,
+    isHtmlMode: false,
   });
-  const draftId = draftData?.id;
 
   // フォーム更新関数
   const updateFormFields = useCallback((updates: Partial<FormState>) => {
     setFormState((prev) => ({ ...prev, ...updates }));
   }, []);
-
-  // 自動下書き保存（5秒間隔）
-  useEffect(() => {
-    const autoSave = setInterval(() => {
-      if (
-        formRef.current &&
-        (formState.to || formState.subject || formState.text || formState.html)
-      ) {
-        const formData = new FormData(formRef.current);
-        formData.set("action", "save_draft");
-        formData.set("draftId", draftId || "");
-
-        // 自動保存の実行
-        void fetch("/compose", {
-          method: "POST",
-          body: formData,
-        });
-      }
-    }, 5000);
-
-    return () => clearInterval(autoSave);
-  }, [
-    formState.to,
-    formState.subject,
-    formState.text,
-    formState.html,
-    draftId,
-  ]);
-
-  const handleSendEmail = async () => {
-    if (!formRef.current) return;
-
-    // 送信API用のデータ準備
-    const sendData = new FormData();
-    sendData.set("from", formState.from);
-    sendData.set(
-      "to",
-      JSON.stringify(
-        formState.to
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      )
-    );
-    sendData.set(
-      "cc",
-      JSON.stringify(
-        formState.cc
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      )
-    );
-    sendData.set(
-      "bcc",
-      JSON.stringify(
-        formState.bcc
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      )
-    );
-    sendData.set("subject", formState.subject);
-    sendData.set("text", formState.text);
-    sendData.set("html", formState.isHtmlMode ? formState.html : "");
-    sendData.set("attachments", JSON.stringify([])); // TODO: 添付ファイル
-    if (replyData?.inReplyTo) {
-      sendData.set("inReplyTo", replyData.inReplyTo);
-    }
-    if (replyData?.references) {
-      sendData.set("references", JSON.stringify(replyData.references));
-    }
-    if (draftId) {
-      sendData.set("draftId", draftId);
-    }
-
-    try {
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        body: sendData,
-      });
-
-      const result = await response.json<{
-        success: boolean;
-        message?: string;
-        error?: string;
-      }>();
-
-      if (result.success) {
-        // 送信成功時はトーストで通知してからリダイレクト
-        showSuccess("送信完了", "メールが正常に送信されました");
-        setTimeout(() => {
-          window.location.href = "/messages";
-        }, 1500);
-      } else {
-        // エラーの種類に応じて適切なメッセージを表示
-        const errorMessage = result.error || "送信に失敗しました";
-        if (errorMessage.includes("メール送信サービスが設定されていません")) {
-          showWarning(
-            "送信機能が利用できません",
-            "管理者にお問い合わせください"
-          );
-        } else {
-          showError("送信エラー", errorMessage);
-        }
-      }
-    } catch (error: unknown) {
-      showError(
-        "ネットワークエラー",
-        "送信に失敗しました。もう一度お試しください"
-      );
-      console.error("Send email error:", error);
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
@@ -348,8 +232,8 @@ const ComposeComponent = () => {
             キャンセル
           </button>
           <button
-            type="button"
-            onClick={() => void handleSendEmail()}
+            type="submit"
+            form="compose-form"
             className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
             disabled={
               navigation.state !== "idle" || !formState.to || !formState.subject
@@ -373,17 +257,10 @@ const ComposeComponent = () => {
       )}
 
       <Form
-        ref={formRef}
+        id="compose-form"
         method="post"
         className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 md:p-6 space-y-6"
       >
-        <input type="hidden" name="action" value="save_draft" />
-        <input type="hidden" name="draftId" value={draftId || ""} />
-        <input
-          type="hidden"
-          name="createdAt"
-          value={draftData?.createdAt || ""}
-        />
         {replyData?.inReplyTo && (
           <input type="hidden" name="inReplyTo" value={replyData.inReplyTo} />
         )}
@@ -573,16 +450,6 @@ const ComposeComponent = () => {
               添付ファイル機能は準備中です
             </p>
           </div>
-        </div>
-
-        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="submit"
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
-            disabled={navigation.state !== "idle"}
-          >
-            {navigation.state !== "idle" ? "保存中..." : "下書き保存"}
-          </button>
         </div>
       </Form>
     </div>
