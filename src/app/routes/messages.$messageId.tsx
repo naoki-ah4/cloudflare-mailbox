@@ -138,7 +138,7 @@ export const action = async ({
       if (
         message.isCatchAll &&
         settings?.catchAllEmailAddress &&
-        !kvSession.managedEmails.includes(settings.catchAllEmailAddress)
+        kvSession.managedEmails.includes(settings.catchAllEmailAddress)
       ) {
         targetEmails.push(settings.catchAllEmailAddress);
       }
