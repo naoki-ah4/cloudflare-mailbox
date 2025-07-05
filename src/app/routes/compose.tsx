@@ -98,7 +98,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 
     const uploadedFiles: File[] = [];
 
-    const uploadHandler = async (fileUpload: FileUpload) => {
+    const uploadHandler = (fileUpload: FileUpload) => {
       if (fileUpload.fieldName === "attachments") {
         const totalSize = uploadedFiles.reduce(
           (sum, file) => sum + file.size,
