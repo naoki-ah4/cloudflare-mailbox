@@ -5,7 +5,7 @@ import { getUserSession } from "~/utils/session.server";
 import type { EmailMetadata } from "~/utils/schema";
 import { sanitizeEmailText, sanitizeSearchQuery } from "~/utils/sanitize";
 import Pagination from "../components/Pagination";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { SkeletonMessageItem } from "../components/elements/SkeletonLoader";
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useFocusTrap } from "../hooks/useFocusTrap";
@@ -145,6 +145,10 @@ const Messages = () => {
   } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [isSelectAllMode, setIsSelectAllMode] = useState(false);
   const navigation = useNavigation();
 
   const isLoading = navigation.state === "loading";
@@ -197,6 +201,104 @@ const Messages = () => {
   const closeSidebar = () => {
     setSidebarOpen(false);
   };
+
+  const currentPageMessageIds = useMemo(
+    () => new Set(messages.map((m) => m.messageId)),
+    [messages]
+  );
+
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        setSelectedMessageIds(new Set(currentPageMessageIds));
+      } else {
+        setSelectedMessageIds(new Set());
+        setIsSelectAllMode(false);
+      }
+    },
+    [currentPageMessageIds]
+  );
+
+  const handleSelectMessage = useCallback(
+    (messageId: string, checked: boolean) => {
+      setSelectedMessageIds((prev) => {
+        const newSet = new Set(prev);
+        if (checked) {
+          newSet.add(messageId);
+        } else {
+          newSet.delete(messageId);
+          setIsSelectAllMode(false);
+        }
+        return newSet;
+      });
+    },
+    []
+  );
+
+  const handleMarkSelectedAsRead = async () => {
+    const messagesByMailbox = new Map<string, string[]>();
+
+    if (isSelectAllMode) {
+      if (selectedMailbox) {
+        const allMessageIds = messages
+          .filter((m) => !m.isRead)
+          .map((m) => m.messageId);
+        messagesByMailbox.set(selectedMailbox, allMessageIds);
+      } else {
+        messages
+          .filter((m) => !m.isRead)
+          .forEach((message) => {
+            const mailboxMessages =
+              messagesByMailbox.get(message.mailbox) || [];
+            mailboxMessages.push(message.messageId);
+            messagesByMailbox.set(message.mailbox, mailboxMessages);
+          });
+      }
+    } else {
+      messages
+        .filter((m) => selectedMessageIds.has(m.messageId) && !m.isRead)
+        .forEach((message) => {
+          const mailboxMessages = messagesByMailbox.get(message.mailbox) || [];
+          mailboxMessages.push(message.messageId);
+          messagesByMailbox.set(message.mailbox, mailboxMessages);
+        });
+    }
+
+    try {
+      const promises = Array.from(messagesByMailbox.entries()).map(
+        async ([mailbox, messageIds]) => {
+          const formData = new FormData();
+          formData.append("messageIds", JSON.stringify(messageIds));
+          formData.append("mailbox", mailbox);
+
+          const response = await fetch("/api/messages/mark-read", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to mark messages as read for ${mailbox}`);
+          }
+        }
+      );
+
+      await Promise.all(promises);
+      setSelectedMessageIds(new Set());
+      setIsSelectAllMode(false);
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to mark messages as read:", error);
+      alert("既読処理に失敗しました");
+    }
+  };
+
+  const isAllSelected =
+    currentPageMessageIds.size > 0 &&
+    Array.from(currentPageMessageIds).every((id) => selectedMessageIds.has(id));
+
+  const selectedCount = isSelectAllMode
+    ? stats.unreadMessages
+    : selectedMessageIds.size;
 
   return (
     <div className="flex min-h-screen lg:flex-row max-lg:flex-col">
@@ -371,6 +473,42 @@ const Messages = () => {
           </a>
         </div>
 
+        {/* 選択アクションバー */}
+        {selectedCount > 0 && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-blue-700 font-medium">
+                {selectedCount}件選択中
+              </span>
+              {!isSelectAllMode && stats.unreadMessages > selectedCount && (
+                <button
+                  onClick={() => setIsSelectAllMode(true)}
+                  className="text-blue-600 hover:text-blue-800 underline text-sm"
+                >
+                  フィルタ条件の全{stats.unreadMessages}件を選択
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => void handleMarkSelectedAsRead()}
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
+              >
+                既読にする
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedMessageIds(new Set());
+                  setIsSelectAllMode(false);
+                }}
+                className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors"
+              >
+                選択解除
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* メール一覧 */}
         {isLoading ? (
           <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
@@ -401,49 +539,77 @@ const Messages = () => {
           <>
             {/* 通常のリスト表示 */}
             <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
+              {/* ヘッダー行 */}
+              <div className="flex items-center p-3 border-b border-gray-200 bg-gray-50">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="mr-3 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  aria-label="すべて選択"
+                />
+                <span className="text-sm text-gray-600">すべて選択</span>
+              </div>
+
+              {/* メールリスト */}
               {messages.map((message) => (
-                <a
+                <div
                   key={message.messageId}
-                  href={`/messages/${message.messageId}`}
-                  className={`block p-4 border-b border-gray-100 last:border-b-0 no-underline text-inherit transition-colors hover:bg-gray-50 ${!message.isRead ? "bg-blue-50" : ""}`}
+                  className={`flex items-start p-4 border-b border-gray-100 last:border-b-0 transition-colors hover:bg-gray-50 ${!message.isRead ? "bg-blue-50" : ""} ${selectedMessageIds.has(message.messageId) ? "bg-blue-100" : ""}`}
                 >
-                  <div className="flex justify-between items-start max-sm:flex-col max-sm:gap-2">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-1">
-                        <span
-                          className={`text-sm ${!message.isRead ? "font-bold" : ""}`}
+                  <input
+                    type="checkbox"
+                    checked={selectedMessageIds.has(message.messageId)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleSelectMessage(message.messageId, e.target.checked);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mr-3 mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    aria-label={`${message.subject}を選択`}
+                  />
+                  <a
+                    href={`/messages/${message.messageId}`}
+                    className="flex-1 no-underline text-inherit"
+                  >
+                    <div className="flex justify-between items-start max-sm:flex-col max-sm:gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center mb-1">
+                          <span
+                            className={`text-sm ${!message.isRead ? "font-bold" : ""}`}
+                          >
+                            {sanitizeEmailText(message.from)}
+                          </span>
+                          {!selectedMailbox && (
+                            <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-xl text-xs text-gray-600">
+                              {message.mailbox}
+                            </span>
+                          )}
+                          {message.hasAttachments && (
+                            <span className="ml-2 text-xs" aria-hidden="true">
+                              📎
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`mb-1 ${!message.isRead ? "font-bold" : ""}`}
                         >
-                          {sanitizeEmailText(message.from)}
-                        </span>
-                        {!selectedMailbox && (
-                          <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-xl text-xs text-gray-600">
-                            {message.mailbox}
-                          </span>
-                        )}
-                        {message.hasAttachments && (
-                          <span className="ml-2 text-xs" aria-hidden="true">
-                            📎
-                          </span>
-                        )}
+                          {sanitizeEmailText(message.subject) || "(件名なし)"}
+                        </div>
                       </div>
-                      <div
-                        className={`mb-1 ${!message.isRead ? "font-bold" : ""}`}
-                      >
-                        {sanitizeEmailText(message.subject) || "(件名なし)"}
+                      <div className="text-xs text-gray-600 text-right min-w-[100px] max-sm:text-left max-sm:min-w-auto">
+                        <time dateTime={message.date.toISOString()}>
+                          {message.date.toLocaleString("ja-JP", {
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </time>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-600 text-right min-w-[100px] max-sm:text-left max-sm:min-w-auto">
-                      <time dateTime={message.date.toISOString()}>
-                        {message.date.toLocaleString("ja-JP", {
-                          month: "numeric",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </time>
-                    </div>
-                  </div>
-                </a>
+                  </a>
+                </div>
               ))}
             </div>
 

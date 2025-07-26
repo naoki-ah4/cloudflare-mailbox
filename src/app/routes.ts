@@ -37,4 +37,5 @@ export default [
     "/api/attachments/:messageId/:filename",
     "routes/api/attachments.$messageId.$filename.tsx"
   ),
+  route("/api/messages/mark-read", "routes/api/messages/mark-read.tsx"),
 ] satisfies RouteConfig;
