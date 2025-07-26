@@ -602,7 +602,7 @@ const ComposeComponent = () => {
 
 export default ComposeComponent;
 
-const useAttachments = <T,>() => {
+const useAttachments = () => {
   const [attachments, setAttachments] = useState<
     Array<{ id: string; file: File }>
   >([]);
