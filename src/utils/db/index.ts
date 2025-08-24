@@ -1,4 +1,4 @@
-import { PrismaClient } from "../../generated/prisma";
+import { PrismaClient } from "node_modules/.prisma/client/index";
 import { PrismaTiDBCloud } from "@tidbcloud/prisma-adapter";
 
 let prisma: PrismaClient | undefined;
