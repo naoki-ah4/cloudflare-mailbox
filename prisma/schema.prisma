@@ -1,0 +1,421 @@
+// Prisma schema for TiDB - 第三正規形
+// TiDBはMySQLプロトコル互換のため、providerはmysqlを使用
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ユーザー管理
+model User {
+  id           String  @id @default(uuid())
+  username     String  @unique @db.VarChar(30)
+  email        String  @db.VarChar(255) // 連絡用メールアドレス
+  passwordHash String  @db.Text
+  createdAt    BigInt // UnixTimestamp (ms)
+  lastLogin    BigInt? // UnixTimestamp (ms)
+
+  // リレーション
+  managedEmails UserManagedEmail[]
+  sessions      Session[]
+  settings      UserSettings?
+  sentEmails    SentEmail[]
+  folders       Folder[]
+
+  @@index([username])
+  @@index([email])
+  @@map("users")
+}
+
+// ユーザーが管理するメールアドレス
+model UserManagedEmail {
+  id        String  @id @default(uuid())
+  userId    String
+  email     String  @db.VarChar(255)
+  isPrimary Boolean @default(false) // メインのメールアドレス
+  createdAt BigInt // UnixTimestamp (ms)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@index([email])
+  @@index([userId])
+  @@map("user_managed_emails")
+}
+
+// セッション管理
+model Session {
+  id        String @id @default(uuid())
+  userId    String
+  email     String @db.VarChar(255) // 連絡用メールアドレス
+  createdAt BigInt // UnixTimestamp (ms)
+  expiresAt BigInt // UnixTimestamp (ms)
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionManagedEmails SessionManagedEmail[] // セッション時点での管理メールアドレス
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// セッション管理下のメールアドレス（セッション時点のスナップショット）
+model SessionManagedEmail {
+  id        String @id @default(uuid())
+  sessionId String
+  email     String @db.VarChar(255)
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, email])
+  @@index([sessionId])
+  @@map("session_managed_emails")
+}
+
+// 招待トークン
+model Invite {
+  token     String  @id @default(uuid())
+  createdAt BigInt // UnixTimestamp (ms)
+  expiresAt BigInt // UnixTimestamp (ms)
+  used      Boolean @default(false)
+  usedAt    BigInt? // UnixTimestamp (ms)
+
+  @@index([expiresAt])
+  @@index([used])
+  @@map("invites")
+}
+
+// 管理者
+model Admin {
+  id           String  @id @default(uuid())
+  username     String  @unique @db.VarChar(30)
+  passwordHash String  @db.Text
+  createdAt    BigInt // UnixTimestamp (ms)
+  lastLogin    BigInt? // UnixTimestamp (ms)
+
+  sessions              AdminSession[]
+  systemSettingsHistory SystemSettingsHistory[]
+
+  @@index([username])
+  @@map("admins")
+}
+
+// 管理者セッション
+model AdminSession {
+  id        String @id @default(uuid())
+  adminId   String
+  createdAt BigInt // UnixTimestamp (ms)
+  expiresAt BigInt // UnixTimestamp (ms)
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}
+
+// メールメッセージ
+model EmailMessage {
+  id           String  @id @default(uuid())
+  from         String  @db.VarChar(255)
+  subject      String  @db.Text
+  date         String  @db.VarChar(255) // RFC2822形式の日付文字列
+  text         String? @db.LongText
+  html         String? @db.LongText
+  threadId     String? @db.VarChar(255)
+  inReplyTo    String? @db.VarChar(255)
+  originalFrom String? @db.VarChar(255)
+  isCatchAll   Boolean @default(false)
+
+  // リレーション
+  recipients  EmailRecipient[]
+  attachments EmailAttachment[]
+  references  EmailReference[]
+  metadata    EmailMetadata[]
+  thread      Thread?           @relation(fields: [threadId], references: [id])
+
+  @@index([from])
+  @@index([threadId])
+  @@index([date])
+  @@map("email_messages")
+}
+
+// メール受信者（To, CC, BCC）
+model EmailRecipient {
+  id        String @id @default(uuid())
+  messageId String
+  email     String @db.VarChar(255)
+  type      String @db.VarChar(10) // 'to', 'cc', 'bcc'
+
+  message EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([email])
+  @@index([type])
+  @@map("email_recipients")
+}
+
+// メール添付ファイル
+model EmailAttachment {
+  id          String @id @default(uuid())
+  messageId   String
+  filename    String @db.VarChar(255)
+  contentType String @db.VarChar(100)
+  r2Key       String @db.VarChar(500)
+  size        Int
+
+  message EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("email_attachments")
+}
+
+// メールリファレンス（References ヘッダー）
+model EmailReference {
+  id        String @id @default(uuid())
+  messageId String
+  reference String @db.VarChar(255) // Message-IDの値
+
+  message EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([reference])
+  @@map("email_references")
+}
+
+// メールメタデータ（受信箱用）
+model EmailMetadata {
+  id             String   @id @default(uuid())
+  messageId      String
+  recipient      String   @db.VarChar(255) // 受信者メールアドレス
+  from           String   @db.VarChar(255)
+  subject        String   @db.Text
+  date           DateTime
+  hasAttachments Boolean
+  size           Int
+  threadId       String?  @db.VarChar(255)
+  isRead         Boolean  @default(false)
+  readAt         BigInt? // UnixTimestamp (ms)
+  originalFrom   String?  @db.VarChar(255)
+  folderId       String? // フォルダID（nullの場合は受信箱）
+
+  message EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  folder  Folder?      @relation(fields: [folderId], references: [id])
+
+  @@index([messageId])
+  @@index([recipient])
+  @@index([date])
+  @@index([isRead])
+  @@index([folderId])
+  @@index([threadId])
+  @@map("email_metadata")
+}
+
+// フォルダ管理
+model Folder {
+  id        String  @id @default(uuid())
+  userId    String
+  name      String  @db.VarChar(100)
+  color     String? @db.VarChar(7) // HEXカラーコード
+  createdAt BigInt // UnixTimestamp (ms)
+  updatedAt BigInt // UnixTimestamp (ms)
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages EmailMetadata[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("folders")
+}
+
+// スレッド管理
+model Thread {
+  id String @id
+
+  emailMessages EmailMessage[]
+
+  @@map("threads")
+}
+
+// 送信済みメール
+model SentEmail {
+  id        String  @id @default(uuid())
+  userId    String
+  from      String  @db.VarChar(255)
+  subject   String  @db.Text
+  text      String? @db.LongText
+  html      String? @db.LongText
+  sentAt    String  @db.VarChar(255) // RFC2822形式の日付文字列
+  resendId  String  @db.VarChar(255)
+  threadId  String? @db.VarChar(255)
+  inReplyTo String? @db.VarChar(255)
+  status    String  @db.VarChar(20) // sent, failed, bounced
+
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipients  SentEmailRecipient[]
+  attachments SentEmailAttachment[]
+  references  SentEmailReference[]
+
+  @@index([userId])
+  @@index([from])
+  @@index([sentAt])
+  @@index([status])
+  @@map("sent_emails")
+}
+
+// 送信メール受信者
+model SentEmailRecipient {
+  id          String @id @default(uuid())
+  sentEmailId String
+  email       String @db.VarChar(255)
+  type        String @db.VarChar(10) // 'to', 'cc', 'bcc'
+
+  sentEmail SentEmail @relation(fields: [sentEmailId], references: [id], onDelete: Cascade)
+
+  @@index([sentEmailId])
+  @@index([email])
+  @@map("sent_email_recipients")
+}
+
+// 送信メール添付ファイル
+model SentEmailAttachment {
+  id          String @id @default(uuid())
+  sentEmailId String
+  filename    String @db.VarChar(255)
+  contentType String @db.VarChar(100)
+  r2Key       String @db.VarChar(500)
+  size        Int
+
+  sentEmail SentEmail @relation(fields: [sentEmailId], references: [id], onDelete: Cascade)
+
+  @@index([sentEmailId])
+  @@map("sent_email_attachments")
+}
+
+// 送信メールリファレンス
+model SentEmailReference {
+  id          String @id @default(uuid())
+  sentEmailId String
+  reference   String @db.VarChar(255)
+
+  sentEmail SentEmail @relation(fields: [sentEmailId], references: [id], onDelete: Cascade)
+
+  @@index([sentEmailId])
+  @@map("sent_email_references")
+}
+
+// ユーザー設定
+model UserSettings {
+  userId             String  @id
+  emailNotifications Boolean @default(true)
+  theme              String  @default("auto") @db.VarChar(10) // light, dark, auto
+  language           String  @default("ja") @db.VarChar(5) // ja, en
+  timezone           String  @default("Asia/Tokyo") @db.VarChar(50)
+  createdAt          BigInt // UnixTimestamp (ms)
+  updatedAt          BigInt // UnixTimestamp (ms)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+// システム設定
+model SystemSettings {
+  id                        Int     @id @default(autoincrement())
+  unauthorizedEmailHandling String  @default("REJECT") @db.VarChar(20) // REJECT, CATCH_ALL
+  catchAllEmailAddress      String? @db.VarChar(255)
+  updatedAt                 BigInt // UnixTimestamp (ms)
+
+  allowedDomains        SystemAllowedDomain[]
+  allowedEmailAddresses SystemAllowedEmail[]
+
+  @@map("system_settings")
+}
+
+// システム許可ドメイン
+model SystemAllowedDomain {
+  id               String @id @default(uuid())
+  systemSettingsId Int
+  domain           String @db.VarChar(255)
+
+  systemSettings SystemSettings @relation(fields: [systemSettingsId], references: [id], onDelete: Cascade)
+
+  @@unique([systemSettingsId, domain])
+  @@index([systemSettingsId])
+  @@index([domain])
+  @@map("system_allowed_domains")
+}
+
+// システム許可メールアドレス
+model SystemAllowedEmail {
+  id               String @id @default(uuid())
+  systemSettingsId Int
+  email            String @db.VarChar(255)
+
+  systemSettings SystemSettings @relation(fields: [systemSettingsId], references: [id], onDelete: Cascade)
+
+  @@unique([systemSettingsId, email])
+  @@index([systemSettingsId])
+  @@index([email])
+  @@map("system_allowed_emails")
+}
+
+// システム設定変更履歴
+model SystemSettingsHistory {
+  id                        String  @id @default(uuid())
+  unauthorizedEmailHandling String  @db.VarChar(20) // REJECT, CATCH_ALL
+  catchAllEmailAddress      String? @db.VarChar(255)
+  updatedAt                 BigInt // UnixTimestamp (ms)
+  updatedBy                 String // 管理者ID
+  changes                   String  @db.Text // 変更内容の説明
+
+  admin                 Admin                         @relation(fields: [updatedBy], references: [id])
+  historyAllowedDomains SystemSettingsHistoryDomain[]
+  historyAllowedEmails  SystemSettingsHistoryEmail[]
+
+  @@index([updatedBy])
+  @@index([updatedAt])
+  @@map("system_settings_history")
+}
+
+// システム設定履歴 - 許可ドメイン
+model SystemSettingsHistoryDomain {
+  id        String @id @default(uuid())
+  historyId String
+  domain    String @db.VarChar(255)
+
+  history SystemSettingsHistory @relation(fields: [historyId], references: [id], onDelete: Cascade)
+
+  @@index([historyId])
+  @@map("system_settings_history_domains")
+}
+
+// システム設定履歴 - 許可メールアドレス
+model SystemSettingsHistoryEmail {
+  id        String @id @default(uuid())
+  historyId String
+  email     String @db.VarChar(255)
+
+  history SystemSettingsHistory @relation(fields: [historyId], references: [id], onDelete: Cascade)
+
+  @@index([historyId])
+  @@map("system_settings_history_emails")
+}
+
+// レートリミット
+model RateLimit {
+  key          String @id @db.VarChar(255)
+  attempts     Int    @default(0)
+  firstAttempt BigInt // UnixTimestamp (ms)
+  lastAttempt  BigInt // UnixTimestamp (ms)
+
+  @@index([lastAttempt])
+  @@map("rate_limits")
+}

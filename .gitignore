@@ -13,3 +13,5 @@
 
 wrangler.jsonc
 DEVELOPMENT_TASKS.md
+/src/generated/prisma
+.env

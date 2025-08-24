@@ -18,5 +18,11 @@ export default defineConfig([
       "@typescript-eslint/require-await": "off",
     },
   },
-  globalIgnores(["./*.*", ".react-router", "build/", "dist/"]),
+  globalIgnores([
+    "./*.*",
+    ".react-router",
+    "build/",
+    "dist/",
+    "src/generated/",
+  ]),
 ]);
