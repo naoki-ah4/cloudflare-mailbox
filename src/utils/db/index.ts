@@ -1,10 +1,15 @@
 import { PrismaClient } from "../../generated/prisma";
+import { PrismaTiDBCloud } from "@tidbcloud/prisma-adapter";
 
 let prisma: PrismaClient | undefined;
 
 export const getPrismaClient = (): PrismaClient => {
   if (!prisma) {
+    const adapter = new PrismaTiDBCloud({
+      url: process.env.DATABASE_URL || "",
+    });
     prisma = new PrismaClient({
+      adapter,
       log: ["query", "error", "warn"],
       errorFormat: "pretty",
     });
