@@ -1,5 +1,7 @@
 import type { EmailMetadata, EmailMessage } from "~/utils/schema";
 import { MessageKV, InboxKV, ThreadKV } from "../utils/kv";
+import { MessageDB, InboxDB, ThreadDB } from "../utils/db";
+import { logger } from "../utils/logger";
 import type { Email } from "postal-mime";
 import PostalMime from "postal-mime";
 import { createMimeMessage } from "mimetext";
@@ -117,4 +119,90 @@ export const forwardEmailWithSendEmail = async (
   const emailMessage = new CFEmailMessage(message.from, forwardTo, msg.asRaw());
 
   await env.SEND_EMAIL.send(emailMessage);
+};
+
+/**
+ * メールメッセージをRDBに保存します（KVに影響しない安全な実装）。
+ * エラーが発生してもログ出力のみ行い、例外は再スローしません。
+ * @param emailMessage 保存するメールメッセージ
+ * @returns {Promise<void>}
+ */
+export const saveEmailToRDB = async (
+  emailMessage: EmailMessage
+): Promise<void> => {
+  try {
+    await MessageDB.set(emailMessage.id, emailMessage);
+
+    if (emailMessage.threadId) {
+      await ThreadDB.addMessage(emailMessage.threadId, emailMessage.id);
+    }
+
+    logger.info("RDB書き込み成功: saveEmailToRDB", {
+      messageId: emailMessage.id,
+      threadId: emailMessage.threadId,
+      hasThread: !!emailMessage.threadId,
+    });
+  } catch (error) {
+    // 絶対に例外を再スローしない - KVシステムの安全性を保証
+    logger.error("RDB書き込みエラー: saveEmailToRDB", {
+      error,
+      messageId: emailMessage.id,
+      threadId: emailMessage.threadId,
+      from: emailMessage.from,
+      subject: emailMessage.subject,
+    });
+  }
+};
+
+/**
+ * 受信トレイのインデックスをRDBに更新します（KVに影響しない安全な実装）。
+ * エラーが発生してもログ出力のみ行い、例外は再スローしません。
+ * @param emailMessage 更新するメールメッセージ
+ * @param options オプション設定
+ * @returns {Promise<void>}
+ */
+export const updateInboxIndexInRDB = async (
+  emailMessage: EmailMessage,
+  options?: {
+    catchAllAddress?: string;
+  }
+): Promise<void> => {
+  try {
+    // catch-all転送の場合は、catch-allアドレスのメールボックスに振り分け
+    const recipients = options?.catchAllAddress
+      ? [options.catchAllAddress]
+      : emailMessage.to;
+
+    for (const recipient of recipients) {
+      const metadata: EmailMetadata = {
+        messageId: emailMessage.id,
+        from: emailMessage.from,
+        to: emailMessage.to, // 元のtoアドレスを保持
+        subject: emailMessage.subject,
+        date: new Date(emailMessage.date),
+        hasAttachments: emailMessage.attachments.length > 0,
+        size: JSON.stringify(emailMessage).length,
+        threadId: emailMessage.threadId,
+      };
+
+      await InboxDB.addMessage(recipient, metadata);
+    }
+
+    logger.info("RDB書き込み成功: updateInboxIndexInRDB", {
+      messageId: emailMessage.id,
+      recipientCount: recipients.length,
+      recipients: recipients,
+      catchAllUsed: !!options?.catchAllAddress,
+    });
+  } catch (error) {
+    // 絶対に例外を再スローしない - KVシステムの安全性を保証
+    logger.error("RDB書き込みエラー: updateInboxIndexInRDB", {
+      error,
+      messageId: emailMessage.id,
+      originalRecipients: emailMessage.to,
+      catchAllAddress: options?.catchAllAddress,
+      from: emailMessage.from,
+      subject: emailMessage.subject,
+    });
+  }
 };

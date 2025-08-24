@@ -5,6 +5,8 @@ import {
   forwardEmailWithSendEmail,
   saveEmailToKV,
   updateInboxIndex,
+  saveEmailToRDB,
+  updateInboxIndexInRDB,
 } from "./storage";
 import { createEmailMessage } from "./utils";
 import { SystemKV } from "../utils/kv/system";
@@ -115,6 +117,12 @@ const emailHandler = async (
 
     await saveEmailToKV(emailMessage, env.MESSAGES_KV);
     await updateInboxIndex(emailMessage, env.MAILBOXES_KV, {
+      catchAllAddress: processingResult.catchAllAddress,
+    });
+
+    // RDBへの書き込み処理（KVに影響しない安全な実装）
+    await saveEmailToRDB(emailMessage);
+    await updateInboxIndexInRDB(emailMessage, {
       catchAllAddress: processingResult.catchAllAddress,
     });
 
